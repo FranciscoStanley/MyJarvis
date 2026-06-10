@@ -1,0 +1,32 @@
+---
+description: Princípios SOLID e Clean Code
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# SOLID & Clean Code
+
+## Single Responsibility (S)
+- Uma classe/função = uma razão para mudar
+- Controllers só roteiam; lógica fica em use cases
+
+## Open/Closed (O)
+- Estender via interfaces e injeção de dependência
+- Novos providers de IA/search sem alterar use cases existentes
+
+## Liskov Substitution (L)
+- Implementações de ports são intercambiáveis (mock em testes)
+
+## Interface Segregation (I)
+- Ports pequenos e específicos: `AiPort`, `SearchPort`, `VoicePort`
+
+## Dependency Inversion (D)
+- Depender de abstrações (interfaces), não de implementações concretas
+
+## Clean Code
+
+- Funções ≤ 30 linhas quando possível
+- Nomes descritivos: `generateJarvisResponse`, não `process`
+- Sem magic numbers — usar constantes em `domain/constants`
+- Tratamento de erros com exceptions de domínio customizadas
+- Logs estruturados com contexto (requestId, userId, service)

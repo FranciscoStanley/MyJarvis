@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "ES2022",
+    "outDir": "./dist",
+    "strict": true,
+    "skipLibCheck": true,
+    "paths": { "@myjarvis/shared": ["../../packages/shared/src"] }
+  }
+}

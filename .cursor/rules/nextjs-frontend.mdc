@@ -1,0 +1,44 @@
+---
+description: Padrões Next.js para frontend jarvis-web
+globs: frontends/**/*.tsx
+alwaysApply: false
+---
+
+# Next.js Frontend — jarvis-web
+
+## Stack
+
+- Next.js 14+ App Router
+- TypeScript strict
+- Tailwind CSS + shadcn/ui patterns
+- Zustand para estado global
+- React Query para cache de API
+
+## Estrutura
+
+```
+src/
+├── app/              # Rotas App Router
+├── components/       # UI components (ui/, jarvis/, layout/)
+├── hooks/            # useVoice, useChat, useJarvis
+├── lib/              # api client, utils
+├── stores/           # Zustand stores
+└── types/            # TypeScript types
+```
+
+## UI/UX JARVIS
+
+- Tema escuro elegante (preto, azul ciano, dourado sutil)
+- Animações suaves de "pulso" no orb central
+- Responsivo mobile-first (PWA)
+- Acessibilidade: ARIA labels, contraste WCAG AA
+
+## API
+
+- Consumir apenas `NEXT_PUBLIC_API_URL` (gateway)
+- Token JWT no header Authorization via interceptor
+
+## Testes
+
+- Vitest + Testing Library para componentes e hooks
+- Mock de Web Speech API nos testes de voz

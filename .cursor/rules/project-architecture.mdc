@@ -1,0 +1,51 @@
+---
+description: Arquitetura geral do MyJarvis - microservices, frontends e convenções
+alwaysApply: true
+---
+
+# MyJarvis — Arquitetura do Projeto
+
+## Estrutura de Diretórios
+
+```
+MyJarvis/
+├── .cursor/rules/          # Regras do Cursor
+├── .cursor/skills/         # Skills do projeto
+├── services/               # Microserviços NestJS
+│   ├── service-gateway/
+│   ├── service-auth/
+│   ├── service-ai/
+│   ├── service-voice/
+│   ├── service-search/
+│   ├── service-notifications/
+│   └── service-media/
+├── frontends/
+│   └── jarvis-web/         # Next.js (web + PWA mobile)
+├── packages/
+│   └── shared/             # Tipos, DTOs e utilitários compartilhados
+├── docs/                   # Documentação
+├── docker/                 # Configs Docker auxiliares
+└── docker-compose.yml
+```
+
+## Regras Obrigatórias
+
+- Cada microserviço é independente com seu próprio `package.json`, Dockerfile e testes
+- Comunicação entre serviços via HTTP REST ou message broker (Redis/RabbitMQ)
+- Gateway (`service-gateway`) é o único ponto de entrada externo
+- Frontend consome apenas o Gateway, nunca serviços internos diretamente
+- Variáveis sensíveis sempre em `.env` — nunca commitar secrets
+- Ao alterar funcionalidades: atualizar Swagger, README, collections Postman/Insomnia e testes
+
+## Portas Padrão
+
+| Serviço | Porta |
+|---------|-------|
+| service-gateway | 3000 |
+| service-auth | 3001 |
+| service-ai | 3002 |
+| service-voice | 3003 |
+| service-search | 3004 |
+| service-notifications | 3005 |
+| service-media | 3006 |
+| jarvis-web | 3100 |

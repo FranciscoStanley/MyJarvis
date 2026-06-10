@@ -1,0 +1,27 @@
+{
+  "name": "myjarvis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MyJarvis — Assistente de IA inspirado no JARVIS do Homem de Ferro",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "frontends/*"
+  ],
+  "scripts": {
+    "dev": "docker compose up -d && npm run dev:services",
+    "dev:services": "concurrently \"npm run dev -w service-gateway\" \"npm run dev -w service-auth\" \"npm run dev -w service-ai\" \"npm run dev -w jarvis-web\"",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

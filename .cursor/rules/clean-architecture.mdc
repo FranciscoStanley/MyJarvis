@@ -1,0 +1,48 @@
+---
+description: Clean Architecture para microserviços NestJS
+globs: services/**/*.ts
+alwaysApply: false
+---
+
+# Clean Architecture — Microserviços
+
+## Camadas (de dentro para fora)
+
+```
+src/
+├── domain/           # Entidades, value objects, interfaces de repositório
+├── application/      # Use cases, DTOs, ports (interfaces)
+├── infrastructure/   # Implementações: DB, HTTP clients, filas
+└── presentation/     # Controllers, guards, filters, modules NestJS
+```
+
+## Regras
+
+- **Domain** não importa de application, infrastructure ou presentation
+- **Application** depende apenas de domain
+- **Infrastructure** implementa interfaces definidas em domain/application
+- **Presentation** orquestra use cases via injeção de dependência
+
+## Exemplo de Use Case
+
+```typescript
+// application/use-cases/send-message.use-case.ts
+@Injectable()
+export class SendMessageUseCase {
+  constructor(
+    private readonly aiPort: AiPort,
+    private readonly conversationRepo: ConversationRepository,
+  ) {}
+
+  async execute(dto: SendMessageDto): Promise<MessageResponse> {
+    const conversation = await this.conversationRepo.findOrCreate(dto.sessionId);
+    return this.aiPort.generateResponse(conversation, dto.message);
+  }
+}
+```
+
+## Nomenclatura
+
+- Use cases: `{Verbo}{Entidade}UseCase` (ex: `AuthenticateUserUseCase`)
+- Ports: `{Entidade}Port` ou `{Entidade}Repository`
+- DTOs: `{Ação}{Entidade}Dto`

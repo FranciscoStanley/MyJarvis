@@ -1,0 +1,45 @@
+---
+description: Padrões NestJS para microserviços MyJarvis
+globs: services/**/*.ts
+alwaysApply: false
+---
+
+# NestJS Microservices
+
+## Estrutura de Módulo
+
+```typescript
+@Module({
+  imports: [ConfigModule, HttpModule],
+  controllers: [XController],
+  providers: [
+    XUseCase,
+    { provide: XPort, useClass: XAdapter },
+  ],
+  exports: [XUseCase],
+})
+export class XModule {}
+```
+
+## Swagger
+
+- Todo controller deve ter `@ApiTags`, `@ApiOperation`, `@ApiResponse`
+- DTOs com `@ApiProperty` para documentação automática
+- Swagger em `/api/docs` de cada serviço
+
+## Testes (Vitest)
+
+- Unit: use cases com mocks de ports
+- Integration: controllers com supertest
+- Arquivo: `*.spec.ts` ao lado do código ou em `test/`
+
+## Health Check
+
+- Todo serviço expõe `GET /health` retornando `{ status: 'ok', service: 'service-name' }`
+
+## Ao Modificar APIs
+
+1. Atualizar DTOs e Swagger decorators
+2. Atualizar testes correspondentes
+3. Atualizar collection Postman em `docs/postman/`
+4. Atualizar collection Insomnia em `docs/insomnia/`

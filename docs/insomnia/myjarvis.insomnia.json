@@ -1,0 +1,115 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-06-10T00:00:00.000Z",
+  "__export_source": "myjarvis",
+  "resources": [
+    {
+      "_type": "workspace",
+      "_id": "wrk_myjarvis",
+      "name": "MyJarvis",
+      "description": "API MyJarvis — Assistente JARVIS"
+    },
+    {
+      "_type": "environment",
+      "_id": "env_myjarvis",
+      "parentId": "wrk_myjarvis",
+      "name": "Local",
+      "data": {
+        "baseUrl": "http://localhost:3000/api",
+        "token": "",
+        "sessionId": ""
+      }
+    },
+    {
+      "_type": "request_group",
+      "_id": "fld_auth",
+      "parentId": "wrk_myjarvis",
+      "name": "Auth"
+    },
+    {
+      "_type": "request",
+      "_id": "req_login",
+      "parentId": "fld_auth",
+      "name": "Login",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/login",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"tony@stark.com\",\n  \"password\": \"SenhaSegura123!\"\n}"
+      }
+    },
+    {
+      "_type": "request",
+      "_id": "req_register",
+      "parentId": "fld_auth",
+      "name": "Register",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/register",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"tony@stark.com\",\n  \"password\": \"SenhaSegura123!\",\n  \"name\": \"Tony Stark\"\n}"
+      }
+    },
+    {
+      "_type": "request_group",
+      "_id": "fld_chat",
+      "parentId": "wrk_myjarvis",
+      "name": "Chat JARVIS"
+    },
+    {
+      "_type": "request",
+      "_id": "req_message",
+      "parentId": "fld_chat",
+      "name": "Send Message",
+      "method": "POST",
+      "url": "{{ baseUrl }}/chat/message",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"JARVIS, busque imagens de tecnologia futurista\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
+      }
+    },
+    {
+      "_type": "request_group",
+      "_id": "fld_search",
+      "parentId": "wrk_myjarvis",
+      "name": "Search"
+    },
+    {
+      "_type": "request",
+      "_id": "req_web_search",
+      "parentId": "fld_search",
+      "name": "Web Search",
+      "method": "POST",
+      "url": "{{ baseUrl }}/search/web",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"query\": \"notícias IA\",\n  \"limit\": 5\n}"
+      }
+    },
+    {
+      "_type": "request_group",
+      "_id": "fld_health",
+      "parentId": "wrk_myjarvis",
+      "name": "Health"
+    },
+    {
+      "_type": "request",
+      "_id": "req_health",
+      "parentId": "fld_health",
+      "name": "Gateway Health",
+      "method": "GET",
+      "url": "{{ baseUrl }}/health"
+    }
+  ]
+}

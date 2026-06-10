@@ -1,0 +1,135 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-myjarvis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-myjarvis_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-myjarvis}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myjarvis"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  service-auth:
+    build:
+      context: .
+      dockerfile: services/service-auth/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-myjarvis}:${POSTGRES_PASSWORD:-myjarvis_secret}@postgres:5432/${POSTGRES_DB:-myjarvis}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  service-ai:
+    build:
+      context: .
+      dockerfile: services/service-ai/Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SEARCH_SERVICE_URL: http://service-search:3004
+    depends_on:
+      - service-search
+
+  service-voice:
+    build:
+      context: .
+      dockerfile: services/service-voice/Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+  service-search:
+    build:
+      context: .
+      dockerfile: services/service-search/Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      PORT: 3004
+      UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY:-}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+
+  service-notifications:
+    build:
+      context: .
+      dockerfile: services/service-notifications/Dockerfile
+    ports:
+      - "3005:3005"
+    environment:
+      PORT: 3005
+
+  service-media:
+    build:
+      context: .
+      dockerfile: services/service-media/Dockerfile
+    ports:
+      - "3006:3006"
+    environment:
+      PORT: 3006
+      SEARCH_SERVICE_URL: http://service-search:3004
+    depends_on:
+      - service-search
+
+  service-gateway:
+    build:
+      context: .
+      dockerfile: services/service-gateway/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:3100
+      AUTH_SERVICE_URL: http://service-auth:3001
+      AI_SERVICE_URL: http://service-ai:3002
+      VOICE_SERVICE_URL: http://service-voice:3003
+      SEARCH_SERVICE_URL: http://service-search:3004
+      NOTIFICATIONS_SERVICE_URL: http://service-notifications:3005
+      MEDIA_SERVICE_URL: http://service-media:3006
+    depends_on:
+      - service-auth
+      - service-ai
+      - service-voice
+      - service-search
+      - service-notifications
+      - service-media
+
+  jarvis-web:
+    build:
+      context: .
+      dockerfile: frontends/jarvis-web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3100:3100"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    depends_on:
+      - service-gateway
+
+volumes:
+  postgres_data:
