@@ -9,7 +9,7 @@ Suíte completa de testes automatizados.
 | **Unitários** | `npm run test:unit` | Use cases, adapters, stores, componentes |
 | **Integração (in-process)** | `npm run test:integration` | Supertest + NestJS TestingModule |
 | **Integração (live HTTP)** | `npm run test:live` | Requer `docker compose up` |
-| **Performance** | `npm run test:performance` | Autocannon + Vitest bench |
+| **Performance** | `npm run test:performance` | Autocannon + benchmarks Vitest |
 | **Stress** | `npm run test:stress` | 200+ conexões, burst load |
 | **E2E** | `npm run test:e2e` | Playwright (frontend) |
 | **K6** | `npm run test:k6:load` | Load test (requer [k6](https://k6.io)) |
@@ -48,5 +48,11 @@ npm run test:k6:stress
 
 ## CI
 
+GitHub Actions (`.github/workflows/tests.yml`) executa `npm run test:all` em cada push/PR.
+
 Testes unitários e integração in-process rodam **sem Docker**.
 Testes live/performance/stress são skipped automaticamente se serviços estiverem offline.
+
+### NestJS + Vitest
+
+Serviços NestJS usam `@myjarvis/nest-vitest` para emitir metadata de decorators (DI) nos testes Vitest.

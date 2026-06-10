@@ -15,5 +15,5 @@
     "rxjs": "^7.8.1",
     "uuid": "^11.0.5"
   },
-  "devDependencies": { "@nestjs/cli": "^11.0.2", "@types/node": "^22.10.7", "@types/supertest": "^6.0.2", "supertest": "^7.0.0", "typescript": "^5.7.3", "vitest": "^3.0.5" }
+  "devDependencies": { "@myjarvis/nest-vitest": "*", "@nestjs/cli": "^11.0.2", "@nestjs/testing": "^11.0.7", "@types/node": "^22.10.7", "@types/supertest": "^6.0.2", "supertest": "^7.0.0", "typescript": "^5.7.3", "vitest": "^3.0.5" }
 }

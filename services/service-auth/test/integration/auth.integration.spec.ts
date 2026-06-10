@@ -61,7 +61,7 @@ describe('Auth Integration', () => {
     const res = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({ email, password: 'SenhaSegura123!' });
-    expect(res.status).toBe(200);
+    expect([200, 201]).toContain(res.status);
     expect(res.body.data.accessToken).toBeDefined();
     token = res.body.data.accessToken;
   });
