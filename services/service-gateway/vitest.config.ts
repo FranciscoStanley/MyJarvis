@@ -1,9 +1,3 @@
-import { defineConfig } from 'vitest/config';
+import { createNestVitestConfig } from '@myjarvis/nest-vitest';
 
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'node',
-    include: ['src/**/*.spec.ts', 'test/**/*.spec.ts'],
-  },
-});
+export default createNestVitestConfig();

@@ -6,7 +6,16 @@ alwaysApply: false
 
 # NestJS Microservices
 
+> Skill detalhada: `.cursor/skills/nestjs-services/SKILL.md`
+
 ## Estrutura de Módulo
+
+```mermaid
+flowchart LR
+    MOD[AppModule] --> CTRL[Controllers]
+    MOD --> UC[Use Cases]
+    MOD --> ADAPT[Adapters via DI]
+```
 
 ```typescript
 @Module({

@@ -2,7 +2,7 @@
   "name": "service-media",
   "version": "1.0.0",
   "private": true,
-  "scripts": { "build": "nest build", "start:dev": "nest start --watch", "start:prod": "node dist/main", "test": "vitest run" },
+  "scripts": { "build": "nest build", "start:dev": "nest start --watch", "start:prod": "node dist/main", "test": "vitest run", "test:unit": "vitest run --exclude 'test/integration/**'", "test:integration": "vitest run test/integration" },
   "dependencies": {
     "@myjarvis/shared": "*",
     "@nestjs/common": "^11.0.7",
@@ -14,5 +14,5 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
-  "devDependencies": { "@nestjs/cli": "^11.0.2", "@types/node": "^22.10.7", "typescript": "^5.7.3", "vitest": "^3.0.5" }
+  "devDependencies": { "@nestjs/cli": "^11.0.2", "@types/node": "^22.10.7", "@types/supertest": "^6.0.2", "supertest": "^7.0.0", "typescript": "^5.7.3", "vitest": "^3.0.5" }
 }

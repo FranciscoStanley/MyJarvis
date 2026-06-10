@@ -8,6 +8,8 @@
     "start": "next start -p 3100",
     "lint": "next lint",
     "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -21,6 +23,8 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",

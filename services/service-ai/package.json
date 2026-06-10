@@ -8,6 +8,9 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "test": "vitest run",
+    "test:unit": "vitest run --exclude 'test/integration/**' --exclude 'test/performance/**'",
+    "test:integration": "vitest run test/integration",
+    "test:performance": "vitest run test/performance",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -26,10 +29,13 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
+    "@myjarvis/nest-vitest": "*",
     "@nestjs/cli": "^11.0.2",
     "@nestjs/testing": "^11.0.7",
     "@types/node": "^22.10.7",
     "@types/uuid": "^10.0.0",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
   }

@@ -5,27 +5,39 @@ alwaysApply: true
 
 # MyJarvis — Arquitetura do Projeto
 
-## Estrutura de Diretórios
+> Skill detalhada: `.cursor/skills/project-architecture/SKILL.md`
+> Diagramas: usar **Mermaid** (renderiza no GitHub)
 
+## Estrutura do Monorepo
+
+```mermaid
+flowchart TB
+    ROOT[MyJarvis/] --> CURSOR[.cursor/]
+    ROOT --> SERVICES[services/]
+    ROOT --> FRONTENDS[frontends/jarvis-web]
+    ROOT --> PACKAGES[packages/shared]
+    ROOT --> DOCS[docs/]
+
+    SERVICES --> GW[service-gateway]
+    SERVICES --> AUTH[service-auth]
+    SERVICES --> AI[service-ai]
+    SERVICES --> VOICE[service-voice]
+    SERVICES --> SEARCH[service-search]
+    SERVICES --> NOTIF[service-notifications]
+    SERVICES --> MEDIA[service-media]
 ```
-MyJarvis/
-├── .cursor/rules/          # Regras do Cursor
-├── .cursor/skills/         # Skills do projeto
-├── services/               # Microserviços NestJS
-│   ├── service-gateway/
-│   ├── service-auth/
-│   ├── service-ai/
-│   ├── service-voice/
-│   ├── service-search/
-│   ├── service-notifications/
-│   └── service-media/
-├── frontends/
-│   └── jarvis-web/         # Next.js (web + PWA mobile)
-├── packages/
-│   └── shared/             # Tipos, DTOs e utilitários compartilhados
-├── docs/                   # Documentação
-├── docker/                 # Configs Docker auxiliares
-└── docker-compose.yml
+
+## Microserviços e Gateway
+
+```mermaid
+flowchart LR
+    WEB[jarvis-web :3100] --> GW[service-gateway :3000]
+    GW --> AUTH[auth :3001]
+    GW --> AI[ai :3002]
+    GW --> VOICE[voice :3003]
+    GW --> SEARCH[search :3004]
+    GW --> NOTIF[notifications :3005]
+    GW --> MEDIA[media :3006]
 ```
 
 ## Regras Obrigatórias
@@ -36,6 +48,7 @@ MyJarvis/
 - Frontend consome apenas o Gateway, nunca serviços internos diretamente
 - Variáveis sensíveis sempre em `.env` — nunca commitar secrets
 - Ao alterar funcionalidades: atualizar Swagger, README, collections Postman/Insomnia e testes
+- **Documentação de arquitetura**: sempre Mermaid em `docs/` e README
 
 ## Portas Padrão
 
@@ -49,3 +62,4 @@ MyJarvis/
 | service-notifications | 3005 |
 | service-media | 3006 |
 | jarvis-web | 3100 |
+| Ollama | 11434 |

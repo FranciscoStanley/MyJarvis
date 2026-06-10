@@ -6,6 +6,8 @@ alwaysApply: false
 
 # SOLID & Clean Code
 
+> Skill detalhada: `.cursor/skills/solid-principles/SKILL.md`
+
 ## Single Responsibility (S)
 - Uma classe/função = uma razão para mudar
 - Controllers só roteiam; lógica fica em use cases

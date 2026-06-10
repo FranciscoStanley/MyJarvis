@@ -5,6 +5,8 @@ alwaysApply: true
 
 # Stack Gratuito — Sem Licenças Pagas
 
+> Skill detalhada: `.cursor/skills/free-open-source-stack/SKILL.md`
+
 ## Proibido adicionar
 
 - OpenAI, Anthropic, Google Gemini API (pagos)
@@ -30,4 +32,4 @@ alwaysApply: true
 3. Documentar em `docs/free-stack.md`
 4. Atualizar `.env.example` — sem vars de APIs pagas
 
-Veja [docs/free-stack.md](../../docs/free-stack.md) para detalhes.
+Veja [docs/free-stack.md](../../docs/free-stack.md) e a skill `.cursor/skills/free-open-source-stack/SKILL.md` para detalhes.

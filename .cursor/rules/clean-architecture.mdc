@@ -6,14 +6,29 @@ alwaysApply: false
 
 # Clean Architecture — Microserviços
 
+> Skill detalhada: `.cursor/skills/clean-architecture/SKILL.md`
+
 ## Camadas (de dentro para fora)
 
-```
-src/
-├── domain/           # Entidades, value objects, interfaces de repositório
-├── application/      # Use cases, DTOs, ports (interfaces)
-├── infrastructure/   # Implementações: DB, HTTP clients, filas
-└── presentation/     # Controllers, guards, filters, modules NestJS
+```mermaid
+flowchart TB
+    subgraph Presentation["presentation/"]
+        CTRL[Controllers · Guards · Modules]
+    end
+    subgraph Application["application/"]
+        UC[Use Cases · DTOs]
+    end
+    subgraph Domain["domain/"]
+        ENT[Entities · Ports · Constants]
+    end
+    subgraph Infrastructure["infrastructure/"]
+        ADAPT[Adapters · Repositories]
+    end
+
+    CTRL --> UC
+    UC --> ENT
+    UC --> PORTS[Ports]
+    ADAPT -.implements.-> PORTS
 ```
 
 ## Regras
@@ -26,12 +41,11 @@ src/
 ## Exemplo de Use Case
 
 ```typescript
-// application/use-cases/send-message.use-case.ts
 @Injectable()
 export class SendMessageUseCase {
   constructor(
-    private readonly aiPort: AiPort,
-    private readonly conversationRepo: ConversationRepository,
+    @Inject(AI_PORT) private readonly aiPort: AiPort,
+    @Inject(CONVERSATION_STORE) private readonly conversationRepo: ConversationRepository,
   ) {}
 
   async execute(dto: SendMessageDto): Promise<MessageResponse> {

@@ -18,17 +18,26 @@ Detalhes: [docs/free-stack.md](docs/free-stack.md)
 
 ## Arquitetura
 
+```mermaid
+flowchart TB
+    USER((Usuário)) --> WEB[jarvis-web :3100<br/>Next.js PWA]
+
+    WEB -->|REST + JWT| GW[service-gateway :3000]
+
+    GW --> AUTH[service-auth :3001]
+    GW --> AI[service-ai :3002]
+    GW --> VOICE[service-voice :3003]
+    GW --> SEARCH[service-search :3004]
+    GW --> NOTIF[service-notifications :3005]
+    GW --> MEDIA[service-media :3006]
+
+    AI --> OLLAMA[(Ollama :11434)]
+    AI --> SEARCH
+    SEARCH --> DDG[DuckDuckGo / Wikimedia / Archive.org]
+    AUTH --> PG[(PostgreSQL)]
 ```
-┌─────────────────┐     ┌──────────────────┐
-│   jarvis-web    │────▶│  service-gateway  │ :3000
-│  (Next.js PWA)  │     └────────┬─────────┘
-└─────────────────┘              │
-         :3100          ┌────────┼────────┬──────────┬────────────┐
-                        ▼        ▼        ▼          ▼            ▼
-                   auth:3001  ai:3002  voice:3003  search:3004  media:3006
-                              Ollama              DuckDuckGo
-                                              notifications:3005
-```
+
+Diagramas detalhados: [docs/architecture.md](docs/architecture.md)
 
 ## Início Rápido
 
@@ -70,8 +79,15 @@ docker compose exec ollama ollama pull llama3.2
 ## Testes
 
 ```bash
-npm test
+npm run test:unit        # Unitários (sem Docker)
+npm run test:integration # Integração in-process
+npm run test:performance # Performance (Autocannon + benchmarks)
+npm run test:stress      # Stress test
+npm run test:e2e         # Playwright E2E
+npm run test:all         # Unit + integration
 ```
+
+Documentação: [docs/testing.md](docs/testing.md)
 
 ## Documentação
 
@@ -88,6 +104,20 @@ npm test
 | `OLLAMA_MODEL` | Modelo local (padrão: llama3.2) |
 | `JWT_SECRET` | Secret JWT (produção) |
 | `DATABASE_URL` | PostgreSQL |
+
+## Cursor — Rules & Skills
+
+| Regra (`.cursor/rules/`) | Skill (`.cursor/skills/`) |
+|--------------------------|---------------------------|
+| `project-architecture` | `project-architecture` |
+| `clean-architecture` | `clean-architecture` |
+| `solid-principles` | `solid-principles` |
+| `nestjs-services` | `nestjs-services` |
+| `nextjs-frontend` | `nextjs-frontend` |
+| `free-open-source-stack` | `free-open-source-stack` |
+| — | `myjarvis-development` (orquestrador) |
+
+Índice: [.cursor/skills/README.md](.cursor/skills/README.md)
 
 ## Licença
 

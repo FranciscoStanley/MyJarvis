@@ -2,6 +2,45 @@
 
 MyJarvis usa **apenas tecnologias gratuitas e open source**. Nenhuma API paga ou licença comercial é necessária.
 
+## Mapa de Tecnologias
+
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend — jarvis-web"]
+        NEXT[Next.js PWA]
+        SPEECH[Web Speech API<br/>STT + TTS]
+    end
+
+    subgraph Backend["Backend — NestJS"]
+        GW[Gateway]
+        AI[service-ai]
+        SEARCH[service-search]
+        AUTH[service-auth]
+    end
+
+    subgraph FreeAI["IA gratuita"]
+        OLLAMA[(Ollama + Llama 3.2)]
+    end
+
+    subgraph FreeSearch["Busca gratuita"]
+        DDG[DuckDuckGo]
+        WIKI[Wikimedia Commons]
+        ARCH[Internet Archive]
+    end
+
+    subgraph Data["Dados"]
+        PG[(PostgreSQL)]
+        REDIS[(Redis)]
+    end
+
+    NEXT --> GW
+    NEXT --> SPEECH
+    GW --> AI & SEARCH & AUTH
+    AI --> OLLAMA
+    SEARCH --> DDG & WIKI & ARCH
+    AUTH --> PG
+```
+
 ## Matriz de Tecnologias
 
 | Função | Tecnologia | Licença | Custo |

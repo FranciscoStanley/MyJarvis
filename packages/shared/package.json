@@ -14,7 +14,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:unit": "vitest run"
   },
   "devDependencies": {
     "typescript": "^5.7.3",

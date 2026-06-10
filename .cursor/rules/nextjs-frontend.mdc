@@ -6,6 +6,8 @@ alwaysApply: false
 
 # Next.js Frontend — jarvis-web
 
+> Skill detalhada: `.cursor/skills/nextjs-frontend/SKILL.md`
+
 ## Stack
 
 - Next.js 14+ App Router
@@ -16,14 +18,14 @@ alwaysApply: false
 
 ## Estrutura
 
-```
-src/
-├── app/              # Rotas App Router
-├── components/       # UI components (ui/, jarvis/, layout/)
-├── hooks/            # useVoice, useChat, useJarvis
-├── lib/              # api client, utils
-├── stores/           # Zustand stores
-└── types/            # TypeScript types
+```mermaid
+flowchart TB
+    SRC[src/] --> APP[app/]
+    SRC --> COMP[components/jarvis/]
+    SRC --> HOOKS[hooks/]
+    SRC --> LIB[lib/api.ts]
+    SRC --> STORES[stores/]
+    LIB --> GW[Gateway :3000]
 ```
 
 ## UI/UX JARVIS

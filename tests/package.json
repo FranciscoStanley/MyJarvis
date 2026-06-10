@@ -1,0 +1,20 @@
+{
+  "name": "@myjarvis/test-suite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Testes de integração, performance, stress e E2E do MyJarvis",
+  "scripts": {
+    "test": "vitest run --config vitest.config.ts",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:performance": "vitest run --config vitest.performance.config.ts",
+    "test:stress": "vitest run --config vitest.stress.config.ts",
+    "test:k6:load": "k6 run k6/load-test.js",
+    "test:k6:stress": "k6 run k6/stress-test.js"
+  },
+  "devDependencies": {
+    "autocannon": "^8.0.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
