@@ -32,17 +32,15 @@ Retorna `{ reply, sessionId, actions, searchResults }`.
 ### GET /chat/session/:sessionId
 Histórico da conversa.
 
-## Voz
+## Voz (gratuito — Web Speech API)
+
+A transcrição e síntese acontecem **no navegador** (Chrome/Edge). O backend retorna metadados `clientSide: true`.
 
 ### POST /voice/transcribe
-```json
-{ "audioBase64": "...", "language": "pt" }
-```
+Preferir microfone no app. Endpoint orienta uso do Web Speech API.
 
 ### POST /voice/synthesize
-```json
-{ "text": "Bom dia, senhor.", "voice": "onyx" }
-```
+Retorna `{ clientSide: true, text }` para TTS no navegador.
 
 ## Busca
 

@@ -1,52 +1,46 @@
 ---
 name: myjarvis-development
-description: Guia de desenvolvimento do MyJarvis. Use ao implementar features, criar serviços, modificar APIs ou frontend. Cobre fluxo de trabalho, documentação obrigatória e arquitetura.
+description: Guia de desenvolvimento do MyJarvis. Use ao implementar features, criar serviços, modificar APIs ou frontend. Stack 100% gratuito e open source.
 ---
 
 # MyJarvis Development Skill
 
+## Stack Gratuito (obrigatório)
+
+- **IA**: Ollama + Llama/Mistral (local, MIT) — nunca OpenAI pago
+- **Busca**: DuckDuckGo, Wikimedia, Internet Archive
+- **Voz**: Web Speech API no browser (STT + TTS)
+- Ver `docs/free-stack.md` antes de adicionar dependências
+
 ## Fluxo ao Implementar Features
 
 1. Identificar serviço(s) afetado(s)
-2. Implementar seguindo Clean Architecture (domain → application → infrastructure → presentation)
-3. Adicionar/atualizar testes Vitest
-4. Atualizar Swagger decorators nos controllers
-5. Atualizar `docs/postman/myjarvis.postman_collection.json`
-6. Atualizar `docs/insomnia/myjarvis.insomnia.json`
-7. Atualizar README do serviço e README raiz se necessário
+2. Confirmar que a tecnologia é gratuita/open source
+3. Implementar Clean Architecture (domain → application → infrastructure → presentation)
+4. Atualizar testes Vitest, Swagger, Postman, Insomnia, README
 
-## Comandos Úteis
+## Comandos
 
 ```bash
-# Subir infraestrutura
 docker compose up -d
-
-# Desenvolvimento individual
-cd services/service-ai && npm run start:dev
-cd frontends/jarvis-web && npm run dev
-
-# Testes
-npm run test          # raiz (todos)
-npm run test:unit     # por serviço
+docker compose exec ollama ollama pull llama3.2
+npm run start:dev -w service-ai
+npm run dev -w jarvis-web
+npm test
 ```
 
 ## Personalidade JARVIS (service-ai)
 
-System prompt deve incluir:
-- Tom britânico elegante, inteligente, levemente irônico
-- Proativo e prestativo como assistente pessoal
-- Capaz de humor sutil quando apropriado
-- Referências contextuais sem exagerar
+System prompt via Ollama — tom britânico elegante, inteligente, humor sutil.
 
 ## Integrações de Busca (service-search)
 
-- Web: DuckDuckGo API / SerpAPI (configurável via env)
-- Imagens: Unsplash API / SerpAPI Images
-- Vídeos: YouTube Data API
-- Música: Spotify Web API / YouTube Music
+- Web: DuckDuckGo Instant Answer + duck-duck-scrape
+- Imagens: duck-duck-scrape + Wikimedia Commons API
+- Vídeos: duck-duck-scrape videos
+- Música: Internet Archive advancedsearch
 
-## Voz (service-voice + frontend)
+## Voz (frontend + service-voice)
 
-- STT: Web Speech API no browser + fallback OpenAI Whisper
-- TTS: Web Speech Synthesis + fallback OpenAI TTS
-- Endpoint backend para processamento server-side quando necessário
+- STT/TTS no navegador (Web Speech API) — gratuito
+- Backend voice retorna metadados `clientSide: true` para TTS

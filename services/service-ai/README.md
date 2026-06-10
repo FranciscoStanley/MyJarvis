@@ -1,14 +1,19 @@
 # service-ai
 
-Cérebro JARVIS — conversação inteligente com personalidade, tool calling e integração com buscas.
+Cérebro JARVIS — conversação via **Ollama** (IA local, gratuita, MIT).
 
 - **Porta**: 3002
 - **Swagger**: http://localhost:3002/api/docs
 
 ## Requer
 
-- `OPENAI_API_KEY` para IA completa
-- `SEARCH_SERVICE_URL` para execução de buscas
+- Ollama em execução (`docker compose up ollama`)
+- Modelo baixado: `ollama pull llama3.2`
+
+## Variáveis
+
+- `OLLAMA_BASE_URL` — padrão `http://localhost:11434`
+- `OLLAMA_MODEL` — padrão `llama3.2`
 
 ## Desenvolvimento
 

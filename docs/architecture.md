@@ -26,7 +26,7 @@ sequenceDiagram
     U->>W: Voz ou texto
     W->>G: POST /api/chat/message
     G->>AI: Forward
-    AI->>AI: OpenAI + tool calling
+    AI->>AI: Ollama (local, gratuito)
     AI->>S: Busca (se necessário)
     S-->>AI: Resultados
     AI-->>G: Resposta JARVIS

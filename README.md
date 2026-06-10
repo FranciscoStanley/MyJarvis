@@ -1,6 +1,20 @@
 # MyJarvis
 
-Assistente de IA pessoal inspirado no **JARVIS** do Homem de Ferro — inteligente, com senso de humor, voz, buscas na internet, imagens, vídeos e músicas.
+Assistente de IA pessoal inspirado no **JARVIS** — inteligente, com humor, voz, buscas na internet, imagens, vídeos e músicas.
+
+**100% gratuito e open source** — sem APIs pagas, sem licenças comerciais.
+
+## Stack Gratuito
+
+| Componente | Tecnologia | Licença |
+|------------|-----------|---------|
+| IA | Ollama + Llama 3.2 | MIT |
+| Busca | DuckDuckGo, Wikimedia, Internet Archive | MIT / CC |
+| Voz | Web Speech API (navegador) | W3C |
+| Backend | NestJS | MIT |
+| Frontend | Next.js PWA | MIT |
+
+Detalhes: [docs/free-stack.md](docs/free-stack.md)
 
 ## Arquitetura
 
@@ -12,13 +26,9 @@ Assistente de IA pessoal inspirado no **JARVIS** do Homem de Ferro — inteligen
          :3100          ┌────────┼────────┬──────────┬────────────┐
                         ▼        ▼        ▼          ▼            ▼
                    auth:3001  ai:3002  voice:3003  search:3004  media:3006
+                              Ollama              DuckDuckGo
                                               notifications:3005
 ```
-
-- **Frontend**: Next.js 15 + Tailwind + PWA (web + mobile)
-- **Backend**: 7 microserviços NestJS com Clean Architecture
-- **IA**: OpenAI GPT-4o + Whisper + TTS
-- **Busca**: DuckDuckGo, Unsplash, YouTube API
 
 ## Início Rápido
 
@@ -26,25 +36,18 @@ Assistente de IA pessoal inspirado no **JARVIS** do Homem de Ferro — inteligen
 
 - Node.js 20+
 - Docker & Docker Compose
-- OpenAI API Key (recomendado)
+- ~4 GB RAM livre (para Ollama)
 
 ### Setup
 
 ```bash
-# Clonar e configurar
 cp .env.example .env
-# Edite .env com suas API keys
 
-# Subir tudo com Docker
+# Subir infraestrutura + serviços
 docker compose up -d --build
 
-# Ou desenvolvimento local
-npm install
-npm run docker:up          # postgres + redis
-npm run start:dev -w service-auth
-npm run start:dev -w service-ai
-npm run start:dev -w service-gateway
-npm run dev -w jarvis-web
+# Baixar modelo de IA (primeira vez)
+docker compose exec ollama ollama pull llama3.2
 ```
 
 ### URLs
@@ -53,58 +56,38 @@ npm run dev -w jarvis-web
 |---------|-----|
 | Frontend | http://localhost:3100 |
 | API Gateway | http://localhost:3000/api |
-| Swagger Gateway | http://localhost:3000/api/docs |
-| Auth Swagger | http://localhost:3001/api/docs |
-| AI Swagger | http://localhost:3002/api/docs |
+| Ollama | http://localhost:11434 |
 
 ## Microserviços
 
-| Serviço | Porta | Responsabilidade |
-|---------|-------|------------------|
-| `service-gateway` | 3000 | API Gateway, roteamento |
-| `service-auth` | 3001 | Autenticação JWT |
-| `service-ai` | 3002 | Cérebro JARVIS (LLM + tools) |
-| `service-voice` | 3003 | STT/TTS (Whisper + OpenAI TTS) |
-| `service-search` | 3004 | Web, imagens, vídeos, música |
-| `service-notifications` | 3005 | Notificações push |
-| `service-media` | 3006 | Reprodução de mídia |
+| Serviço | Porta | Tecnologia gratuita |
+|---------|-------|---------------------|
+| `service-ai` | 3002 | Ollama (LLM local) |
+| `service-search` | 3004 | DuckDuckGo + Wikimedia + Archive.org |
+| `service-voice` | 3003 | Web Speech API (via frontend) |
+| Demais | — | NestJS + PostgreSQL + Redis |
 
 ## Testes
 
 ```bash
-npm test                    # Todos os workspaces
-npm run test -w service-ai  # Serviço específico
-npm run test -w jarvis-web  # Frontend
+npm test
 ```
 
 ## Documentação
 
+- [Stack gratuito](docs/free-stack.md)
 - [Arquitetura](docs/architecture.md)
 - [API Reference](docs/api.md)
-- [Postman Collection](docs/postman/myjarvis.postman_collection.json)
-- [Insomnia Collection](docs/insomnia/myjarvis.insomnia.json)
+- [Postman](docs/postman/myjarvis.postman_collection.json)
 
 ## Variáveis de Ambiente
 
-Veja [.env.example](.env.example) para a lista completa.
-
-| Variável | Obrigatória | Descrição |
-|----------|-------------|-----------|
-| `OPENAI_API_KEY` | Recomendada | IA, voz e personalidade completa |
-| `JWT_SECRET` | Sim (prod) | Secret para tokens JWT |
-| `DATABASE_URL` | Sim | PostgreSQL connection string |
-| `YOUTUBE_API_KEY` | Opcional | Busca de vídeos real |
-| `UNSPLASH_ACCESS_KEY` | Opcional | Busca de imagens real |
-
-## Regras de Desenvolvimento
-
-Consulte `.cursor/rules/` para padrões de Clean Architecture, SOLID e convenções do projeto.
-
-**Ao alterar funcionalidades**, sempre atualize:
-1. Swagger decorators nos controllers
-2. Testes Vitest
-3. Collections Postman/Insomnia
-4. Documentação em `docs/`
+| Variável | Descrição |
+|----------|-----------|
+| `OLLAMA_BASE_URL` | URL do Ollama (padrão: http://localhost:11434) |
+| `OLLAMA_MODEL` | Modelo local (padrão: llama3.2) |
+| `JWT_SECRET` | Secret JWT (produção) |
+| `DATABASE_URL` | PostgreSQL |
 
 ## Licença
 
