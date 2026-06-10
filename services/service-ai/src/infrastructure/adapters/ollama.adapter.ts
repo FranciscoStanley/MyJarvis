@@ -69,10 +69,14 @@ export class OllamaAdapter implements AiPort {
       music_search: 'music',
     };
 
-    return msg.tool_calls.map((call) => ({
-      type: typeMap[call.function.name] ?? 'search',
-      query: call.function.arguments?.query ?? call.function.arguments,
-    })) as JarvisAction[];
+    return msg.tool_calls.map((call) => {
+      const raw = call.function.arguments;
+      const args = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return {
+        type: typeMap[call.function.name] ?? 'search',
+        query: args?.query ?? String(raw),
+      };
+    });
   }
 
   private detectActionsFromText(text: string): JarvisAction[] {

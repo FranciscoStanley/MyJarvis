@@ -1,0 +1,33 @@
+---
+description: Usar apenas tecnologias gratuitas e open source — sem APIs pagas
+alwaysApply: true
+---
+
+# Stack Gratuito — Sem Licenças Pagas
+
+## Proibido adicionar
+
+- OpenAI, Anthropic, Google Gemini API (pagos)
+- SerpAPI, Bing Search API (pagos)
+- Unsplash, YouTube Data API, Spotify API como dependência obrigatória
+- Qualquer SDK que exija chave comercial paga
+
+## Usar sempre
+
+| Necessidade | Solução |
+|-------------|---------|
+| IA | Ollama (local, MIT) |
+| Busca web | DuckDuckGo + duck-duck-scrape |
+| Imagens | DuckDuckGo + Wikimedia Commons |
+| Vídeos | DuckDuckGo Videos |
+| Música | Internet Archive |
+| STT/TTS | Web Speech API no frontend |
+
+## Ao integrar nova feature
+
+1. Verificar licença (MIT, Apache 2.0, BSD, domínio público)
+2. Confirmar que não exige API key paga
+3. Documentar em `docs/free-stack.md`
+4. Atualizar `.env.example` — sem vars de APIs pagas
+
+Veja [docs/free-stack.md](../../docs/free-stack.md) para detalhes.
