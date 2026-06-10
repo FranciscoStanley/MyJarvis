@@ -1,24 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { search as ddgSearch, searchImages, searchVideos } from 'duck-duck-scrape';
 import { SearchResult } from '@myjarvis/shared';
 import { SearchPort } from '../../domain/ports/search.port';
 
 @Injectable()
-export class MultiProviderSearchAdapter implements SearchPort {
-  constructor(
-    private readonly http: HttpService,
-    private readonly config: ConfigService,
-  ) {}
+export class FreeSearchAdapter implements SearchPort {
+  constructor(private readonly http: HttpService) {}
 
   async searchWeb(query: string, limit: number): Promise<SearchResult[]> {
     try {
       const { data } = await firstValueFrom(
-        this.http.get(`https://api.duckduckgo.com/`, {
+        this.http.get('https://api.duckduckgo.com/', {
           params: { q: query, format: 'json', no_html: 1 },
         }),
       );
+
       const results: SearchResult[] = [];
       if (data.AbstractText) {
         results.push({
@@ -28,73 +26,143 @@ export class MultiProviderSearchAdapter implements SearchPort {
           type: 'web',
         });
       }
+
       for (const topic of (data.RelatedTopics ?? []).slice(0, limit - 1)) {
         if (topic.Text && topic.FirstURL) {
-          results.push({ title: topic.Text.slice(0, 80), url: topic.FirstURL, snippet: topic.Text, type: 'web' });
+          results.push({
+            title: topic.Text.slice(0, 80),
+            url: topic.FirstURL,
+            snippet: topic.Text,
+            type: 'web',
+          });
         }
       }
-      return results.length ? results : this.mockResults(query, 'web', limit);
+
+      if (results.length) return results.slice(0, limit);
+
+      const ddgResults = await ddgSearch(query, { safeSearch: -1 });
+      return (ddgResults.results ?? []).slice(0, limit).map((r) => ({
+        title: r.title,
+        url: r.url,
+        snippet: r.description ?? '',
+        type: 'web' as const,
+      }));
     } catch {
-      return this.mockResults(query, 'web', limit);
+      return this.fallbackWeb(query);
     }
   }
 
   async searchImages(query: string, limit: number): Promise<SearchResult[]> {
-    const key = this.config.get('UNSPLASH_ACCESS_KEY');
-    if (key) {
-      try {
-        const { data } = await firstValueFrom(
-          this.http.get('https://api.unsplash.com/search/photos', {
-            params: { query, per_page: limit },
-            headers: { Authorization: `Client-ID ${key}` },
-          }),
-        );
-        return data.results.map((img: { urls: { regular: string }; alt_description: string; links: { html: string } }) => ({
-          title: img.alt_description || query,
-          url: img.links.html,
-          snippet: img.alt_description || '',
+    try {
+      const images = await searchImages(query, { safeSearch: -1 });
+      const items = (images.results ?? []).slice(0, limit);
+      if (items.length) {
+        return items.map((img) => ({
+          title: img.title || query,
+          url: img.url,
+          snippet: img.source ?? '',
           type: 'image' as const,
-          thumbnail: img.urls.regular,
+          thumbnail: img.image,
         }));
-      } catch { /* fallback */ }
-    }
-    return this.mockResults(query, 'image', limit);
+      }
+    } catch { /* Wikimedia fallback */ }
+
+    return this.searchWikimediaImages(query, limit);
   }
 
   async searchVideos(query: string, limit: number): Promise<SearchResult[]> {
-    const key = this.config.get('YOUTUBE_API_KEY');
-    if (key) {
-      try {
-        const { data } = await firstValueFrom(
-          this.http.get('https://www.googleapis.com/youtube/v3/search', {
-            params: { part: 'snippet', q: query, type: 'video', maxResults: limit, key },
-          }),
-        );
-        return data.items.map((item: { id: { videoId: string }; snippet: { title: string; description: string; thumbnails: { medium: { url: string } } } }) => ({
-          title: item.snippet.title,
-          url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-          snippet: item.snippet.description,
-          type: 'video' as const,
-          thumbnail: item.snippet.thumbnails.medium.url,
-        }));
-      } catch { /* fallback */ }
+    try {
+      const videos = await searchVideos(query, { safeSearch: -1 });
+      return (videos.results ?? []).slice(0, limit).map((v) => ({
+        title: v.title,
+        url: v.url,
+        snippet: v.description ?? '',
+        type: 'video' as const,
+        thumbnail: v.image,
+      }));
+    } catch {
+      return [{
+        title: query,
+        url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=videos`,
+        snippet: 'Busca de vídeos via DuckDuckGo',
+        type: 'video',
+      }];
     }
-    return this.mockResults(query, 'video', limit);
   }
 
   async searchMusic(query: string, limit: number): Promise<SearchResult[]> {
-    return this.mockResults(query, 'music', limit).map((r) => ({
-      ...r,
-      url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
-    }));
+    try {
+      const { data } = await firstValueFrom(
+        this.http.get('https://archive.org/advancedsearch.php', {
+          params: {
+            q: `(${query}) AND mediatype:audio`,
+            fl: 'identifier,title,description',
+            rows: limit,
+            output: 'json',
+          },
+        }),
+      );
+
+      const docs = data.response?.docs ?? [];
+      if (docs.length) {
+        return docs.map((doc: { identifier: string; title: string; description?: string }) => ({
+          title: doc.title || query,
+          url: `https://archive.org/details/${doc.identifier}`,
+          snippet: doc.description?.slice(0, 120) ?? 'Áudio gratuito — Internet Archive',
+          type: 'music' as const,
+        }));
+      }
+    } catch { /* fallback */ }
+
+    return [{
+      title: `Música: ${query}`,
+      url: `https://duckduckgo.com/?q=${encodeURIComponent(query + ' music')}&ia=videos`,
+      snippet: 'Busca musical via DuckDuckGo (100% gratuito)',
+      type: 'music',
+    }];
   }
 
-  private mockResults(query: string, type: SearchResult['type'], limit: number): SearchResult[] {
-    return Array.from({ length: Math.min(limit, 3) }, (_, i) => ({
-      title: `${type} result ${i + 1} for "${query}"`,
-      url: `https://example.com/${type}/${encodeURIComponent(query)}`,
-      snippet: `Resultado simulado — configure API keys para resultados reais.`,
-      type,
-    }));
+  private async searchWikimediaImages(query: string, limit: number): Promise<SearchResult[]> {
+    try {
+      const { data } = await firstValueFrom(
+        this.http.get('https://commons.wikimedia.org/w/api.php', {
+          params: {
+            action: 'query',
+            generator: 'search',
+            gsrsearch: query,
+            gsrlimit: limit,
+            prop: 'imageinfo',
+            iiprop: 'url|mime',
+            format: 'json',
+            origin: '*',
+          },
+        }),
+      );
+
+      const pages = data.query?.pages ?? {};
+      return Object.values(pages).map((page: { title: string; imageinfo?: { url: string }[] }) => ({
+        title: page.title,
+        url: page.imageinfo?.[0]?.url ?? `https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title)}`,
+        snippet: 'Imagem — Wikimedia Commons (domínio público / licenças livres)',
+        type: 'image' as const,
+        thumbnail: page.imageinfo?.[0]?.url,
+      }));
+    } catch {
+      return [{
+        title: query,
+        url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=images`,
+        snippet: 'Busca de imagens via DuckDuckGo',
+        type: 'image',
+      }];
+    }
+  }
+
+  private fallbackWeb(query: string): SearchResult[] {
+    return [{
+      title: query,
+      url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
+      snippet: 'Resultado via DuckDuckGo',
+      type: 'web',
+    }];
   }
 }

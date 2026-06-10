@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { SEARCH_PORT, SearchPort } from '../domain/ports/search.port';
+import { SEARCH_PORT, SearchPort } from '../../domain/ports/search.port';
 
 @Injectable()
 export class SearchUseCase {

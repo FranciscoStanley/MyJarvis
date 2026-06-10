@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { VOICE_PORT, VoicePort } from '../domain/ports/voice.port';
+import { VOICE_PORT, VoicePort } from '../../domain/ports/voice.port';
 
 @Injectable()
 export class TranscribeAudioUseCase {

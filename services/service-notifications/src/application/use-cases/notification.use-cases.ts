@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { NOTIFICATION_REPOSITORY, NotificationRepositoryPort } from '../domain/ports/notification.port';
+import { NOTIFICATION_REPOSITORY, NotificationRepositoryPort } from '../../domain/ports/notification.port';
 
 @Injectable()
 export class SendNotificationUseCase {

@@ -1,7 +1,7 @@
 import { Injectable, Inject, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { USER_REPOSITORY, UserRepositoryPort } from '../domain/ports/user-repository.port';
+import { USER_REPOSITORY, UserRepositoryPort } from '../../domain/ports/user-repository.port';
 
 @Injectable()
 export class RegisterUserUseCase {

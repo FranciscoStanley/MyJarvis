@@ -8,7 +8,7 @@ import {
   ConversationStorePort,
   SEARCH_CLIENT,
   SearchClientPort,
-} from '../domain/ports/ai.port';
+} from '../../domain/ports/ai.port';
 
 export interface SendMessageInput {
   message: string;
