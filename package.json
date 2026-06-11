@@ -28,9 +28,9 @@
     "ci:stage3": "npm run test:e2e && node scripts/ci/audit-gate.mjs",
     "ci:pipeline": "npm run ci:stage1 && npm run ci:stage2 && npm run ci:stage3",
     "lint": "npm run lint --workspaces --if-present",
-    "docker:up": "docker compose up -d",
+    "docker:up": "node scripts/docker/compose.mjs up -d --build",
     "docker:down": "docker compose down",
-    "docker:build": "docker compose build",
+    "docker:build": "node scripts/docker/compose.mjs build",
     "prepare": "node -e \"if(process.env.HUSKY==='0'||process.env.CI==='true')process.exit(0)\" && husky"
   },
   "devDependencies": {
