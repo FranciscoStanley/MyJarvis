@@ -16,12 +16,16 @@ RUN npm install \
   --workspace=@myjarvis/nest-security \
   --ignore-scripts
 
-RUN npm run build -w @myjarvis/shared && npm run build -w service-gateway
+RUN npm run build -w @myjarvis/shared \
+  && npm run build -w @myjarvis/nest-auth \
+  && npm run build -w @myjarvis/nest-security \
+  && npm run build -w service-gateway
 
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app/services/service-gateway/dist ./dist
 COPY --from=builder /app/services/service-gateway/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
 EXPOSE 3000
 CMD ["node", "dist/main.js"]

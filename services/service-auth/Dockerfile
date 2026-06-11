@@ -18,12 +18,16 @@ RUN npm install \
 
 RUN npm rebuild bcrypt --workspace=service-auth
 
-RUN npm run build -w @myjarvis/shared && npm run build -w service-auth
+RUN npm run build -w @myjarvis/shared \
+  && npm run build -w @myjarvis/nest-auth \
+  && npm run build -w @myjarvis/nest-security \
+  && npm run build -w service-auth
 
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app/services/service-auth/dist ./dist
 COPY --from=builder /app/services/service-auth/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
 EXPOSE 3001
 CMD ["node", "dist/main.js"]

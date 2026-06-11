@@ -18,5 +18,6 @@ WORKDIR /app
 COPY --from=builder /app/services/service-search/dist ./dist
 COPY --from=builder /app/services/service-search/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
 EXPOSE 3004
 CMD ["node", "dist/main.js"]
