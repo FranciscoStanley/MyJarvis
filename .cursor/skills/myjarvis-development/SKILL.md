@@ -17,6 +17,8 @@ Skill principal de workflow. Carregue skills específicas conforme o domínio.
 | [nestjs-services](nestjs-services/SKILL.md) | Backend, APIs, Swagger, testes |
 | [nextjs-frontend](nextjs-frontend/SKILL.md) | UI, PWA, voz, Zustand |
 | [free-open-source-stack](free-open-source-stack/SKILL.md) | Dependências, integrações externas |
+| [review-code](review-code/SKILL.md) | Code review, CI 3 etapas, antes de push |
+| [organize-commits](organize-commits/SKILL.md) | Separar e commitar de forma organizada |
 
 Índice completo: [.cursor/skills/README.md](README.md)
 
@@ -31,10 +33,12 @@ flowchart TD
     D -->|frontends/| F[nextjs-frontend]
     E --> G[5. Testes + Swagger + Postman]
     F --> G
-    G --> H[6. Atualizar docs + Mermaid]
+    G --> H[6. organize-commits]
+    H --> I[7. ci:pipeline + review-code]
+    I --> J[8. Atualizar docs + Mermaid]
 ```
 
-Skills: `project-architecture` → `free-open-source-stack` → `clean-architecture` → `nestjs-services` | `nextjs-frontend`
+Skills: `project-architecture` → `free-open-source-stack` → `clean-architecture` → `nestjs-services` | `nextjs-frontend` → **`organize-commits`** → **`review-code`**
 
 ## Comandos Essenciais
 
@@ -49,8 +53,8 @@ npm run start:dev -w service-ai
 npm run dev -w jarvis-web
 
 # Testes
-npm test
-npm run test -w service-ai
+npm run test:unit
+npm run ci:pipeline   # 3 etapas — obrigatório antes de push
 ```
 
 ## Personalidade JARVIS (service-ai)

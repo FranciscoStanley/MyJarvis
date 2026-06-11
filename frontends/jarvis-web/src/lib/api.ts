@@ -1,3 +1,13 @@
+import { UserRole, AuthSource } from '@myjarvis/shared';
+
+export interface ApiUser {
+  id: string;
+  email: string;
+  name: string;
+  roles: UserRole[];
+  authSource?: AuthSource;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 class ApiClient {
@@ -6,6 +16,11 @@ class ApiClient {
   setToken(token: string) {
     this.token = token;
     if (typeof window !== 'undefined') localStorage.setItem('jarvis_token', token);
+  }
+
+  clearToken() {
+    this.token = null;
+    if (typeof window !== 'undefined') localStorage.removeItem('jarvis_token');
   }
 
   getToken() {
@@ -30,9 +45,19 @@ class ApiClient {
   }
 
   login(email: string, password: string) {
-    return this.request<{ accessToken: string; user: { id: string; name: string; email: string } }>(
+    return this.request<{ accessToken: string; user: ApiUser }>(
       '/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) },
     );
+  }
+
+  loginLdap(username: string, password: string) {
+    return this.request<{ accessToken: string; user: ApiUser }>(
+      '/auth/login/ldap', { method: 'POST', body: JSON.stringify({ username, password }) },
+    );
+  }
+
+  getProfile() {
+    return this.request<ApiUser>('/auth/profile');
   }
 
   register(email: string, password: string, name: string) {

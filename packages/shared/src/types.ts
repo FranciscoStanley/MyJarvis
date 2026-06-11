@@ -18,10 +18,14 @@ export interface HealthCheck {
   uptime: number;
 }
 
+import { UserRole, AuthSource } from './auth';
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  roles?: UserRole[];
+  authSource?: AuthSource;
   createdAt: Date;
 }
 

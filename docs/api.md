@@ -1,22 +1,58 @@
 # API Reference
 
+> **MyJarvis** — Francisco Stanley Rodrigues Albuquerque
+
 Base URL: `http://localhost:3000/api`
+
+> RBAC e LDAP: [docs/rbac-ldap.md](rbac-ldap.md)
 
 ## Autenticação
 
+Rotas públicas: `/auth/register`, `/auth/login`, `/auth/login/ldap`. Demais rotas exigem `Authorization: Bearer <token>`.
+
 ### POST /auth/register
+Cria usuário com papel `user`.
 ```json
 { "email": "user@email.com", "password": "senha123", "name": "Nome" }
 ```
 
 ### POST /auth/login
+Login local (email/senha).
 ```json
 { "email": "user@email.com", "password": "senha123" }
 ```
-Retorna `{ accessToken, user }`.
+
+### POST /auth/login/ldap
+Login corporativo LDAP/Active Directory.
+```json
+{ "username": "jdoe", "password": "senha" }
+```
+
+Resposta (login local ou LDAP):
+```json
+{
+  "accessToken": "jwt...",
+  "user": {
+    "id": "uuid",
+    "email": "user@email.com",
+    "name": "Nome",
+    "roles": ["user"],
+    "authSource": "local"
+  }
+}
+```
 
 ### GET /auth/profile
-Header: `Authorization: Bearer <token>`
+Retorna perfil com `roles` e `authSource`.
+
+### GET /auth/users `[admin]`
+Lista todos os usuários.
+
+### PATCH /auth/users/:id/role `[admin]`
+```json
+{ "role": "admin" }
+```
+Valores: `user` | `admin`.
 
 ## Chat JARVIS
 

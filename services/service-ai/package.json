@@ -2,6 +2,7 @@
   "name": "service-ai",
   "version": "1.0.0",
   "private": true,
+  "author": "Francisco Stanley Rodrigues Albuquerque",
   "scripts": {
     "build": "nest build",
     "start": "nest start",

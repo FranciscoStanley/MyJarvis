@@ -19,7 +19,7 @@ const config: Config = {
         mono: ['var(--font-mono)', 'monospace'],
       },
       animation: {
-        pulse-glow: 'pulse-glow 3s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
         orbit: 'orbit 8s linear infinite',
       },
       keyframes: {

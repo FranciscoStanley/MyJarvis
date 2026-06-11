@@ -12,6 +12,8 @@ Cada **regra** em `.cursor/rules/` tem uma **skill** correspondente em `.cursor/
 | `nestjs-services.mdc` | [nestjs-services](nestjs-services/SKILL.md) | Microserviços NestJS, Swagger, testes |
 | `nextjs-frontend.mdc` | [nextjs-frontend](nextjs-frontend/SKILL.md) | Frontend jarvis-web, UI, PWA |
 | `free-open-source-stack.mdc` | [free-open-source-stack](free-open-source-stack/SKILL.md) | Stack gratuito, Ollama, DuckDuckGo |
+| `review-code.mdc` | [review-code](review-code/SKILL.md) | Code review, CI/CD 3 etapas, pre-push |
+| `organize-commits.mdc` | [organize-commits](organize-commits/SKILL.md) | Commits atômicos, Conventional Commits |
 | — | [myjarvis-development](myjarvis-development/SKILL.md) | Fluxo geral de desenvolvimento |
 
 ## Como funciona

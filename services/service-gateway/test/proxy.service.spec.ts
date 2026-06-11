@@ -19,8 +19,12 @@ describe('ProxyService', () => {
   });
 
   it('should forward requests', async () => {
-    mockHttp.request.mockReturnValue(of({ data: { ok: true } }));
+    mockHttp.request.mockReturnValue(of({ data: { ok: true }, status: 200 }));
     const result = await service.forward('auth', 'POST', '/api/auth/login', { email: 'test@test.com' });
     expect(result).toEqual({ ok: true });
+  });
+
+  it('should reject path traversal', async () => {
+    await expect(service.forward('auth', 'GET', '/api/../etc/passwd')).rejects.toThrow();
   });
 });

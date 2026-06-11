@@ -4,25 +4,30 @@ import { useState, FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { useJarvisStore } from '@/stores/jarvis.store';
 
-export function AuthModal({ onSkip }: { onSkip: () => void }) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+type AuthTab = 'local' | 'ldap' | 'register';
+
+export function AuthModal() {
+  const [tab, setTab] = useState<AuthTab>('local');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useJarvisStore();
+  const { login, loginLdap } = useJarvisStore();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      if (mode === 'login') {
-        await login(email, password);
-      } else {
+      if (tab === 'ldap') {
+        await loginLdap(username, password);
+      } else if (tab === 'register') {
         const { api } = await import('@/lib/api');
         await api.register(email, password, name);
+        await login(email, password);
+      } else {
         await login(email, password);
       }
     } catch (err) {
@@ -44,10 +49,27 @@ export function AuthModal({ onSkip }: { onSkip: () => void }) {
         className="glass rounded-2xl p-8 w-full max-w-md"
       >
         <h2 className="text-2xl font-bold text-jarvis-cyan text-glow mb-2">MyJarvis</h2>
-        <p className="text-gray-400 text-sm mb-6">Acesse seu assistente pessoal</p>
+        <p className="text-gray-400 text-sm mb-4">Autenticação obrigatória (RBAC)</p>
+
+        <div className="flex gap-2 mb-6 text-sm">
+          {(['local', 'ldap', 'register'] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`flex-1 py-2 rounded-lg border transition-all ${
+                tab === t
+                  ? 'border-jarvis-cyan/50 bg-jarvis-cyan/10 text-jarvis-cyan'
+                  : 'border-white/10 text-gray-400 hover:text-white'
+              }`}
+            >
+              {t === 'local' ? 'Email' : t === 'ldap' ? 'LDAP' : 'Registrar'}
+            </button>
+          ))}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'register' && (
+          {tab === 'register' && (
             <input
               type="text"
               placeholder="Nome"
@@ -57,21 +79,32 @@ export function AuthModal({ onSkip }: { onSkip: () => void }) {
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50"
             />
           )}
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50"
-          />
+          {tab === 'ldap' ? (
+            <input
+              type="text"
+              placeholder="Usuário LDAP"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50"
+            />
+          ) : (
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50"
+            />
+          )}
           <input
             type="password"
             placeholder="Senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={8}
+            minLength={tab === 'ldap' ? 1 : 8}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50"
           />
           {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -80,22 +113,9 @@ export function AuthModal({ onSkip }: { onSkip: () => void }) {
             disabled={loading}
             className="w-full py-3 rounded-lg bg-jarvis-cyan/20 text-jarvis-cyan border border-jarvis-cyan/30 hover:bg-jarvis-cyan/30 transition-all font-medium"
           >
-            {loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta'}
+            {loading ? 'Aguarde...' : tab === 'register' ? 'Criar conta' : 'Entrar'}
           </button>
         </form>
-
-        <div className="mt-4 flex justify-between text-sm">
-          <button
-            type="button"
-            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-            className="text-jarvis-cyan hover:underline"
-          >
-            {mode === 'login' ? 'Criar conta' : 'Já tenho conta'}
-          </button>
-          <button type="button" onClick={onSkip} className="text-gray-500 hover:text-gray-300">
-            Continuar como convidado
-          </button>
-        </div>
       </motion.div>
     </motion.div>
   );

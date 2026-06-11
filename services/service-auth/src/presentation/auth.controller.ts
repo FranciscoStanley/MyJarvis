@@ -1,61 +1,124 @@
-import { Controller, Post, Get, Body, Headers, UnauthorizedException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtService } from '@nestjs/jwt';
-import { RegisterRequestDto, LoginRequestDto } from './dto/auth.dto';
-import {
-  RegisterUserUseCase,
-  AuthenticateUserUseCase,
-  GetProfileUseCase,
-} from '../application/use-cases/auth.use-cases';
-
-@ApiTags('Auth')
-@Controller('auth')
-export class AuthController {
-  constructor(
-    private readonly registerUser: RegisterUserUseCase,
-    private readonly authenticateUser: AuthenticateUserUseCase,
-    private readonly getProfile: GetProfileUseCase,
-    private readonly jwt: JwtService,
-  ) {}
-
-  @Post('register')
-  @ApiOperation({ summary: 'Registrar novo usuário' })
-  @ApiResponse({ status: 201, description: 'Usuário criado' })
-  async register(@Body() dto: RegisterRequestDto) {
-    const user = await this.registerUser.execute(dto);
-    return { success: true, data: user, timestamp: new Date().toISOString() };
-  }
-
-  @Post('login')
-  @ApiOperation({ summary: 'Autenticar usuário' })
-  @ApiResponse({ status: 200, description: 'Token JWT retornado' })
-  async login(@Body() dto: LoginRequestDto) {
-    const result = await this.authenticateUser.execute(dto);
-    return { success: true, data: result, timestamp: new Date().toISOString() };
-  }
-
-  @Get('profile')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Obter perfil do usuário autenticado' })
-  async profile(@Headers('authorization') auth: string) {
-    const userId = this.extractUserId(auth);
-    const user = await this.getProfile.execute(userId);
-    return { success: true, data: user, timestamp: new Date().toISOString() };
-  }
-
-  private extractUserId(auth: string): string {
-    if (!auth?.startsWith('Bearer ')) throw new UnauthorizedException();
-    const payload = this.jwt.verify(auth.slice(7)) as { sub: string };
-    return payload.sub;
-  }
-}
-
-@ApiTags('Health')
-@Controller('health')
-export class HealthController {
-  @Get()
-  @ApiOperation({ summary: 'Health check' })
-  check() {
-    return { status: 'ok', service: 'service-auth', version: '1.0.0', uptime: process.uptime() };
-  }
-}
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { Request } from 'express';
+import { UserRole } from '@myjarvis/shared';
+import {
+  JwtAuthGuard,
+  RolesGuard,
+  Roles,
+  Public,
+  AuthenticatedRequest,
+  AuthThrottle,
+} from '@myjarvis/nest-auth';
+import {
+  RegisterRequestDto,
+  LoginRequestDto,
+  LdapLoginRequestDto,
+  AssignRoleRequestDto,
+} from './dto/auth.dto';
+import {
+  RegisterUserUseCase,
+  AuthenticateUserUseCase,
+  AuthenticateLdapUseCase,
+  GetProfileUseCase,
+  ListUsersUseCase,
+  AssignRoleUseCase,
+} from '../application/use-cases/auth.use-cases';
+
+@ApiTags('Auth')
+@Controller('auth')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class AuthController {
+  constructor(
+    private readonly registerUser: RegisterUserUseCase,
+    private readonly authenticateUser: AuthenticateUserUseCase,
+    private readonly authenticateLdap: AuthenticateLdapUseCase,
+    private readonly getProfile: GetProfileUseCase,
+    private readonly listUsers: ListUsersUseCase,
+    private readonly assignRole: AssignRoleUseCase,
+  ) {}
+
+  @Public()
+  @AuthThrottle()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('register')
+  @ApiOperation({ summary: 'Registrar novo usuário (papel: user)' })
+  @ApiResponse({ status: 201, description: 'Usuário criado' })
+  async register(@Body() dto: RegisterRequestDto) {
+    const user = await this.registerUser.execute(dto);
+    return { success: true, data: user, timestamp: new Date().toISOString() };
+  }
+
+  @Public()
+  @AuthThrottle()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('login')
+  @ApiOperation({ summary: 'Autenticar com email e senha (local)' })
+  async login(@Body() dto: LoginRequestDto, @Req() req: Request) {
+    const result = await this.authenticateUser.execute(dto, { ip: req.ip });
+    return { success: true, data: result, timestamp: new Date().toISOString() };
+  }
+
+  @Public()
+  @AuthThrottle()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('login/ldap')
+  @ApiOperation({ summary: 'Autenticar via LDAP / Active Directory' })
+  async loginLdap(@Body() dto: LdapLoginRequestDto, @Req() req: Request) {
+    const result = await this.authenticateLdap.execute(dto, { ip: req.ip });
+    return { success: true, data: result, timestamp: new Date().toISOString() };
+  }
+
+  @Get('profile')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Perfil do usuário autenticado (inclui roles)' })
+  async profile(@Req() req: AuthenticatedRequest) {
+    const user = await this.getProfile.execute(req.user.sub);
+    return { success: true, data: user, timestamp: new Date().toISOString() };
+  }
+
+  @Get('users')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Listar usuários' })
+  async users() {
+    const data = await this.listUsers.execute();
+    return { success: true, data, timestamp: new Date().toISOString() };
+  }
+
+  @Patch('users/:id/role')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Atribuir papel (user | admin)' })
+  async updateRole(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: AssignRoleRequestDto,
+  ) {
+    const actorRoles = req.user.roles;
+    const user = await this.assignRole.execute(actorRoles, id, dto.role);
+    return { success: true, data: user, timestamp: new Date().toISOString() };
+  }
+}
+
+@ApiTags('Health')
+@Controller('health')
+export class HealthController {
+  @Public()
+  @SkipThrottle()
+  @Get()
+  @ApiOperation({ summary: 'Health check' })
+  check() {
+    return { status: 'ok', service: 'service-auth', version: '1.0.0', uptime: process.uptime() };
+  }
+}

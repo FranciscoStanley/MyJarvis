@@ -2,6 +2,8 @@
 
 Frontend Next.js — interface web e mobile (PWA) do MyJarvis.
 
+**Autor:** Francisco Stanley Rodrigues Albuquerque
+
 - **Porta**: 3100
 - **PWA**: Instalável em dispositivos móveis
 

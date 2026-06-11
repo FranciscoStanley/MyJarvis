@@ -1,5 +1,7 @@
 # Arquitetura MyJarvis
 
+> **Autor:** Francisco Stanley Rodrigues Albuquerque
+
 ## Visão Geral
 
 MyJarvis segue **Clean Architecture** com microserviços independentes, comunicando-se via HTTP REST através de um API Gateway. Stack 100% gratuita e open source.

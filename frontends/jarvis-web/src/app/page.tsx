@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LogOut, Sparkles } from 'lucide-react';
+import { LogOut, Shield, Sparkles } from 'lucide-react';
+import { UserRole } from '@myjarvis/shared';
 import { useJarvisStore } from '@/stores/jarvis.store';
 import { JarvisOrb } from '@/components/jarvis/JarvisOrb';
 import { ChatPanel } from '@/components/jarvis/ChatPanel';
@@ -9,25 +10,24 @@ import { InputBar } from '@/components/jarvis/InputBar';
 import { AuthModal } from '@/components/jarvis/AuthModal';
 
 export default function HomePage() {
-  const { isAuthenticated, userName, initSession, logout } = useJarvisStore();
-  const [showAuth, setShowAuth] = useState(false);
-  const [guest, setGuest] = useState(false);
+  const { isAuthenticated, userName, userRoles, restoreSession, logout, hasRole } = useJarvisStore();
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('jarvis_token');
-    if (token) {
-      useJarvisStore.setState({ isAuthenticated: true });
-      initSession();
-    } else {
-      setShowAuth(true);
-    }
-  }, [initSession]);
+    restoreSession().finally(() => setChecking(false));
+  }, [restoreSession]);
 
-  const handleSkip = () => {
-    setGuest(true);
-    setShowAuth(false);
-    initSession();
-  };
+  if (checking) {
+    return (
+      <main className="min-h-screen flex items-center justify-center text-gray-400">
+        Validando sessão...
+      </main>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthModal />;
+  }
 
   return (
     <main className="min-h-screen flex flex-col relative">
@@ -41,20 +41,23 @@ export default function HomePage() {
           <Sparkles className="text-jarvis-cyan" size={24} />
           <div>
             <h1 className="text-lg font-bold text-white tracking-wide">MyJarvis</h1>
-            <p className="text-xs text-gray-500 font-mono">
-              {userName ? `Bem-vindo, ${userName}` : guest ? 'Modo convidado' : 'Assistente Inteligente'}
+            <p className="text-xs text-gray-500 font-mono flex items-center gap-2">
+              Bem-vindo, {userName}
+              {hasRole(UserRole.ADMIN) && (
+                <span className="inline-flex items-center gap-1 text-jarvis-gold">
+                  <Shield size={12} /> admin
+                </span>
+              )}
             </p>
           </div>
         </div>
-        {(isAuthenticated || guest) && isAuthenticated && (
-          <button
-            onClick={logout}
-            className="p-2 rounded-lg glass hover:bg-white/10 text-gray-400 hover:text-white transition-all"
-            aria-label="Sair"
-          >
-            <LogOut size={18} />
-          </button>
-        )}
+        <button
+          onClick={logout}
+          className="p-2 rounded-lg glass hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+          aria-label="Sair"
+        >
+          <LogOut size={18} />
+        </button>
       </header>
 
       <section className="relative z-10 flex flex-col items-center py-6 md:py-10">
@@ -65,8 +68,6 @@ export default function HomePage() {
         <ChatPanel />
         <InputBar />
       </section>
-
-      {showAuth && !guest && <AuthModal onSkip={handleSkip} />}
     </main>
   );
 }

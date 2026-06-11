@@ -1,0 +1,18 @@
+{
+  "name": "@myjarvis/nest-auth",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Francisco Stanley Rodrigues Albuquerque",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "@myjarvis/shared": "*",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.0",
+    "reflect-metadata": "^0.2.0"
+  }
+}

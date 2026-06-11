@@ -1,0 +1,30 @@
+---
+description: Code review profissional e pipeline CI/CD em três etapas — obrigatório antes de push
+globs: "**/*.{ts,tsx,yml,yaml,json}"
+alwaysApply: false
+---
+
+# Review Code & CI/CD
+
+> Skill detalhada: `.cursor/skills/review-code/SKILL.md`
+
+## Regra de ouro
+
+Nenhum push sem passar **as três etapas**:
+
+1. **Validate** — `npm run ci:stage1` (lint + unitários)
+2. **Build & Integration** — `npm run ci:stage2` (build + integração)
+3. **E2E & Quality** — `npm run ci:stage3` (Playwright + audit)
+
+Pipeline completo: `npm run ci:pipeline`
+
+## Antes de commit/push
+
+- Rodar pipeline local ou confirmar que passou
+- Aplicar checklist em `.cursor/skills/review-code/checklist.md`
+- Findings 🔴 Critical bloqueiam merge
+
+## Enforcement
+
+- Hook: `.husky/pre-push`
+- CI: `.github/workflows/ci.yml`

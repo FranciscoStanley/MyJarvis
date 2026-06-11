@@ -2,6 +2,8 @@
   "name": "myjarvis",
   "version": "1.0.0",
   "private": true,
+  "author": "Francisco Stanley Rodrigues Albuquerque",
+  "license": "MIT",
   "description": "MyJarvis — Assistente de IA inspirado no JARVIS do Homem de Ferro",
   "workspaces": [
     "packages/*",
@@ -21,13 +23,19 @@
     "test:stress": "npm run test:stress -w @myjarvis/test-suite",
     "test:e2e": "npm run test:e2e -w jarvis-web",
     "test:all": "npm run test:unit && npm run test:integration",
+    "ci:stage1": "npm run lint && npm run test:unit",
+    "ci:stage2": "npm run build && npm run test:integration",
+    "ci:stage3": "npm run test:e2e && node scripts/ci/audit-gate.mjs",
+    "ci:pipeline": "npm run ci:stage1 && npm run ci:stage2 && npm run ci:stage3",
     "lint": "npm run lint --workspaces --if-present",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:build": "docker compose build"
+    "docker:build": "docker compose build",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^10.0.3",
+    "husky": "^9.1.7"
   },
   "engines": {
     "node": ">=20.0.0"

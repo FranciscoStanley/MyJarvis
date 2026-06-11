@@ -1,29 +1,79 @@
-import { Injectable } from '@nestjs/common';
-import { UserRepositoryPort } from '../../src/domain/ports/user-repository.port';
+import { UserRole, AuthSource } from '@myjarvis/shared';
+import { UserRecord, UserRepositoryPort } from '../../src/domain/ports/user-repository.port';
 
-interface StoredUser {
-  id: string;
-  email: string;
-  name: string;
-  passwordHash: string;
-}
+interface StoredUser extends UserRecord {}
 
-@Injectable()
 export class InMemoryUserRepository implements UserRepositoryPort {
-  private users: StoredUser[] = [];
+  users: StoredUser[] = [];
 
   async findByEmail(email: string) {
-    return this.users.find((u) => u.email === email) ?? null;
+    return this.users.find((u) => u.email === email.toLowerCase()) ?? null;
   }
 
   async findById(id: string) {
-    const u = this.users.find((x) => x.id === id);
-    return u ? { id: u.id, email: u.email, name: u.name } : null;
+    return this.users.find((x) => x.id === id) ?? null;
   }
 
-  async create(data: { email: string; passwordHash: string; name: string }) {
-    const user = { id: crypto.randomUUID(), ...data };
+  async create(data: {
+    email: string;
+    passwordHash: string;
+    name: string;
+    role?: UserRole;
+    authSource?: AuthSource;
+  }) {
+    const user: StoredUser = {
+      id: crypto.randomUUID(),
+      email: data.email.toLowerCase(),
+      passwordHash: data.passwordHash,
+      name: data.name,
+      role: data.role ?? UserRole.USER,
+      authSource: data.authSource ?? 'local',
+      ldapDn: null,
+    };
     this.users.push(user);
-    return { id: user.id, email: user.email, name: user.name };
+    return user;
+  }
+
+  async upsertLdapUser(data: {
+    email: string;
+    name: string;
+    ldapDn: string;
+    role: UserRole;
+  }) {
+    const existing = await this.findByEmail(data.email);
+    if (existing) {
+      existing.name = data.name;
+      existing.ldapDn = data.ldapDn;
+      existing.role = data.role;
+      existing.authSource = 'ldap';
+      existing.passwordHash = null;
+      return existing;
+    }
+    const user: StoredUser = {
+      id: crypto.randomUUID(),
+      email: data.email.toLowerCase(),
+      name: data.name,
+      ldapDn: data.ldapDn,
+      role: data.role,
+      authSource: 'ldap',
+      passwordHash: null,
+    };
+    this.users.push(user);
+    return user;
+  }
+
+  async updateRole(id: string, role: UserRole) {
+    const user = this.users.find((u) => u.id === id);
+    if (!user) throw new Error('not found');
+    user.role = role;
+    return user;
+  }
+
+  async listAll() {
+    return [...this.users];
+  }
+
+  async count() {
+    return this.users.length;
   }
 }

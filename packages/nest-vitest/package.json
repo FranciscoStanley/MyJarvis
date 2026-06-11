@@ -2,6 +2,7 @@
   "name": "@myjarvis/nest-vitest",
   "version": "1.0.0",
   "private": true,
+  "author": "Francisco Stanley Rodrigues Albuquerque",
   "type": "module",
   "exports": {
     ".": "./index.ts",

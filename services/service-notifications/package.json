@@ -2,6 +2,7 @@
   "name": "service-notifications",
   "version": "1.0.0",
   "private": true,
+  "author": "Francisco Stanley Rodrigues Albuquerque",
   "scripts": { "build": "nest build", "start:dev": "nest start --watch", "start:prod": "node dist/main", "test": "vitest run", "test:unit": "vitest run --exclude 'test/integration/**'", "test:integration": "vitest run test/integration" },
   "dependencies": {
     "@myjarvis/shared": "*",

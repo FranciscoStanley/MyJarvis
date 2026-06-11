@@ -1,3 +1,5 @@
+export const PROJECT_AUTHOR = 'Francisco Stanley Rodrigues Albuquerque';
+
 export const SERVICE_PORTS = {
   GATEWAY: 3000,
   AUTH: 3001,

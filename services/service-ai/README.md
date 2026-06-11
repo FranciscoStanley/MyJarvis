@@ -2,6 +2,8 @@
 
 Cérebro JARVIS — conversação via **Ollama** (IA local, gratuita, MIT).
 
+**Autor:** Francisco Stanley Rodrigues Albuquerque
+
 - **Porta**: 3002
 - **Swagger**: http://localhost:3002/api/docs
 

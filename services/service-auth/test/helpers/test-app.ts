@@ -1,10 +1,11 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { createStrictValidationPipe } from '@myjarvis/nest-security';
 
 export async function createTestApp(module: Parameters<typeof Test.createTestingModule>[0]): Promise<INestApplication> {
   const testingModule = await Test.createTestingModule(module).compile();
   const app = testingModule.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(createStrictValidationPipe());
   app.setGlobalPrefix('api');
   await app.init();
   return app;

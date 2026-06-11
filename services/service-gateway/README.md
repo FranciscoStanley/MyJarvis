@@ -2,6 +2,8 @@
 
 API Gateway — ponto de entrada unificado para todos os microserviços.
 
+**Autor:** Francisco Stanley Rodrigues Albuquerque
+
 - **Porta**: 3000
 - **Swagger**: http://localhost:3000/api/docs
 

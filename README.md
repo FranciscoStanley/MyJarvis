@@ -2,6 +2,8 @@
 
 Assistente de IA pessoal inspirado no **JARVIS** — inteligente, com humor, voz, buscas na internet, imagens, vídeos e músicas.
 
+**Autor:** [Francisco Stanley Rodrigues Albuquerque](LICENSE)
+
 **100% gratuito e open source** — sem APIs pagas, sem licenças comerciais.
 
 ## Stack Gratuito
@@ -37,7 +39,8 @@ flowchart TB
     AUTH --> PG[(PostgreSQL)]
 ```
 
-Diagramas detalhados: [docs/architecture.md](docs/architecture.md)
+Diagramas detalhados: [docs/architecture.md](docs/architecture.md)  
+Mapa de pastas: [docs/project-structure.md](docs/project-structure.md)
 
 ## Início Rápido
 
@@ -76,21 +79,31 @@ docker compose exec ollama ollama pull llama3.2
 | `service-voice` | 3003 | Web Speech API (via frontend) |
 | Demais | — | NestJS + PostgreSQL + Redis |
 
-## Testes
+## Testes & CI/CD
+
+Pipeline em **3 etapas** — obrigatório antes de `git push` (hook Husky + GitHub Actions):
 
 ```bash
-npm run test:unit        # Unitários (sem Docker)
-npm run test:integration # Integração in-process
-npm run test:performance # Performance (Autocannon + benchmarks)
+npm run ci:stage1      # 1. Validate — lint + unitários
+npm run ci:stage2      # 2. Build + integração
+npm run ci:stage3      # 3. E2E + audit gate
+npm run ci:pipeline    # Executa as 3 etapas
+```
+
+Skill de code review: `.cursor/skills/review-code/SKILL.md`
+
+Outros testes:
+
+```bash
+npm run test:performance # Autocannon (requer Docker)
 npm run test:stress      # Stress test
-npm run test:e2e         # Playwright E2E
-npm run test:all         # Unit + integration
 ```
 
 Documentação: [docs/testing.md](docs/testing.md)
 
 ## Documentação
 
+- [RBAC & LDAP](docs/rbac-ldap.md)
 - [Stack gratuito](docs/free-stack.md)
 - [Arquitetura](docs/architecture.md)
 - [API Reference](docs/api.md)
@@ -119,6 +132,10 @@ Documentação: [docs/testing.md](docs/testing.md)
 
 Índice: [.cursor/skills/README.md](.cursor/skills/README.md)
 
+## Autor
+
+**Francisco Stanley Rodrigues Albuquerque** — criador e mantenedor do MyJarvis.
+
 ## Licença
 
-MIT
+MIT — Copyright © 2026 Francisco Stanley Rodrigues Albuquerque. Ver [LICENSE](LICENSE).

@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserRole, AuthSource } from '@myjarvis/shared';
 
 @Entity('users')
 export class UserEntity {
@@ -14,11 +15,20 @@ export class UserEntity {
   @Column({ unique: true })
   email!: string;
 
-  @Column()
-  passwordHash!: string;
+  @Column({ type: 'varchar', nullable: true })
+  passwordHash!: string | null;
 
   @Column()
   name!: string;
+
+  @Column({ type: 'varchar', default: UserRole.USER })
+  role!: UserRole;
+
+  @Column({ type: 'varchar', default: 'local' })
+  authSource!: AuthSource;
+
+  @Column({ type: 'varchar', nullable: true })
+  ldapDn!: string | null;
 
   @CreateDateColumn()
   createdAt!: Date;

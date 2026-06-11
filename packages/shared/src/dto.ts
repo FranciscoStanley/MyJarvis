@@ -9,13 +9,26 @@ export interface RegisterDto {
   name: string;
 }
 
+import { UserRole, AuthSource } from './auth';
+
 export interface AuthResponseDto {
   accessToken: string;
   user: {
     id: string;
     email: string;
     name: string;
+    roles: UserRole[];
+    authSource?: AuthSource;
   };
+}
+
+export interface LdapLoginDto {
+  username: string;
+  password: string;
+}
+
+export interface AssignRoleDto {
+  role: UserRole;
 }
 
 export interface SendMessageDto {

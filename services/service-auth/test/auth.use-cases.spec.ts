@@ -7,6 +7,10 @@ describe('Auth Use Cases', () => {
     findByEmail: vi.fn(),
     findById: vi.fn(),
     create: vi.fn(),
+    upsertLdapUser: vi.fn(),
+    updateRole: vi.fn(),
+    listAll: vi.fn(),
+    count: vi.fn(),
   };
 
   describe('RegisterUserUseCase', () => {

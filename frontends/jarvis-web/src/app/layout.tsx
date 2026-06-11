@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from 'next';
+import { PROJECT_AUTHOR } from '@myjarvis/shared';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'MyJarvis — Assistente Inteligente',
   description: 'Seu assistente pessoal de IA inspirado no JARVIS',
+  authors: [{ name: PROJECT_AUTHOR }],
+  creator: PROJECT_AUTHOR,
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'MyJarvis' },
 };

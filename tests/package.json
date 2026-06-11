@@ -2,6 +2,7 @@
   "name": "@myjarvis/test-suite",
   "version": "1.0.0",
   "private": true,
+  "author": "Francisco Stanley Rodrigues Albuquerque",
   "description": "Testes de integração, performance, stress e E2E do MyJarvis",
   "scripts": {
     "test": "vitest run --config vitest.config.ts",

@@ -1,3 +1,6 @@
+# MyJarvis — Docker Compose
+# Autor: Francisco Stanley Rodrigues Albuquerque
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -49,6 +52,19 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-myjarvis}:${POSTGRES_PASSWORD:-myjarvis_secret}@postgres:5432/${POSTGRES_DB:-myjarvis}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@myjarvis.local}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-AdminSeguro123!}
+      ADMIN_SEED_NAME: ${ADMIN_SEED_NAME:-Administrador}
+      LDAP_ENABLED: ${LDAP_ENABLED:-false}
+      LDAP_URL: ${LDAP_URL:-ldap://ldap:389}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:-}
+      LDAP_BASE_DN: ${LDAP_BASE_DN:-dc=example,dc=com}
+      LDAP_USER_FILTER: ${LDAP_USER_FILTER:-(|(mail={{username}})(uid={{username}}))}
+      LDAP_ADMIN_GROUP_DN: ${LDAP_ADMIN_GROUP_DN:-}
+      LDAP_MOCK_USER: ${LDAP_MOCK_USER:-ldapuser}
+      LDAP_MOCK_PASSWORD: ${LDAP_MOCK_PASSWORD:-ldappass}
+      LDAP_MOCK_ADMIN: ${LDAP_MOCK_ADMIN:-false}
     depends_on:
       postgres:
         condition: service_healthy
@@ -116,6 +132,8 @@ services:
     environment:
       PORT: 3000
       CORS_ORIGIN: http://localhost:3100
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       AUTH_SERVICE_URL: http://service-auth:3001
       AI_SERVICE_URL: http://service-ai:3002
       VOICE_SERVICE_URL: http://service-voice:3003

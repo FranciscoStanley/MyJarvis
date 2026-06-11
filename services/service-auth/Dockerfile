@@ -1,4 +1,5 @@
 FROM node:20-alpine AS builder
+LABEL org.opencontainers.image.authors="Francisco Stanley Rodrigues Albuquerque"
 WORKDIR /app
 COPY package*.json ./
 COPY packages/shared ./packages/shared

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { UserRole, hasRole } from '@myjarvis/shared';
 import { api } from '@/lib/api';
 
 export interface Message {
@@ -17,12 +18,16 @@ interface JarvisState {
   isLoading: boolean;
   isAuthenticated: boolean;
   userName: string | null;
+  userRoles: UserRole[];
   addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
   sendMessage: (text: string) => Promise<void>;
   setListening: (v: boolean) => void;
   setSpeaking: (v: boolean) => void;
   initSession: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  loginLdap: (username: string, password: string) => Promise<void>;
+  restoreSession: () => Promise<boolean>;
+  hasRole: (role: UserRole) => boolean;
   logout: () => void;
 }
 
@@ -34,6 +39,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
   isLoading: false,
   isAuthenticated: false,
   userName: null,
+  userRoles: [],
 
   addMessage: (msg) =>
     set((s) => ({
@@ -45,7 +51,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
       const { sessionId } = await api.createSession();
       set({ sessionId });
     } catch {
-      set({ sessionId: crypto.randomUUID() });
+      set({ sessionId: null });
     }
   },
 
@@ -65,7 +71,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
     } catch {
       addMessage({
         role: 'assistant',
-        content: 'Desculpe, senhor. Encontrei dificuldades ao processar sua solicitação. Verifique se os serviços estão em execução.',
+        content: 'Desculpe, senhor. Encontrei dificuldades ao processar sua solicitação. Verifique se está autenticado e se os serviços estão em execução.',
       });
     } finally {
       set({ isLoading: false });
@@ -78,12 +84,53 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
   login: async (email, password) => {
     const result = await api.login(email, password);
     api.setToken(result.accessToken);
-    set({ isAuthenticated: true, userName: result.user.name });
+    set({
+      isAuthenticated: true,
+      userName: result.user.name,
+      userRoles: result.user.roles,
+    });
     await get().initSession();
   },
 
+  loginLdap: async (username, password) => {
+    const result = await api.loginLdap(username, password);
+    api.setToken(result.accessToken);
+    set({
+      isAuthenticated: true,
+      userName: result.user.name,
+      userRoles: result.user.roles,
+    });
+    await get().initSession();
+  },
+
+  restoreSession: async () => {
+    if (!api.getToken()) return false;
+    try {
+      const profile = await api.getProfile();
+      set({
+        isAuthenticated: true,
+        userName: profile.name,
+        userRoles: profile.roles,
+      });
+      await get().initSession();
+      return true;
+    } catch {
+      api.clearToken();
+      set({ isAuthenticated: false, userName: null, userRoles: [] });
+      return false;
+    }
+  },
+
+  hasRole: (role) => hasRole(get().userRoles, role),
+
   logout: () => {
-    if (typeof window !== 'undefined') localStorage.removeItem('jarvis_token');
-    set({ isAuthenticated: false, userName: null, messages: [], sessionId: null });
+    api.clearToken();
+    set({
+      isAuthenticated: false,
+      userName: null,
+      userRoles: [],
+      messages: [],
+      sessionId: null,
+    });
   },
 }));
