@@ -7,7 +7,7 @@
     "dev": "next dev -p 3100",
     "build": "next build",
     "start": "next start -p 3100",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
@@ -24,6 +24,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
     "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
@@ -32,6 +33,8 @@
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "^15.1.4",
     "jsdom": "^26.0.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",

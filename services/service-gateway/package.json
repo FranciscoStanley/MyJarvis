@@ -12,7 +12,7 @@
     "test:unit": "vitest run --exclude 'test/integration/**' --exclude 'test/performance/**'",
     "test:integration": "vitest run test/integration",
     "test:watch": "vitest",
-    "lint": "eslint \"{src,test}/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\""
   },
   "dependencies": {
     "@myjarvis/nest-auth": "*",
@@ -34,14 +34,17 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
     "@myjarvis/nest-vitest": "*",
     "@nestjs/cli": "^11.0.2",
     "@nestjs/testing": "^11.0.7",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
     "supertest": "^7.0.0",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.21.0",
     "vitest": "^3.0.5"
   }
 }
