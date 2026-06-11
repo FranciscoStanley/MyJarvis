@@ -7,7 +7,7 @@ import { useVoice } from '@/hooks/useVoice';
 
 export function InputBar() {
   const [text, setText] = useState('');
-  const { sendMessage, isLoading, isListening } = useJarvisStore();
+  const { sendMessage, isLoading } = useJarvisStore();
   const { supported, startListening, stopListening, speak, isListening: listening } = useVoice();
 
   const handleSubmit = async (e: FormEvent) => {

@@ -54,7 +54,10 @@ export function ChatPanel() {
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-xs text-jarvis-cyan hover:underline"
                     >
-                      {r.thumbnail && <img src={r.thumbnail} alt="" className="w-8 h-8 rounded object-cover" />}
+                      {r.thumbnail && (
+                        // eslint-disable-next-line @next/next/no-img-element -- thumbnail externo dinâmico de busca
+                        <img src={r.thumbnail} alt="" className="w-8 h-8 rounded object-cover" />
+                      )}
                       <span className="truncate">{r.title}</span>
                     </a>
                   ))}

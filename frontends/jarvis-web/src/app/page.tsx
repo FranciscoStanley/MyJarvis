@@ -10,7 +10,7 @@ import { InputBar } from '@/components/jarvis/InputBar';
 import { AuthModal } from '@/components/jarvis/AuthModal';
 
 export default function HomePage() {
-  const { isAuthenticated, userName, userRoles, restoreSession, logout, hasRole } = useJarvisStore();
+  const { isAuthenticated, userName, restoreSession, logout, hasRole } = useJarvisStore();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
