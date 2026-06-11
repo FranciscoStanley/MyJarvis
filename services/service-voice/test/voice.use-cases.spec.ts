@@ -10,7 +10,7 @@ describe('Voice Use Cases (free stack)', () => {
   it('should synthesize via client-side TTS metadata', async () => {
     const uc = new SynthesizeSpeechUseCase(mock as never);
     const result = await uc.execute({ text: 'Olá' });
-    expect(result.clientSide).toBe(true);
+    expect(result.format).toBe('browser-tts');
   });
 
   it('should delegate transcribe to port', async () => {

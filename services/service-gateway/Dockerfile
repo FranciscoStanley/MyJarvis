@@ -1,12 +1,22 @@
 FROM node:20-alpine AS builder
 LABEL org.opencontainers.image.authors="Francisco Stanley Rodrigues Albuquerque"
 WORKDIR /app
+
+ENV HUSKY=0 CI=true
+RUN apk add --no-cache libc6-compat
+
 COPY package*.json ./
-COPY packages/shared ./packages/shared
+COPY packages ./packages
 COPY services/service-gateway ./services/service-gateway
-RUN npm install --workspace=service-gateway --workspace=@myjarvis/shared
-RUN npm run build -w @myjarvis/shared
-RUN npm run build -w service-gateway
+
+RUN npm install \
+  --workspace=service-gateway \
+  --workspace=@myjarvis/shared \
+  --workspace=@myjarvis/nest-auth \
+  --workspace=@myjarvis/nest-security \
+  --ignore-scripts
+
+RUN npm run build -w @myjarvis/shared && npm run build -w service-gateway
 
 FROM node:20-alpine
 WORKDIR /app

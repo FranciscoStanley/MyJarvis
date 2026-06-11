@@ -1,11 +1,18 @@
 FROM node:20-alpine AS builder
 LABEL org.opencontainers.image.authors="Francisco Stanley Rodrigues Albuquerque"
 WORKDIR /app
+
+ENV HUSKY=0 CI=true
+RUN apk add --no-cache libc6-compat
+
 COPY package*.json ./
-COPY packages/shared ./packages/shared
+COPY packages ./packages
 COPY services/service-notifications ./services/service-notifications
-RUN npm install --workspace=service-notifications --workspace=@myjarvis/shared
+
+RUN npm install --workspace=service-notifications --workspace=@myjarvis/shared --ignore-scripts
+
 RUN npm run build -w @myjarvis/shared && npm run build -w service-notifications
+
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app/services/service-notifications/dist ./dist

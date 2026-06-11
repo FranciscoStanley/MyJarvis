@@ -140,7 +140,8 @@ export class FreeSearchAdapter implements SearchPort {
       );
 
       const pages = data.query?.pages ?? {};
-      return Object.values(pages).map((page: { title: string; imageinfo?: { url: string }[] }) => ({
+      type WikiPage = { title: string; imageinfo?: { url: string }[] };
+      return (Object.values(pages) as WikiPage[]).map((page) => ({
         title: page.title,
         url: page.imageinfo?.[0]?.url ?? `https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title)}`,
         snippet: 'Imagem — Wikimedia Commons (domínio público / licenças livres)',

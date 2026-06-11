@@ -10,7 +10,10 @@ import { VoicePort } from '../../domain/ports/voice.port';
  */
 @Injectable()
 export class FreeVoiceAdapter implements VoicePort {
-  async transcribe(_audioBase64: string, language = 'pt') {
+  async transcribe(
+    _audioBase64: string,
+    language = 'pt',
+  ): Promise<{ text: string; confidence: number; language: string }> {
     throw new BadRequestException({
       message: 'Use o microfone no app. A transcrição é feita pelo Web Speech API do navegador (gratuito).',
       language,

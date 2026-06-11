@@ -31,7 +31,7 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:build": "docker compose build",
-    "prepare": "husky"
+    "prepare": "node -e \"if(process.env.HUSKY==='0'||process.env.CI==='true')process.exit(0)\" && husky"
   },
   "devDependencies": {
     "concurrently": "^10.0.3",

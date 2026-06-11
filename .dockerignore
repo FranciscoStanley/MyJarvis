@@ -1,0 +1,35 @@
+# Dependencies — rebuilt inside the image
+node_modules
+**/node_modules
+
+# Git & hooks
+.git
+.gitignore
+.husky
+
+# Dev, CI, docs
+.cursor
+.github
+docs
+tests
+*.md
+!README.md
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+
+# Build artifacts — rebuilt in container
+**/dist
+**/.next
+**/coverage
+**/.turbo
+
+# OS
+.DS_Store
+Thumbs.db
