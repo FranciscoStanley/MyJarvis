@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "docker compose up -d && npm run dev:services",
     "dev:services": "concurrently \"npm run dev -w service-gateway\" \"npm run dev -w service-auth\" \"npm run dev -w service-ai\" \"npm run dev -w jarvis-web\"",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @myjarvis/shared && npm run build --workspaces --if-present",
     "build:packages": "npm run build -w @myjarvis/shared && npm run build -w @myjarvis/nest-auth -w @myjarvis/nest-security",
     "test": "npm run test:unit",
     "pretest:unit": "npm run build:packages",
