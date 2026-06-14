@@ -76,7 +76,7 @@ npm run test:k6:stress
 
 GitHub Actions (`.github/workflows/ci.yml`) executa as **3 etapas encadeadas** em cada push/PR.
 
-Branch protection em `main`: exigir os 3 status checks (ver `.cursor/skills/review-code/ci-stages.md`).
+Branch protection em `master`: exigir os 3 status checks + pull request (ver `.cursor/skills/review-code/ci-stages.md`).
 
 Local: Husky `pre-push` roda `npm run ci:pipeline`.
 

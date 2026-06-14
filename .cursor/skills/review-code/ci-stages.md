@@ -52,11 +52,18 @@ GitHub job: `stage-3-e2e-quality` (depende de stage 2)
 
 ## Branch protection (GitHub)
 
-Settings → Branches → Branch protection rules → `main`:
+Branch `master` protegida via `.github/branch-protection-master.json`:
 
 1. Require status checks: `Stage 1 — Validate`, `Stage 2 — Build & Integration`, `Stage 3 — E2E & Quality Gate`
-2. Require branches up to date before merging
-3. (Opcional) Require pull request reviews
+2. Require branches up to date before merging (`strict: true`)
+3. Require pull request before merging (1 approval)
+4. Block force push and branch deletion
+
+Reaplicar após clone ou mudança de repo:
+
+```bash
+gh api -X PUT repos/FranciscoStanley/MyJarvis/branches/master/protection --input .github/branch-protection-master.json
+```
 
 ---
 
