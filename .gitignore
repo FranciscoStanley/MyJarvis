@@ -8,3 +8,7 @@ coverage/
 .DS_Store
 .turbo/
 *.tsbuildinfo
+
+# Playwright (E2E) — artefatos gerados localmente
+playwright-report/
+test-results/
