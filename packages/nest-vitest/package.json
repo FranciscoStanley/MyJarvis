@@ -5,8 +5,8 @@
   "author": "Francisco Stanley Rodrigues Albuquerque",
   "type": "module",
   "exports": {
-    ".": "./index.ts",
-    "./setup": "./setup.ts"
+    ".": "./index.js",
+    "./setup": "./setup.js"
   },
   "devDependencies": {
     "@swc/core": "^1.10.7",

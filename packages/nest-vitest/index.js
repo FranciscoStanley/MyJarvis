@@ -1,7 +1,7 @@
 import swc from 'unplugin-swc';
-import { defineConfig, type UserConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config';
 
-export function createNestVitestConfig(overrides: UserConfig = {}) {
+export function createNestVitestConfig(overrides = {}) {
   return defineConfig({
     test: {
       globals: true,
