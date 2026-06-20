@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { ChatMessage, JarvisAction } from '@myjarvis/shared';
+import { ChatMessage, JarvisAction, SearchResult } from '@myjarvis/shared';
 import { AiPort } from '../../domain/ports/ai.port';
-import { JARVIS_SYSTEM_PROMPT, JARVIS_TOOLS } from '../../domain/constants/jarvis-prompt';
+import { JARVIS_SYSTEM_PROMPT, JARVIS_TOOLS, JARVIS_SYNTHESIS_PROMPT } from '../../domain/constants/jarvis-prompt';
+import { detectActionsFromText } from './action-detector';
 
 interface OllamaMessage {
   role: string;
@@ -36,26 +37,71 @@ export class OllamaAdapter implements AiPort {
       }));
 
       const { data } = await firstValueFrom(
-        this.http.post(`${this.baseUrl}/api/chat`, {
-          model: this.model,
-          messages: [
-            { role: 'system', content: JARVIS_SYSTEM_PROMPT },
-            ...history,
-            { role: 'user', content: userMessage },
-          ],
-          tools: JARVIS_TOOLS,
-          stream: false,
-          options: { temperature: 0.8 },
-        }),
+        this.http.post(
+          `${this.baseUrl}/api/chat`,
+          {
+            model: this.model,
+            messages: [
+              { role: 'system', content: JARVIS_SYSTEM_PROMPT },
+              ...history,
+              { role: 'user', content: userMessage },
+            ],
+            tools: JARVIS_TOOLS,
+            stream: false,
+            options: { temperature: 0.85 },
+          },
+          { timeout: 120_000 },
+        ),
       );
 
       const msg = data.message as OllamaMessage;
       const actions = this.extractActions(msg);
       const reply = msg.content?.trim() || 'Desculpe, não consegui formular uma resposta.';
 
-      return { reply, actions: actions.length ? actions : this.detectActionsFromText(userMessage) };
+      return { reply, actions: actions.length ? actions : detectActionsFromText(userMessage) };
     } catch {
       return this.offlineResponse(userMessage);
+    }
+  }
+
+  async synthesizeWithResults(
+    userMessage: string,
+    searchResults: SearchResult[],
+    actionTypes: string[],
+  ): Promise<string> {
+    const resultsContext = searchResults
+      .slice(0, 5)
+      .map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`)
+      .join('\n\n');
+
+    const prompt = `${JARVIS_SYNTHESIS_PROMPT}
+
+Pedido do usuário: "${userMessage}"
+Tipo de busca: ${actionTypes.join(', ') || 'geral'}
+
+Resultados encontrados:
+${resultsContext}
+
+Formule uma resposta natural como JARVIS. Mencione o resultado mais relevante. Não liste URLs cruas. Responda no idioma do usuário.`;
+
+    try {
+      const { data } = await firstValueFrom(
+        this.http.post(
+          `${this.baseUrl}/api/chat`,
+          {
+            model: this.model,
+            messages: [{ role: 'user', content: prompt }],
+            stream: false,
+            options: { temperature: 0.75 },
+          },
+          { timeout: 90_000 },
+        ),
+      );
+
+      const content = (data.message as OllamaMessage)?.content?.trim();
+      return content || '';
+    } catch {
+      return '';
     }
   }
 
@@ -67,45 +113,40 @@ export class OllamaAdapter implements AiPort {
       image_search: 'image',
       video_search: 'video',
       music_search: 'music',
+      open_url: 'open_url',
+      open_application: 'open_app',
     };
 
     return msg.tool_calls.map((call) => {
       const raw = call.function.arguments;
       const args = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const type = typeMap[call.function.name] ?? 'search';
+      if (type === 'open_url' || type === 'open_app') {
+        return {
+          type,
+          data: {
+            url: args?.url,
+            app: args?.app,
+            label: args?.label,
+            description: args?.description,
+          },
+        };
+      }
       return {
-        type: typeMap[call.function.name] ?? 'search',
+        type,
         query: args?.query ?? String(raw),
       };
     });
   }
 
-  private detectActionsFromText(text: string): JarvisAction[] {
-    const lower = text.toLowerCase();
-    const actions: JarvisAction[] = [];
-    const query = text.replace(/^(jarvis,?\s*|busque?\s+|pesquise?\s+|procure?\s+)/i, '').trim() || text;
-
-    if (/busca|pesquis|notícia|informaç|internet|web/.test(lower)) {
-      actions.push({ type: 'search', query });
-    }
-    if (/imagem|foto|picture/.test(lower)) {
-      actions.push({ type: 'image', query });
-    }
-    if (/vídeo|video|youtube/.test(lower)) {
-      actions.push({ type: 'video', query });
-    }
-    if (/música|musica|som|tocar|playlist/.test(lower)) {
-      actions.push({ type: 'music', query });
-    }
-    return actions;
-  }
-
   private offlineResponse(userMessage: string): { reply: string; actions: JarvisAction[] } {
-    const actions = this.detectActionsFromText(userMessage);
+    const actions = detectActionsFromText(userMessage);
+    const hasActions = actions.length > 0;
+
     return {
-      reply:
-        `Bom dia, senhor. O serviço Ollama não está disponível no momento. ` +
-        `Inicie com: docker compose up ollama && docker exec myjarvis-ollama-1 ollama pull ${this.model}. ` +
-        `Posso ainda executar buscas básicas enquanto isso.`,
+      reply: hasActions
+        ? 'Senhor, o modelo de IA demorou para responder. Prossigo com a busca solicitada — peço um instante.'
+        : `Senhor, o serviço Ollama não respondeu. Verifique se está em execução: docker compose up ollama && docker exec myjarvis-ollama-1 ollama pull ${this.model}.`,
       actions,
     };
   }

@@ -1,10 +1,16 @@
-import { ChatMessage, JarvisAction } from '@myjarvis/shared';
+import { ChatMessage, JarvisAction, SearchResult } from '@myjarvis/shared';
 
 export interface AiPort {
   generateResponse(
     messages: ChatMessage[],
     userMessage: string,
   ): Promise<{ reply: string; actions: JarvisAction[] }>;
+
+  synthesizeWithResults(
+    userMessage: string,
+    searchResults: SearchResult[],
+    actionTypes: string[],
+  ): Promise<string>;
 }
 
 export const AI_PORT = Symbol('AI_PORT');
