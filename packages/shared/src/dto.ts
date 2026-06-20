@@ -10,6 +10,8 @@ export interface RegisterDto {
 }
 
 import { UserRole, AuthSource } from './auth';
+import type { ClientAction } from './actions';
+import type { SearchResult } from './types';
 
 export interface AuthResponseDto {
   accessToken: string;
@@ -41,10 +43,12 @@ export interface ChatResponseDto {
   reply: string;
   sessionId: string;
   actions?: JarvisAction[];
+  searchResults?: SearchResult[];
+  clientActions?: ClientAction[];
 }
 
 export interface JarvisAction {
-  type: 'search' | 'image' | 'video' | 'music' | 'notification' | 'speak';
+  type: 'search' | 'image' | 'video' | 'music' | 'open_url' | 'open_app' | 'notification' | 'speak';
   query?: string;
   data?: Record<string, unknown>;
 }
