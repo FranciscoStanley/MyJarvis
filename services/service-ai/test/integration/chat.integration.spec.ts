@@ -17,6 +17,7 @@ describe('AI Chat Integration', () => {
           reply: 'Bom dia, senhor. Sistemas operacionais.',
           actions: [],
         }),
+        synthesizeWithResults: vi.fn().mockResolvedValue(''),
       })
       .overrideProvider(SEARCH_CLIENT)
       .useValue({ search: vi.fn().mockResolvedValue([]) })

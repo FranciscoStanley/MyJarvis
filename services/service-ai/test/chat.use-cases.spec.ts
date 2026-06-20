@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SendMessageUseCase } from '../src/application/use-cases/chat.use-cases';
 
 describe('SendMessageUseCase', () => {
-  const mockAi = { generateResponse: vi.fn() };
+  const mockAi = {
+    generateResponse: vi.fn(),
+    synthesizeWithResults: vi.fn(),
+  };
   const mockStore = {
     getMessages: vi.fn().mockReturnValue([]),
     addMessage: vi.fn(),
@@ -14,6 +17,7 @@ describe('SendMessageUseCase', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAi.synthesizeWithResults.mockResolvedValue('');
     useCase = new SendMessageUseCase(mockAi as never, mockStore as never, mockSearch as never);
   });
 
@@ -29,15 +33,61 @@ describe('SendMessageUseCase', () => {
     expect(mockStore.addMessage).toHaveBeenCalledTimes(2);
   });
 
-  it('should execute search actions', async () => {
+  it('should execute search actions and synthesize reply', async () => {
     mockAi.generateResponse.mockResolvedValue({
       reply: 'Vou buscar isso.',
       actions: [{ type: 'search', query: 'tempo hoje' }],
     });
-    mockSearch.search.mockResolvedValue([{ title: 'Result' }]);
+    mockSearch.search.mockResolvedValue([
+      { title: 'Clima', url: 'https://example.com', snippet: 'Ensolarado', type: 'web' },
+    ]);
+    mockAi.synthesizeWithResults.mockResolvedValue('Senhor, o tempo está ensolarado hoje.');
 
     const result = await useCase.execute({ message: 'Busque o tempo' });
     expect(mockSearch.search).toHaveBeenCalledWith('web', 'tempo hoje');
     expect(result.searchResults).toHaveLength(1);
+    expect(result.reply).toContain('ensolarado');
+    expect(result.clientActions?.length).toBeGreaterThan(0);
+  });
+
+  it('should handle confirmation yes and return executable actions', async () => {
+    const pending = [{
+      id: 'a1',
+      type: 'open_url' as const,
+      label: 'Abrir no YouTube',
+      description: 'Abrir vídeo',
+      url: 'https://youtube.com/watch?v=1',
+      app: 'youtube' as const,
+      requiresConfirmation: true,
+    }];
+    mockStore.getMessages.mockReturnValue([
+      { role: 'assistant', metadata: { pendingClientActions: pending } },
+    ]);
+
+    const result = await useCase.execute({ message: 'sim' });
+    expect(result.clientActions?.[0].requiresConfirmation).toBe(false);
+    expect(result.reply).toMatch(/senhor/i);
+  });
+
+  it('should handle confirmation no', async () => {
+    mockStore.getMessages.mockReturnValue([
+      {
+        role: 'assistant',
+        metadata: {
+          pendingClientActions: [{
+            id: 'a1',
+            type: 'open_url',
+            label: 'Abrir',
+            description: 'Abrir',
+            url: 'https://x.com',
+            requiresConfirmation: true,
+          }],
+        },
+      },
+    ]);
+
+    const result = await useCase.execute({ message: 'não' });
+    expect(result.clientActions).toEqual([]);
+    expect(result.reply).toMatch(/como desejar/i);
   });
 });

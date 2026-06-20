@@ -25,11 +25,25 @@ describe('OllamaAdapter', () => {
     expect(result.reply).toBe('Bom dia, senhor.');
   });
 
-  it('should fallback when Ollama is offline', async () => {
+  it('should fallback when Ollama is offline with search actions', async () => {
     mockHttp.post.mockReturnValue(throwError(() => new Error('ECONNREFUSED')));
 
     const result = await adapter.generateResponse([], 'busque notícias de IA');
-    expect(result.reply).toContain('Ollama');
+    expect(result.reply).toContain('busca solicitada');
     expect(result.actions.some((a) => a.type === 'search')).toBe(true);
+  });
+
+  it('should mention Ollama when offline without detectable actions', async () => {
+    mockHttp.post.mockReturnValue(throwError(() => new Error('ECONNREFUSED')));
+
+    const result = await adapter.generateResponse([], 'Olá');
+    expect(result.reply).toContain('Ollama');
+  });
+
+  it('should detect YouTube music as video action on fallback', async () => {
+    mockHttp.post.mockReturnValue(throwError(() => new Error('timeout')));
+
+    const result = await adapter.generateResponse([], 'busca no YouTube a música Espírito Santo');
+    expect(result.actions).toEqual([{ type: 'video', query: 'Espírito Santo' }]);
   });
 });
