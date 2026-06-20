@@ -88,7 +88,7 @@ Tipo de busca: ${actionTypes.join(', ') || 'geral'}
 Resultados encontrados:
 ${resultsContext}
 
-Formule uma resposta natural como JARVIS. Mencione o resultado mais relevante. Não liste URLs cruas. Responda no idioma do usuário.`;
+Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Mencione o resultado mais relevante. Não liste URLs cruas.`;
 
     try {
       const { data } = await firstValueFrom(
