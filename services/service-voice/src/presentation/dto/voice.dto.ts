@@ -8,5 +8,5 @@ export class TranscribeDto {
 
 export class SynthesizeDto {
   @ApiProperty() @IsString() text!: string;
-  @ApiPropertyOptional({ default: 'onyx' }) @IsOptional() @IsString() voice?: string;
+  @ApiPropertyOptional({ default: 'en_GB-alan-medium', description: 'Voz Piper (ex.: en_GB-alan-medium.onnx)' }) @IsOptional() @IsString() voice?: string;
 }
