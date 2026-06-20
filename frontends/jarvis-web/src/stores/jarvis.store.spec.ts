@@ -73,6 +73,18 @@ describe('Jarvis Store — clientActions', () => {
     expect(useJarvisStore.getState().pendingClientActions[0].requiresConfirmation).toBe(true);
   });
 
+  it('should show friendly message on timeout errors', async () => {
+    vi.mocked(api.sendMessage).mockRejectedValue(
+      new Error('timeout of 120000ms exceeded'),
+    );
+
+    await useJarvisStore.getState().sendMessage('olá');
+
+    const assistantMsg = useJarvisStore.getState().messages.find((m) => m.role === 'assistant');
+    expect(assistantMsg?.content).toContain('Ollama demorou mais que o esperado');
+    expect(assistantMsg?.content).not.toContain('120000ms');
+  });
+
   it('should execute confirmed action via confirmAction', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
 

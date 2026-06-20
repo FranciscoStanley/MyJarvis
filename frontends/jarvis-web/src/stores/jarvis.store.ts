@@ -41,6 +41,9 @@ function formatUserError(error: unknown): string {
   if (/401|unauthorized|não autorizado/i.test(raw)) {
     return 'Sua sessão expirou, senhor. Saia e entre novamente.';
   }
+  if (/timeout|timed out|abort/i.test(raw)) {
+    return 'Senhor, o Ollama demorou mais que o esperado. Aguarde o modelo carregar na primeira mensagem ou tente um pedido mais curto.';
+  }
   return `Desculpe, senhor. ${raw}`;
 }
 

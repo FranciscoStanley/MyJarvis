@@ -9,6 +9,7 @@ export interface ApiUser {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const CHAT_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_CHAT_TIMEOUT_MS ?? 390_000);
 
 class ApiClient {
   private token: string | null = null;
@@ -94,7 +95,7 @@ class ApiClient {
 
   sendMessage(message: string, sessionId?: string) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 130_000);
+    const timeout = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
 
     return this.request<{
       reply: string;
