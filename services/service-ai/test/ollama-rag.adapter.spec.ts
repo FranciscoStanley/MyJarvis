@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OllamaRagAdapter } from '../src/infrastructure/adapters/ollama-rag.adapter';
+import { ACTION_KNOWLEDGE_CHUNKS } from '../src/domain/knowledge/action-knowledge';
 
 describe('OllamaRagAdapter', () => {
   const mockHttp = { post: vi.fn() };
@@ -28,5 +29,11 @@ describe('OllamaRagAdapter', () => {
   it('should return creator identity for origin questions', async () => {
     const context = await adapter.retrieve('quem te criou?', 2);
     expect(context).toContain('Francisco Stanley Rodrigues Albuquerque');
+  });
+
+  it('should index all 8 knowledge chunks after retrieve', async () => {
+    expect(ACTION_KNOWLEDGE_CHUNKS.length).toBe(8);
+    await adapter.retrieve('youtube', 1);
+    expect(adapter.isReady()).toBe(true);
   });
 });
