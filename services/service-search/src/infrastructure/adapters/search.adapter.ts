@@ -92,6 +92,22 @@ export class FreeSearchAdapter implements SearchPort {
 
   async searchMusic(query: string, limit: number): Promise<SearchResult[]> {
     try {
+      const videos = await searchVideos(query, { safeSearch: -1 });
+      const ytResults = (videos.results ?? [])
+        .filter((v) => /youtube\.com|youtu\.be/.test(v.url))
+        .slice(0, limit);
+      if (ytResults.length) {
+        return ytResults.map((v) => ({
+          title: v.title,
+          url: v.url,
+          snippet: v.description ?? 'Vídeo musical — YouTube via DuckDuckGo',
+          type: 'music' as const,
+          thumbnail: v.image,
+        }));
+      }
+    } catch { /* Internet Archive fallback */ }
+
+    try {
       const { data } = await firstValueFrom(
         this.http.get('https://archive.org/advancedsearch.php', {
           params: {
@@ -116,8 +132,8 @@ export class FreeSearchAdapter implements SearchPort {
 
     return [{
       title: `Música: ${query}`,
-      url: `https://duckduckgo.com/?q=${encodeURIComponent(query + ' music')}&ia=videos`,
-      snippet: 'Busca musical via DuckDuckGo (100% gratuito)',
+      url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+      snippet: 'Busca musical no YouTube',
       type: 'music',
     }];
   }
