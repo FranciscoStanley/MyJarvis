@@ -100,8 +100,9 @@ export class SendMessageUseCase {
         actionTypes,
       );
       finalReply = synthesized || synthesizeFallbackReply(input.message, searchResults, actionTypes);
-    } else if (!finalReply.trim() || finalReply.length < 20) {
-      finalReply = synthesizeFallbackReply(input.message, searchResults, actionTypes) || finalReply;
+    } else if (!finalReply.trim()) {
+      finalReply = synthesizeFallbackReply(input.message, searchResults, actionTypes)
+        || 'Senhor, não consegui formular uma resposta no momento.';
     }
 
     if (clientActions.length) {
