@@ -36,6 +36,24 @@ interface JarvisState {
   logout: () => void;
 }
 
+function formatUserError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : 'Erro desconhecido';
+  if (/401|unauthorized|não autorizado/i.test(raw)) {
+    return 'Sua sessão expirou, senhor. Saia e entre novamente.';
+  }
+  return `Desculpe, senhor. ${raw}`;
+}
+
+async function ensureChatSession(
+  sessionId: string | null,
+  set: (partial: Partial<JarvisState>) => void,
+): Promise<string> {
+  if (sessionId) return sessionId;
+  const { sessionId: newId } = await api.createSession();
+  set({ sessionId: newId });
+  return newId;
+}
+
 function applyExecutedActions(
   addMessage: JarvisState['addMessage'],
   reply: string,
@@ -80,18 +98,20 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
     try {
       const { sessionId } = await api.createSession();
       set({ sessionId });
-    } catch {
+    } catch (error) {
+      console.error('[JARVIS] Falha ao criar sessão de chat:', error);
       set({ sessionId: null });
     }
   },
 
   sendMessage: async (text) => {
-    const { sessionId, addMessage } = get();
+    const { addMessage } = get();
     addMessage({ role: 'user', content: text });
     set({ isLoading: true });
 
     try {
-      const result = await api.sendMessage(text, sessionId ?? undefined);
+      const sessionId = await ensureChatSession(get().sessionId, set);
+      const result = await api.sendMessage(text, sessionId);
       set({ sessionId: result.sessionId });
 
       const pending = (result.clientActions ?? []).filter((a) => a.requiresConfirmation);
@@ -102,10 +122,11 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
       if (!pending.length) {
         set({ pendingClientActions: [] });
       }
-    } catch {
+    } catch (error) {
+      console.error('[JARVIS] Falha ao enviar mensagem:', error);
       addMessage({
         role: 'assistant',
-        content: 'Desculpe, senhor. Encontrei dificuldades ao processar sua solicitação. Verifique se está autenticado e se os serviços estão em execução.',
+        content: formatUserError(error),
       });
       set({ pendingClientActions: [] });
     } finally {

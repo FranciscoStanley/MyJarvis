@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useJarvisStore } from '@/stores/jarvis.store';
+import { api } from '@/lib/api';
 import { stripTextForSpeech } from '@/lib/client-actions';
 
 interface SpeechRecognitionEvent {
@@ -26,16 +27,15 @@ declare global {
   }
 }
 
-/** Preferência de voz estilo JARVIS: inglês britânico masculino, tom grave e pausado. */
-function selectJarvisVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
+/** Fallback: voz neural en-GB do sistema quando Piper está offline. */
+function selectBrowserVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
   const preferred = [
     (v: SpeechSynthesisVoice) => v.name.includes('Google UK English Male'),
+    (v: SpeechSynthesisVoice) => v.name.includes('Microsoft Ryan') && v.lang.startsWith('en'),
     (v: SpeechSynthesisVoice) => v.name.includes('Daniel') && v.lang.startsWith('en-GB'),
     (v: SpeechSynthesisVoice) => v.name.includes('Microsoft George') && v.lang.startsWith('en-GB'),
-    (v: SpeechSynthesisVoice) => v.lang === 'en-GB' && /male|daniel|george|ryan/i.test(v.name),
     (v: SpeechSynthesisVoice) => v.lang.startsWith('en-GB'),
     (v: SpeechSynthesisVoice) => v.lang.startsWith('en'),
-    (v: SpeechSynthesisVoice) => v.lang.startsWith('pt-BR'),
   ];
 
   for (const match of preferred) {
@@ -45,11 +45,27 @@ function selectJarvisVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice
   return voices[0];
 }
 
+function speakWithBrowser(text: string, setSpeaking: (v: boolean) => void, voices: SpeechSynthesisVoice[]) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  const voice = selectBrowserVoice(voices);
+  utterance.lang = voice?.lang ?? 'en-GB';
+  utterance.rate = 0.9;
+  utterance.pitch = 0.85;
+  if (voice) utterance.voice = voice;
+  utterance.onstart = () => setSpeaking(true);
+  utterance.onend = () => setSpeaking(false);
+  utterance.onerror = () => setSpeaking(false);
+  window.speechSynthesis.speak(utterance);
+}
+
 export function useVoice() {
   const { sendMessage, confirmAction, setListening, setSpeaking, isListening } = useJarvisStore();
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const [supported, setSupported] = useState(false);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
@@ -67,24 +83,41 @@ export function useVoice() {
     };
     loadVoices();
     window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
-    return () => window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+    return () => {
+      window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+      audioRef.current?.pause();
+    };
   }, []);
 
-  const speak = useCallback((text: string) => {
-    if (!window.speechSynthesis) return;
+  const speak = useCallback(async (text: string) => {
     const spoken = stripTextForSpeech(text);
     if (!spoken) return;
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(spoken);
-    const voice = selectJarvisVoice(voicesRef.current);
-    utterance.lang = voice?.lang ?? 'en-GB';
-    utterance.rate = 0.92;
-    utterance.pitch = 0.82;
-    if (voice) utterance.voice = voice;
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    window.speechSynthesis.speak(utterance);
+    audioRef.current?.pause();
+    window.speechSynthesis?.cancel();
+
+    try {
+      const result = await api.synthesizeSpeech(spoken);
+
+      if (!result.clientSide && result.audioBase64 && result.format === 'wav') {
+        const audio = new Audio(`data:audio/wav;base64,${result.audioBase64}`);
+        audioRef.current = audio;
+        audio.onplay = () => setSpeaking(true);
+        audio.onended = () => setSpeaking(false);
+        audio.onerror = () => setSpeaking(false);
+        try {
+          await audio.play();
+        } catch {
+          setSpeaking(false);
+          speakWithBrowser(spoken, setSpeaking, voicesRef.current);
+        }
+        return;
+      }
+    } catch {
+      /* fallback abaixo */
+    }
+
+    speakWithBrowser(spoken, setSpeaking, voicesRef.current);
   }, [setSpeaking]);
 
   const startListening = useCallback(() => {
@@ -103,7 +136,7 @@ export function useVoice() {
       }
 
       const lastMsg = useJarvisStore.getState().messages.at(-1);
-      if (lastMsg?.role === 'assistant') speak(lastMsg.content);
+      if (lastMsg?.role === 'assistant') await speak(lastMsg.content);
     };
     rec.onerror = () => setListening(false);
     rec.onend = () => setListening(false);

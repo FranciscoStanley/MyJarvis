@@ -16,6 +16,8 @@ export function InputBar() {
     const msg = text.trim();
     setText('');
     await sendMessage(msg);
+    const lastMsg = useJarvisStore.getState().messages.at(-1);
+    if (lastMsg?.role === 'assistant') await speak(lastMsg.content);
   };
 
   const toggleMic = () => {
@@ -23,10 +25,10 @@ export function InputBar() {
     else startListening();
   };
 
-  const speakLast = () => {
+  const speakLast = async () => {
     const msgs = useJarvisStore.getState().messages;
     const last = msgs.filter((m) => m.role === 'assistant').at(-1);
-    if (last) speak(last.content);
+    if (last) await speak(last.content);
   };
 
   return (

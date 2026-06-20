@@ -38,10 +38,31 @@ class ApiClient {
     const token = this.getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    const res = await fetch(`${API_URL}/api${path}`, { ...options, headers });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message ?? json.error ?? 'Erro na requisição');
-    return json.data ?? json;
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/api${path}`, { ...options, headers });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Falha de rede';
+      throw new Error(
+        /abort/i.test(msg)
+          ? 'A resposta demorou demais. Tente um pedido mais curto ou aguarde o Ollama carregar.'
+          : `Não foi possível contactar o servidor (${API_URL}). Verifique se o gateway está em execução.`,
+      );
+    }
+
+    let json: Record<string, unknown>;
+    try {
+      json = await res.json();
+    } catch {
+      throw new Error('Resposta inválida do servidor.');
+    }
+
+    if (!res.ok) {
+      const message = json.message ?? json.error;
+      throw new Error(typeof message === 'string' ? message : 'Erro na requisição');
+    }
+
+    return (json.data ?? json) as T;
   }
 
   login(email: string, password: string) {
@@ -65,10 +86,16 @@ class ApiClient {
   }
 
   createSession() {
-    return this.request<{ sessionId: string }>('/chat/session', { method: 'POST' });
+    return this.request<{ sessionId: string }>(
+      '/chat/session',
+      { method: 'POST', body: '{}' },
+    );
   }
 
   sendMessage(message: string, sessionId?: string) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 130_000);
+
     return this.request<{
       reply: string;
       sessionId: string;
@@ -76,7 +103,26 @@ class ApiClient {
       searchResults?: SearchResult[];
       clientActions?: ClientAction[];
     }>(
-      '/chat/message', { method: 'POST', body: JSON.stringify({ message, sessionId }) },
+      '/chat/message',
+      {
+        method: 'POST',
+        body: JSON.stringify({ message, sessionId }),
+        signal: controller.signal,
+      },
+    ).finally(() => clearTimeout(timeout));
+  }
+
+  synthesizeSpeech(text: string, voice?: string) {
+    return this.request<{
+      audioBase64: string;
+      format: string;
+      clientSide?: boolean;
+      text?: string;
+      voice?: string;
+      message?: string;
+    }>(
+      '/voice/synthesize',
+      { method: 'POST', body: JSON.stringify({ text, voice }) },
     );
   }
 
