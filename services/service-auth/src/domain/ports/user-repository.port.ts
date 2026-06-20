@@ -9,6 +9,8 @@ export interface UserRecord {
   authSource: AuthSource;
   ldapDn?: string | null;
   createdAt?: Date;
+  termsAcceptedAt?: Date | null;
+  termsVersion?: string | null;
 }
 
 export interface UserRepositoryPort {
@@ -20,6 +22,8 @@ export interface UserRepositoryPort {
     name: string;
     role?: UserRole;
     authSource?: AuthSource;
+    termsAcceptedAt?: Date | null;
+    termsVersion?: string | null;
   }): Promise<UserRecord>;
   upsertLdapUser(data: {
     email: string;
@@ -27,6 +31,7 @@ export interface UserRepositoryPort {
     ldapDn: string;
     role: UserRole;
   }): Promise<UserRecord>;
+  acceptTerms(id: string, version: string, acceptedAt: Date): Promise<UserRecord>;
   updateRole(id: string, role: UserRole): Promise<UserRecord>;
   listAll(): Promise<UserRecord[]>;
   count(): Promise<number>;

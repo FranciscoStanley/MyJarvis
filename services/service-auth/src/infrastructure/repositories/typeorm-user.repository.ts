@@ -15,6 +15,8 @@ function toRecord(user: UserEntity): UserRecord {
     authSource: user.authSource,
     ldapDn: user.ldapDn,
     createdAt: user.createdAt,
+    termsAcceptedAt: user.termsAcceptedAt,
+    termsVersion: user.termsVersion,
   };
 }
 
@@ -41,6 +43,8 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
     name: string;
     role?: UserRole;
     authSource?: UserRecord['authSource'];
+    termsAcceptedAt?: Date | null;
+    termsVersion?: string | null;
   }) {
     const user = this.repo.create({
       email: data.email.toLowerCase(),
@@ -48,6 +52,8 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
       name: data.name,
       role: data.role ?? UserRole.USER,
       authSource: data.authSource ?? 'local',
+      termsAcceptedAt: data.termsAcceptedAt ?? null,
+      termsVersion: data.termsVersion ?? null,
     });
     const saved = await this.repo.save(user);
     return toRecord(saved);
@@ -83,6 +89,13 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
   async updateRole(id: string, role: UserRole) {
     const user = await this.repo.findOneOrFail({ where: { id } });
     user.role = role;
+    return toRecord(await this.repo.save(user));
+  }
+
+  async acceptTerms(id: string, version: string, acceptedAt: Date) {
+    const user = await this.repo.findOneOrFail({ where: { id } });
+    user.termsAcceptedAt = acceptedAt;
+    user.termsVersion = version;
     return toRecord(await this.repo.save(user));
   }
 

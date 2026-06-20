@@ -20,6 +20,8 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     name: string;
     role?: UserRole;
     authSource?: AuthSource;
+    termsAcceptedAt?: Date | null;
+    termsVersion?: string | null;
   }) {
     const user: StoredUser = {
       id: crypto.randomUUID(),
@@ -29,6 +31,8 @@ export class InMemoryUserRepository implements UserRepositoryPort {
       role: data.role ?? UserRole.USER,
       authSource: data.authSource ?? 'local',
       ldapDn: null,
+      termsAcceptedAt: data.termsAcceptedAt ?? null,
+      termsVersion: data.termsVersion ?? null,
     };
     this.users.push(user);
     return user;
@@ -66,6 +70,14 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     const user = this.users.find((u) => u.id === id);
     if (!user) throw new Error('not found');
     user.role = role;
+    return user;
+  }
+
+  async acceptTerms(id: string, version: string, acceptedAt: Date) {
+    const user = this.users.find((u) => u.id === id);
+    if (!user) throw new Error('not found');
+    user.termsAcceptedAt = acceptedAt;
+    user.termsVersion = version;
     return user;
   }
 

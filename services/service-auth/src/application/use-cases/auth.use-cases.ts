@@ -1,8 +1,8 @@
-import { Injectable, Inject, ConflictException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Inject, ConflictException, UnauthorizedException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { UserRole, JwtPayload, AuthUser, hasRole } from '@myjarvis/shared';
+import { UserRole, JwtPayload, AuthUser, hasRole, TERMS_VERSION, hasAcceptedCurrentTerms } from '@myjarvis/shared';
 import { LoginProtectionService } from '../../infrastructure/security/login-protection.service';
 import { USER_REPOSITORY, UserRepositoryPort } from '../../domain/ports/user-repository.port';
 import { LDAP_AUTH, LdapAuthPort } from '../../domain/ports/ldap-auth.port';
@@ -15,6 +15,8 @@ function toAuthUser(user: {
   role: UserRole;
   authSource: AuthUser['authSource'];
   createdAt?: Date;
+  termsAcceptedAt?: Date | null;
+  termsVersion?: string | null;
 }): AuthUser {
   return {
     id: user.id,
@@ -23,6 +25,9 @@ function toAuthUser(user: {
     roles: [user.role],
     authSource: user.authSource,
     createdAt: user.createdAt,
+    termsAcceptedAt: user.termsAcceptedAt ?? null,
+    termsVersion: user.termsVersion ?? null,
+    hasAcceptedTerms: hasAcceptedCurrentTerms(user.termsAcceptedAt, user.termsVersion),
   };
 }
 
@@ -42,18 +47,41 @@ export class RegisterUserUseCase {
     @Inject(USER_REPOSITORY) private readonly users: UserRepositoryPort,
   ) {}
 
-  async execute(dto: { email: string; password: string; name: string }) {
+  async execute(dto: { email: string; password: string; name: string; acceptTerms: boolean }) {
+    if (!dto.acceptTerms) {
+      throw new BadRequestException('É necessário aceitar os Termos de Uso e a Política de Privacidade para se cadastrar.');
+    }
+
     const existing = await this.users.findByEmail(dto.email);
     if (existing) throw new ConflictException('Email já cadastrado');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
+    const now = new Date();
     const user = await this.users.create({
       email: dto.email,
       passwordHash,
       name: dto.name,
       role: UserRole.USER,
       authSource: 'local',
+      termsAcceptedAt: now,
+      termsVersion: TERMS_VERSION,
     });
+    return toAuthUser(user);
+  }
+}
+
+@Injectable()
+export class AcceptTermsUseCase {
+  constructor(
+    @Inject(USER_REPOSITORY) private readonly users: UserRepositoryPort,
+  ) {}
+
+  async execute(userId: string, acceptTerms: boolean) {
+    if (!acceptTerms) {
+      throw new BadRequestException('É necessário aceitar os Termos de Uso e a Política de Privacidade.');
+    }
+
+    const user = await this.users.acceptTerms(userId, TERMS_VERSION, new Date());
     return toAuthUser(user);
   }
 }
@@ -181,16 +209,22 @@ export class SeedAdminUseCase {
       if (existing.role !== UserRole.ADMIN) {
         await this.users.updateRole(existing.id, UserRole.ADMIN);
       }
+      if (!hasAcceptedCurrentTerms(existing.termsAcceptedAt, existing.termsVersion)) {
+        await this.users.acceptTerms(existing.id, TERMS_VERSION, new Date());
+      }
       return;
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+    const now = new Date();
     await this.users.create({
       email,
       passwordHash,
       name,
       role: UserRole.ADMIN,
       authSource: 'local',
+      termsAcceptedAt: now,
+      termsVersion: TERMS_VERSION,
     });
   }
 }

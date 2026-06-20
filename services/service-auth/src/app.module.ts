@@ -44,6 +44,8 @@ import {
 
   SeedAdminUseCase,
 
+  AcceptTermsUseCase,
+
 } from './application/use-cases/auth.use-cases';
 
 import { AuthBootstrapService } from './infrastructure/bootstrap/auth-bootstrap.service';
@@ -120,6 +122,7 @@ import { AuthController, HealthController } from './presentation/auth.controller
     AssignRoleUseCase,
 
     SeedAdminUseCase,
+    AcceptTermsUseCase,
 
     LoginProtectionService,
 

@@ -30,6 +30,12 @@ export class UserEntity {
   @Column({ type: 'varchar', nullable: true })
   ldapDn!: string | null;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  termsAcceptedAt!: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  termsVersion!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 
