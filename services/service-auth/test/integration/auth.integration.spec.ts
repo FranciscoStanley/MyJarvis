@@ -17,6 +17,7 @@ import {
   GetProfileUseCase,
   ListUsersUseCase,
   AssignRoleUseCase,
+  AcceptTermsUseCase,
 } from '../../src/application/use-cases/auth.use-cases';
 import { USER_REPOSITORY } from '../../src/domain/ports/user-repository.port';
 import { LDAP_AUTH } from '../../src/domain/ports/ldap-auth.port';
@@ -55,6 +56,7 @@ const mockLdap = {
     GetProfileUseCase,
     ListUsersUseCase,
     AssignRoleUseCase,
+    AcceptTermsUseCase,
     LoginProtectionService,
     { provide: USER_REPOSITORY, useClass: InMemoryUserRepository },
     { provide: LDAP_AUTH, useValue: mockLdap },
@@ -87,7 +89,7 @@ describe('Auth Integration', () => {
   it('POST /api/auth/register cria usuário com role user', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email, password: 'SenhaSegura123!', name: 'Integration Test' });
+      .send({ email, password: 'SenhaSegura123!', name: 'Integration Test', acceptTerms: true });
     expect([200, 201]).toContain(res.status);
     expect(res.body.data.roles).toContain(UserRole.USER);
     userId = res.body.data.id;
