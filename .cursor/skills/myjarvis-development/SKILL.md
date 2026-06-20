@@ -70,10 +70,10 @@ System prompt em `services/service-ai/src/domain/constants/jarvis-prompt.ts`:
 
 | Serviço | Integração gratuita |
 |---------|---------------------|
-| service-ai | Ollama `/api/chat` + tool calling |
+| service-ai | Ollama `/api/chat` + **RAG** (`nomic-embed-text`) + tool calling |
 | service-search | DuckDuckGo, Wikimedia, Archive.org |
-| service-voice | Metadados `clientSide: true` |
-| jarvis-web | Web Speech API (STT/TTS) |
+| service-voice | Piper TTS HTTP (`pt_BR-faber-medium`); STT `clientSide: true` |
+| jarvis-web | Web Speech STT; TTS via `/api/voice/synthesize` + fallback browser |
 
 ## Documentação a Atualizar
 

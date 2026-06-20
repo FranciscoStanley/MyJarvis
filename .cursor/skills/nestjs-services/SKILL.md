@@ -49,14 +49,19 @@ SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
 
 ## Health Check
 
-Todo serviço expõe:
+Todo serviço expõe `GET /api/health` (prefixo global `/api`):
 
 ```typescript
-@Get()
-check() {
-  return { status: 'ok', service: 'service-name', version: '1.0.0', uptime: process.uptime() };
+@Controller('health')
+export class HealthController {
+  @Get()
+  check() {
+    return { status: 'ok', service: 'service-name', version: '1.0.0', uptime: process.uptime() };
+  }
 }
 ```
+
+`service-ai` inclui status RAG: `{ rag: { ready, embedModel, chunks: 8 } }`.
 
 ## Testes (Vitest)
 
@@ -85,8 +90,8 @@ npm run test:watch -w service-auth
 |---------|-------|------|
 | service-gateway | 3000 | Proxy HTTP |
 | service-auth | 3001 | JWT + PostgreSQL |
-| service-ai | 3002 | Ollama + chat JARVIS |
-| service-voice | 3003 | Metadados voz client-side |
+| service-ai | 3002 | Ollama + RAG + chat JARVIS |
+| service-voice | 3003 | Piper TTS + metadados STT client-side |
 | service-search | 3004 | DuckDuckGo, Wikimedia |
 | service-notifications | 3005 | Notificações in-memory |
 | service-media | 3006 | Mídia reproduzível |

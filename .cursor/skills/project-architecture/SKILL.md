@@ -23,7 +23,8 @@ flowchart TB
     GW --> NOTIF[service-notifications :3005]
     GW --> MEDIA[service-media :3006]
 
-    AI --> OLLAMA[(Ollama :11434)]
+    AI --> OLLAMA[(Ollama :11434<br/>chat + RAG)]
+    VOICE --> PIPER[(Piper :5000)]
     AUTH --> PG[(PostgreSQL)]
     SEARCH --> EXT[DuckDuckGo · Wikimedia · Archive.org]
 ```
@@ -38,7 +39,7 @@ flowchart TB
     ROOT --> CURSOR[".cursor/rules + skills"]
     ROOT --> SERVICES["services/ — 7 microserviços"]
     ROOT --> FRONTENDS["frontends/jarvis-web"]
-    ROOT --> PACKAGES["packages/shared"]
+    ROOT --> PACKAGES["packages/<br/>shared · nest-auth · nest-security · nest-vitest"]
     ROOT --> DOCS["docs/ + docker-compose.yml"]
 ```
 
@@ -64,6 +65,7 @@ flowchart TB
 | service-media | 3006 |
 | jarvis-web | 3100 |
 | Ollama | 11434 |
+| Piper TTS | 5000 |
 
 ## Skills Relacionadas
 

@@ -53,14 +53,15 @@ Endpoints usados:
 - `POST /api/chat/session`, `/message`
 - Nunca chamar serviços internos (3001–3006) diretamente
 
-## Voz (gratuito — Web Speech API)
+## Voz (STT browser + TTS Piper)
 
-| Função | API | Arquivo |
-|--------|-----|---------|
-| STT | `SpeechRecognition` | `hooks/useVoice.ts` |
-| TTS | `speechSynthesis` | `hooks/useVoice.ts` |
+| Função | API / Serviço | Arquivo |
+|--------|---------------|---------|
+| STT | `SpeechRecognition` (pt-BR) | `hooks/useVoice.ts` |
+| TTS | Piper via `POST /api/voice/synthesize` | `hooks/useVoice.ts`, `lib/api.ts` |
+| Fallback TTS | `speechSynthesis` pt-BR | `hooks/useVoice.ts` |
 
-Requisitos: Chrome/Edge, HTTPS ou localhost, permissão de microfone.
+Requisitos STT: Chrome/Edge, HTTPS ou localhost, permissão de microfone.
 
 ## Testes
 

@@ -18,12 +18,13 @@ alwaysApply: true
 
 | Necessidade | Solução |
 |-------------|---------|
-| IA | Ollama (local, MIT) |
+| IA / RAG | Ollama (local, MIT) + nomic-embed-text |
 | Busca web | DuckDuckGo + duck-duck-scrape |
 | Imagens | DuckDuckGo + Wikimedia Commons |
 | Vídeos | DuckDuckGo Videos |
 | Música | Internet Archive |
-| STT/TTS | Web Speech API no frontend |
+| STT | Web Speech API no frontend (pt-BR) |
+| TTS | Piper (`pt_BR-faber-medium`) via service-voice + fallback browser |
 
 ## Ao integrar nova feature
 

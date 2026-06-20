@@ -1,6 +1,6 @@
 ---
 name: free-open-source-stack
-description: Stack 100% gratuito do MyJarvis — Ollama, DuckDuckGo, Wikimedia, Internet Archive, Web Speech API. Use ao adicionar dependências, integrações ou validar que nenhuma API paga é necessária.
+description: Stack 100% gratuito do MyJarvis — Ollama, RAG, DuckDuckGo, Piper TTS, Web Speech API. Use ao adicionar dependências, integrações ou validar que nenhuma API paga é necessária.
 ---
 
 # Stack Gratuito — Sem Licenças Pagas
@@ -14,9 +14,10 @@ Documentação completa: [docs/free-stack.md](../../docs/free-stack.md)
 ```mermaid
 flowchart TB
     WEB[jarvis-web] --> GW[gateway]
-    WEB --> SPEECH[Web Speech API]
+    WEB --> STT[Web Speech STT]
 
-    GW --> AI[service-ai] --> OLLAMA[(Ollama)]
+    GW --> AI[service-ai + RAG] --> OLLAMA[(Ollama)]
+    GW --> VOICE[service-voice] --> PIPER[(Piper TTS)]
     GW --> SEARCH[service-search] --> DDG[DuckDuckGo · Wikimedia · Archive.org]
     GW --> AUTH[service-auth] --> PG[(PostgreSQL)]
 ```
@@ -33,28 +34,38 @@ flowchart TB
 | Necessidade | Solução | Licença |
 |-------------|---------|---------|
 | IA / Chat | Ollama + Llama 3.2 | MIT |
+| RAG / Embeddings | Ollama + nomic-embed-text | Apache 2.0 |
 | Busca web | DuckDuckGo + duck-duck-scrape | MIT |
 | Imagens | DuckDuckGo + Wikimedia Commons | MIT / CC |
 | Vídeos | DuckDuckGo Videos | MIT |
 | Música | Internet Archive | Domínio público |
-| STT | Web Speech API (browser) | W3C |
-| TTS | Web Speech Synthesis (browser) | W3C |
+| STT | Web Speech API (browser, pt-BR) | W3C |
+| TTS | Piper (`pt_BR-faber-medium`) + fallback browser | MIT / W3C |
 | Backend | NestJS | MIT |
 | Frontend | Next.js | MIT |
 | DB | PostgreSQL | PostgreSQL License |
 
-## Ollama (IA local)
+## Ollama (IA local + RAG)
 
 ```bash
 docker compose up -d ollama
-docker compose exec ollama ollama pull llama3.2
+# Modelos baixados via ollama-init no Docker (llama3.2 + nomic-embed-text)
 ```
 
 Variáveis:
 - `OLLAMA_BASE_URL=http://localhost:11434`
 - `OLLAMA_MODEL=llama3.2`
+- `OLLAMA_EMBED_MODEL=nomic-embed-text`
 
-Adapter: `services/service-ai/src/infrastructure/adapters/ollama.adapter.ts`
+Adapters:
+- Chat: `services/service-ai/src/infrastructure/adapters/ollama.adapter.ts`
+- RAG: `services/service-ai/src/infrastructure/adapters/ollama-rag.adapter.ts`
+
+## Piper TTS
+
+Variáveis: `PIPER_URL`, `PIPER_VOICE`, `PIPER_LENGTH_SCALE`
+
+Adapter: `services/service-voice/src/infrastructure/adapters/piper-voice.adapter.ts`
 
 ## Checklist ao Integrar Nova Feature
 
@@ -68,10 +79,10 @@ Adapter: `services/service-ai/src/infrastructure/adapters/ollama.adapter.ts`
 
 | Serviço | Adapter / Implementação |
 |---------|-------------------------|
-| service-ai | `OllamaAdapter` |
+| service-ai | `OllamaAdapter`, `OllamaRagAdapter` |
 | service-search | `FreeSearchAdapter` (duck-duck-scrape) |
-| service-voice | `FreeVoiceAdapter` (clientSide TTS/STT) |
-| jarvis-web | `useVoice.ts` (Web Speech API) |
+| service-voice | `PiperVoiceAdapter` (TTS); STT via browser |
+| jarvis-web | `useVoice.ts` (Web Speech STT + Piper TTS via API) |
 
 ## Skills Relacionadas
 

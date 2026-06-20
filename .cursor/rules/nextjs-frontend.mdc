@@ -14,7 +14,7 @@ alwaysApply: false
 - TypeScript strict
 - Tailwind CSS + shadcn/ui patterns
 - Zustand para estado global
-- React Query para cache de API
+- `lib/api.ts` para chamadas HTTP ao gateway
 
 ## Estrutura
 

@@ -15,7 +15,7 @@ flowchart TB
     ROOT[MyJarvis/] --> CURSOR[.cursor/]
     ROOT --> SERVICES[services/]
     ROOT --> FRONTENDS[frontends/jarvis-web]
-    ROOT --> PACKAGES[packages/shared]
+    ROOT --> PACKAGES["packages/<br/>shared · nest-auth · nest-security · nest-vitest"]
     ROOT --> DOCS[docs/]
 
     SERVICES --> GW[service-gateway]
@@ -63,3 +63,4 @@ flowchart LR
 | service-media | 3006 |
 | jarvis-web | 3100 |
 | Ollama | 11434 |
+| Piper TTS | 5000 |

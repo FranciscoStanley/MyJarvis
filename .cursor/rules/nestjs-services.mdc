@@ -44,7 +44,7 @@ export class XModule {}
 
 ## Health Check
 
-- Todo serviço expõe `GET /health` retornando `{ status: 'ok', service: 'service-name' }`
+- Todo serviço expõe `GET /api/health` retornando `{ status: 'ok', service: 'service-name' }` (prefixo global `/api`)
 
 ## Ao Modificar APIs
 
