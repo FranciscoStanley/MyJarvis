@@ -2,7 +2,7 @@ import { SearchResult } from './types';
 
 export type ClientActionType = 'open_url' | 'open_app' | 'play_embed';
 
-export type ClientApp = 'youtube' | 'spotify' | 'gmail' | 'browser';
+export type ClientApp = 'youtube' | 'spotify' | 'gmail' | 'browser' | 'cursor' | 'vscode';
 
 export interface ClientAction {
   id: string;
@@ -64,6 +64,16 @@ export function buildYoutubeSearchUrl(query: string): string {
 /** Monta URL do Gmail. */
 export function buildGmailUrl(): string {
   return 'https://mail.google.com';
+}
+
+/** Monta deep link do Cursor IDE. */
+export function buildCursorUrl(): string {
+  return 'cursor://file/';
+}
+
+/** Monta deep link do VS Code. */
+export function buildVscodeUrl(): string {
+  return 'vscode://file/';
 }
 
 /** Verifica se a URL é do YouTube. */

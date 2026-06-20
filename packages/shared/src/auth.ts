@@ -20,6 +20,9 @@ export interface AuthUser {
   roles: UserRole[];
   authSource: AuthSource;
   createdAt?: Date;
+  termsAcceptedAt?: Date | null;
+  termsVersion?: string | null;
+  hasAcceptedTerms?: boolean;
 }
 
 export const ROLE_HIERARCHY: Record<UserRole, number> = {

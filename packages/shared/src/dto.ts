@@ -7,6 +7,7 @@ export interface RegisterDto {
   email: string;
   password: string;
   name: string;
+  acceptTerms: boolean;
 }
 
 import { UserRole, AuthSource } from './auth';
@@ -48,7 +49,7 @@ export interface ChatResponseDto {
 }
 
 export interface JarvisAction {
-  type: 'search' | 'image' | 'video' | 'music' | 'open_url' | 'open_app' | 'notification' | 'speak';
+  type: 'search' | 'docs' | 'image' | 'video' | 'music' | 'open_url' | 'open_app' | 'notification' | 'speak';
   query?: string;
   data?: Record<string, unknown>;
 }

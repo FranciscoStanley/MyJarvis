@@ -24,3 +24,14 @@ export const JARVIS_PERSONALITY = {
   tone: 'british-elegant',
   traits: ['intelligent', 'witty', 'proactive', 'loyal', 'sophisticated'],
 } as const;
+
+/** Versão vigente dos Termos de Uso — reaceite necessário se mudar. */
+export const TERMS_VERSION = '2026-06-01';
+
+/** Indica se o usuário aceitou a versão atual dos termos. */
+export function hasAcceptedCurrentTerms(
+  termsAcceptedAt?: Date | string | null,
+  termsVersion?: string | null,
+): boolean {
+  return Boolean(termsAcceptedAt && termsVersion === TERMS_VERSION);
+}
