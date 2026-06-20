@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import {
   ClientAction,
@@ -24,6 +24,12 @@ import {
   synthesizeFallbackReply,
 } from '../../domain/services/response-synthesizer';
 import { buildActionAcknowledgement, isExplicitExecuteCommand } from '../../domain/services/action-intent';
+import { PEER_AI, PeerAiPort } from '../../domain/ports/peer-ai.port';
+import {
+  PersistLearningUseCase,
+  formatPeerInsight,
+  mergeSearchWithPeer,
+} from './learning.use-cases';
 
 export interface SendMessageInput {
   message: string;
@@ -44,6 +50,8 @@ export class SendMessageUseCase {
     @Inject(AI_PORT) private readonly ai: AiPort,
     @Inject(CONVERSATION_STORE) private readonly store: ConversationStorePort,
     @Inject(SEARCH_CLIENT) private readonly search: SearchClientPort,
+    @Optional() @Inject(PEER_AI) private readonly peerAi?: PeerAiPort,
+    @Optional() private readonly persistLearning?: PersistLearningUseCase,
   ) {}
 
   async execute(input: SendMessageInput): Promise<SendMessageOutput> {
@@ -68,8 +76,25 @@ export class SendMessageUseCase {
 
     const searchResults: SearchResult[] = [];
     const actionTypes: string[] = [];
+    let peerInsight = '';
+    let peerIdUsed = 'mistral';
 
     for (const action of actions) {
+      if (action.type === 'peer_ai') {
+        actionTypes.push('peer_ai');
+        if (!this.peerAi) continue;
+        peerIdUsed = String(action.data?.peerId ?? 'mistral');
+        const result = await this.peerAi.consult({
+          peerId: peerIdUsed,
+          question: action.query ?? input.message,
+          context: action.data?.context ? String(action.data.context) : undefined,
+        });
+        if (result.available) {
+          peerInsight = formatPeerInsight(peerIdUsed, result.answer);
+        }
+        continue;
+      }
+
       const needsSearch = action.query || action.type === 'docs';
       if (needsSearch) {
         actionTypes.push(action.type);
@@ -110,13 +135,15 @@ export class SendMessageUseCase {
 
     let finalReply = reply;
 
-    if (searchResults.length) {
+    const enrichedResults = mergeSearchWithPeer(searchResults, peerInsight, peerIdUsed);
+
+    if (enrichedResults.length) {
       const synthesized = await this.ai.synthesizeWithResults(
         input.message,
-        searchResults,
+        enrichedResults,
         actionTypes,
       );
-      finalReply = synthesized || synthesizeFallbackReply(input.message, searchResults, actionTypes);
+      finalReply = synthesized || synthesizeFallbackReply(input.message, enrichedResults, actionTypes);
     } else if (!finalReply.trim() || /^desculpe,?\s+n[aã]o consegui/i.test(finalReply.trim())) {
       finalReply = buildActionAcknowledgement(actions, input.message)
         || synthesizeFallbackReply(input.message, searchResults, actionTypes)
@@ -129,6 +156,14 @@ export class SendMessageUseCase {
     }
 
     const pendingClientActions = pendingOnly;
+
+    void this.persistLearning?.execute({
+      userMessage: input.message,
+      synthesizedReply: finalReply,
+      searchResults: enrichedResults.length ? enrichedResults : undefined,
+      actionTypes,
+      peerInsight: peerInsight || undefined,
+    });
 
     this.store.addMessage(sessionId, {
       id: randomUUID(),
@@ -146,7 +181,7 @@ export class SendMessageUseCase {
       reply: finalReply,
       sessionId,
       actions,
-      searchResults: searchResults.length ? searchResults : undefined,
+      searchResults: enrichedResults.length ? enrichedResults : undefined,
       clientActions: clientActions.length ? clientActions : undefined,
     };
   }

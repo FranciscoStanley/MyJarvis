@@ -45,6 +45,31 @@ export function detectActionsFromText(text: string): JarvisAction[] {
     return [{ type: 'docs', query: topic, data: { technology } }];
   }
 
+  if (/\b(consulte?|pergunte?)\s+(?:ao\s+|à\s+)?(?:ia\s+)?(mistral|gemma|llama|peer)\b/i.test(lower)
+      || /\bsegunda\s+opini[aã]o\b/i.test(lower)
+      || /\bconsultar?\s+outra\s+ia\b/i.test(lower)) {
+    const peerMatch = lower.match(/\b(mistral|gemma2?|llama3\.?2?)\b/);
+    return [{
+      type: 'peer_ai',
+      query: text,
+      data: { peerId: peerMatch?.[1] ?? 'mistral' },
+    }];
+  }
+
+  if (/\b(gest[aã]o de projetos?|scrum|sprint|roadmap|wbs|raci|equipe|lideran[cç]a)\b/i.test(lower)
+      && /\b(como|planej|organiz|estrutur)\b/i.test(lower)) {
+    return [{ type: 'search', query: `${extractSearchQuery(text)} project management agile best practices` }];
+  }
+
+  if (/\b(problema complexo|resolver|causa raiz|incidente|crise)\b/i.test(lower)) {
+    return [{ type: 'search', query: `${extractSearchQuery(text)} problem solving root cause analysis` }];
+  }
+
+  if (/\b(f[eé]\s+crist[aã]|evang[eé]lico|batista|b[ií]blia|jesus|cristo|deus)\b/i.test(lower)
+      && /\b(o que|como|explique|ensin)\b/i.test(lower)) {
+    return [{ type: 'search', query: 'cristianismo evangélico batista ensino bíblico' }];
+  }
+
   if (/^(abre|abra|abrir|open|entre|entrar|acesse|vá para|va para)\s/.test(lower)
       || /\b(?:preciso que|quero que)\s+(?:abra|abrir|entre|entrar)\b/.test(lower)) {
     if (/nova aba|aba (?:do )?navegador|aba em branco|new tab|navegador em branco/.test(lower)) {

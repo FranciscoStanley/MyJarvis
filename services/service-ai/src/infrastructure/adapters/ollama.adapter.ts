@@ -4,7 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { ChatMessage, JarvisAction, SearchResult } from '@myjarvis/shared';
 import { AiPort } from '../../domain/ports/ai.port';
-import { RAG_PORT, RagPort } from '../../domain/ports/rag.port';
+import { ContextEnrichmentService } from '../../application/services/context-enrichment.service';
 import { JARVIS_SYSTEM_PROMPT, JARVIS_TOOLS, JARVIS_SYNTHESIS_PROMPT, JARVIS_DOC_SYNTHESIS_PROMPT } from '../../domain/constants/jarvis-prompt';
 import { buildActionAcknowledgement } from '../../domain/services/action-intent';
 import { detectActionsFromText } from './action-detector';
@@ -25,7 +25,7 @@ export class OllamaAdapter implements AiPort {
   constructor(
     private readonly http: HttpService,
     config: ConfigService,
-    @Optional() @Inject(RAG_PORT) private readonly rag?: RagPort,
+    @Optional() private readonly contextEnrichment?: ContextEnrichmentService,
   ) {
     this.baseUrl = config.get('OLLAMA_BASE_URL', 'http://localhost:11434');
     this.model = config.get('OLLAMA_MODEL', 'llama3.2');
@@ -125,11 +125,11 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
   }
 
   private async buildSystemPrompt(userMessage: string): Promise<string> {
-    if (!this.rag) return JARVIS_SYSTEM_PROMPT;
+    if (!this.contextEnrichment) return JARVIS_SYSTEM_PROMPT;
     try {
-      const context = await this.rag.retrieve(userMessage);
+      const context = await this.contextEnrichment.buildEnrichedContext(userMessage);
       if (context) {
-        return `${JARVIS_SYSTEM_PROMPT}\n\n--- CONTEXTO RAG (capacidades e exemplos) ---\n${context}`;
+        return `${JARVIS_SYSTEM_PROMPT}\n\n${context}`;
       }
     } catch {
       /* fallback to base prompt */
@@ -168,12 +168,20 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
       music_search: 'music',
       open_url: 'open_url',
       open_application: 'open_app',
+      consult_peer_ai: 'peer_ai',
     };
 
     return msg.tool_calls.map((call) => {
       const raw = call.function.arguments;
       const args = typeof raw === 'string' ? JSON.parse(raw) : raw;
       const type = typeMap[call.function.name] ?? 'search';
+      if (type === 'peer_ai') {
+        return {
+          type: 'peer_ai',
+          query: args?.question ?? String(raw),
+          data: { peerId: args?.peer ?? args?.peerId ?? 'mistral', context: args?.context },
+        };
+      }
       if (type === 'docs') {
         return {
           type: 'docs',

@@ -43,7 +43,7 @@ export class SearchResultDto {
 
 export class JarvisActionDto {
   @ApiProperty({
-    enum: ['search', 'image', 'video', 'music', 'open_url', 'open_app', 'notification', 'speak'],
+    enum: ['search', 'docs', 'image', 'video', 'music', 'open_url', 'open_app', 'peer_ai', 'notification', 'speak'],
   })
   type!: string;
 
@@ -98,7 +98,23 @@ export class HealthResponseDto {
 
   @ApiPropertyOptional({
     description: 'Status do índice RAG (embeddings Ollama ou fallback por keywords)',
-    example: { ready: true, embedModel: 'nomic-embed-text', chunks: 32 },
+    example: {
+      ready: true,
+      embedModel: 'nomic-embed-text',
+      chunks: 45,
+      breakdown: { action: 11, dev: 17, ethics: 5, faith: 5, pm: 7 },
+    },
   })
-  rag?: { ready: boolean; embedModel: string; chunks: number };
+  rag?: {
+    ready: boolean;
+    embedModel: string;
+    chunks: number;
+    breakdown?: { action: number; dev: number; ethics: number; faith: number; pm: number };
+  };
+
+  @ApiPropertyOptional({
+    description: 'Memória de aprendizado persistente (filtrada por ética)',
+    example: { enabled: true, dataPath: './data/jarvis-learned-knowledge.json' },
+  })
+  learning?: { enabled: boolean; dataPath: string };
 }

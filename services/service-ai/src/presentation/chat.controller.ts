@@ -13,6 +13,7 @@ import {
   CreateSessionUseCase,
 } from '../application/use-cases/chat.use-cases';
 import { RAG_PORT, RagPort } from '../domain/ports/rag.port';
+import { LEARNING_STORE, LearningStorePort } from '../domain/ports/learning-store.port';
 import { KNOWLEDGE_STATS } from '../domain/knowledge/knowledge-index';
 
 @ApiTags('Chat')
@@ -38,9 +39,8 @@ export class ChatController {
   @ApiOperation({
     summary: 'Enviar mensagem ao JARVIS',
     description:
-      'Pipeline: RAG recupera contexto (ações + agente de desenvolvimento) → Ollama responde + tool calls → ' +
-      'buscas via service-search → clientActions para o PWA. Suporta code review, refatoração, skills/rules e ' +
-      'abertura de apps (YouTube, Cursor, VS Code). Comandos imperativos retornam requiresConfirmation=false.',
+      'Pipeline: RAG (45 chunks) + memória aprendida + Ollama + tools (doc_search, web_search, consult_peer_ai) → ' +
+      'buscas via service-search → aprendizado persistente filtrado por ética → clientActions para o PWA.',
   })
   @ApiResponse({ status: 200, description: 'Resposta do JARVIS com ações opcionais', type: SendMessageResponseDto })
   async message(@Body() dto: SendMessageRequestDto) {
@@ -63,10 +63,11 @@ export class HealthController {
   constructor(
     private readonly config: ConfigService,
     @Optional() @Inject(RAG_PORT) private readonly rag?: RagPort,
+    @Optional() @Inject(LEARNING_STORE) private readonly learning?: LearningStorePort,
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Health check do service-ai (inclui status RAG)' })
+  @ApiOperation({ summary: 'Health check do service-ai (RAG + aprendizado persistente)' })
   @ApiResponse({ status: 200, type: HealthResponseDto })
   check(): HealthResponseDto {
     return {
@@ -78,6 +79,17 @@ export class HealthController {
         ready: this.rag?.isReady() ?? false,
         embedModel: this.config.get('OLLAMA_EMBED_MODEL', 'nomic-embed-text'),
         chunks: KNOWLEDGE_STATS.total,
+        breakdown: {
+          action: KNOWLEDGE_STATS.actionChunks,
+          dev: KNOWLEDGE_STATS.devChunks,
+          ethics: KNOWLEDGE_STATS.ethicsChunks,
+          faith: KNOWLEDGE_STATS.faithChunks,
+          pm: KNOWLEDGE_STATS.pmChunks,
+        },
+      },
+      learning: {
+        enabled: Boolean(this.learning),
+        dataPath: this.config.get('LEARNING_DATA_PATH', './data/jarvis-learned-knowledge.json'),
       },
     };
   }
