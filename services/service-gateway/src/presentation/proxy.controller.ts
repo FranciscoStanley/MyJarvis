@@ -22,41 +22,41 @@ export class ProxyController {
 
   @Public()
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
-  @All('auth/*')
+  @All('auth/*path')
   @ApiOperation({ summary: 'Proxy para service-auth (rotas públicas de login)' })
   async proxyAuth(@Req() req: Request, @Body() body: unknown, @Headers() headers: Record<string, string>) {
     return this.handleProxy('auth', req, body, headers, undefined);
   }
 
-  @All('chat/*')
+  @All('chat/*path')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Proxy para service-ai (chat JARVIS)' })
   async proxyAi(@Req() req: AuthenticatedRequest, @Body() body: unknown, @Headers() headers: Record<string, string>) {
     return this.handleProxy('ai', req, body, headers, '/api/chat', req.user);
   }
 
-  @All('voice/*')
+  @All('voice/*path')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Proxy para service-voice' })
   async proxyVoice(@Req() req: AuthenticatedRequest, @Body() body: unknown, @Headers() headers: Record<string, string>) {
     return this.handleProxy('voice', req, body, headers, '/api/voice', req.user);
   }
 
-  @All('search/*')
+  @All('search/*path')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Proxy para service-search' })
   async proxySearch(@Req() req: AuthenticatedRequest, @Body() body: unknown, @Headers() headers: Record<string, string>) {
     return this.handleProxy('search', req, body, headers, '/api/search', req.user);
   }
 
-  @All('notifications/*')
+  @All('notifications/*path')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Proxy para service-notifications' })
   async proxyNotifications(@Req() req: AuthenticatedRequest, @Body() body: unknown, @Headers() headers: Record<string, string>) {
     return this.handleProxy('notifications', req, body, headers, '/api/notifications', req.user);
   }
 
-  @All('media/*')
+  @All('media/*path')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Proxy para service-media' })
   async proxyMedia(@Req() req: AuthenticatedRequest, @Body() body: unknown, @Headers() headers: Record<string, string>) {
