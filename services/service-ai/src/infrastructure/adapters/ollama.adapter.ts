@@ -1,11 +1,18 @@
-import { Injectable, Inject, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { ChatMessage, JarvisAction, SearchResult } from '@myjarvis/shared';
 import { AiPort } from '../../domain/ports/ai.port';
 import { ContextEnrichmentService } from '../../application/services/context-enrichment.service';
-import { JARVIS_SYSTEM_PROMPT, JARVIS_TOOLS, JARVIS_SYNTHESIS_PROMPT, JARVIS_DOC_SYNTHESIS_PROMPT } from '../../domain/constants/jarvis-prompt';
+import {
+  JARVIS_SYSTEM_PROMPT,
+  JARVIS_EXTENDED_PROMPT,
+  JARVIS_TOOLS,
+  JARVIS_SYNTHESIS_PROMPT,
+  JARVIS_DOC_SYNTHESIS_PROMPT,
+} from '../../domain/constants/jarvis-prompt';
+import { needsExtendedPrompt, shouldAttachTools } from '../../domain/services/prompt-strategy';
 import { buildActionAcknowledgement } from '../../domain/services/action-intent';
 import { detectActionsFromText } from './action-detector';
 
@@ -17,6 +24,7 @@ interface OllamaMessage {
 
 @Injectable()
 export class OllamaAdapter implements AiPort {
+  private readonly logger = new Logger(OllamaAdapter.name);
   private readonly baseUrl: string;
   private readonly model: string;
   private readonly chatTimeoutMs: number;
@@ -29,7 +37,7 @@ export class OllamaAdapter implements AiPort {
   ) {
     this.baseUrl = config.get('OLLAMA_BASE_URL', 'http://localhost:11434');
     this.model = config.get('OLLAMA_MODEL', 'llama3.2');
-    this.chatTimeoutMs = Number(config.get('OLLAMA_TIMEOUT_MS', 180_000));
+    this.chatTimeoutMs = Number(config.get('OLLAMA_TIMEOUT_MS', 360_000));
     this.synthesisTimeoutMs = Number(config.get('OLLAMA_SYNTHESIS_TIMEOUT_MS', 120_000));
   }
 
@@ -44,23 +52,23 @@ export class OllamaAdapter implements AiPort {
       }));
 
       const systemPrompt = await this.buildSystemPrompt(userMessage);
+      const extendedPrompt = needsExtendedPrompt(userMessage);
+      const payload: Record<string, unknown> = {
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...history,
+          { role: 'user', content: userMessage },
+        ],
+        stream: false,
+        options: { temperature: 0.85, num_predict: extendedPrompt ? 512 : 192 },
+      };
+      if (shouldAttachTools(userMessage)) {
+        payload.tools = JARVIS_TOOLS;
+      }
 
       const { data } = await firstValueFrom(
-        this.http.post(
-          `${this.baseUrl}/api/chat`,
-          {
-            model: this.model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...history,
-              { role: 'user', content: userMessage },
-            ],
-            tools: JARVIS_TOOLS,
-            stream: false,
-            options: { temperature: 0.85 },
-          },
-          { timeout: this.chatTimeoutMs },
-        ),
+        this.http.post(`${this.baseUrl}/api/chat`, payload, { timeout: this.chatTimeoutMs }),
       );
 
       const msg = data.message as OllamaMessage;
@@ -69,8 +77,9 @@ export class OllamaAdapter implements AiPort {
       const reply = this.resolveReply(msg, detected, userMessage);
 
       return { reply, actions: detected };
-    } catch {
-      return this.offlineResponse(userMessage);
+    } catch (err) {
+      this.logger.warn(`Ollama chat falhou: ${(err as Error).message}`);
+      return this.offlineResponse(userMessage, err);
     }
   }
 
@@ -104,6 +113,7 @@ ${resultsContext}
 Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Mencione o resultado mais relevante. Não liste URLs cruas.`;
 
     try {
+      const synthesisMaxTokens = actionTypes.includes('docs') ? 420 : 220;
       const { data } = await firstValueFrom(
         this.http.post(
           `${this.baseUrl}/api/chat`,
@@ -111,7 +121,7 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
             model: this.model,
             messages: [{ role: 'user', content: prompt }],
             stream: false,
-            options: { temperature: 0.75 },
+            options: { temperature: 0.75, num_predict: synthesisMaxTokens },
           },
           { timeout: this.synthesisTimeoutMs },
         ),
@@ -125,16 +135,19 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
   }
 
   private async buildSystemPrompt(userMessage: string): Promise<string> {
-    if (!this.contextEnrichment) return JARVIS_SYSTEM_PROMPT;
-    try {
-      const context = await this.contextEnrichment.buildEnrichedContext(userMessage);
-      if (context) {
-        return `${JARVIS_SYSTEM_PROMPT}\n\n${context}`;
-      }
-    } catch {
-      /* fallback to base prompt */
+    const sections = [JARVIS_SYSTEM_PROMPT];
+    if (needsExtendedPrompt(userMessage)) {
+      sections.push(JARVIS_EXTENDED_PROMPT);
     }
-    return JARVIS_SYSTEM_PROMPT;
+    if (this.contextEnrichment) {
+      try {
+        const context = await this.contextEnrichment.buildEnrichedContext(userMessage);
+        if (context) sections.push(context);
+      } catch {
+        /* fallback to base prompt */
+      }
+    }
+    return sections.join('\n\n');
   }
 
   private resolveReply(msg: OllamaMessage, actions: JarvisAction[], userMessage: string): string {
@@ -208,14 +221,21 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
     });
   }
 
-  private offlineResponse(userMessage: string): { reply: string; actions: JarvisAction[] } {
+  private offlineResponse(
+    userMessage: string,
+    err?: unknown,
+  ): { reply: string; actions: JarvisAction[] } {
     const actions = detectActionsFromText(userMessage);
     const hasActions = actions.length > 0;
+    const message = (err as Error)?.message?.toLowerCase() ?? '';
+    const timedOut = message.includes('timeout') || message.includes('timed out');
+
+    const fallback = timedOut
+      ? `Senhor, o Ollama demorou além do limite (${Math.round(this.chatTimeoutMs / 1000)}s) — comum em CPU sem GPU na primeira inferência. Aguarde e tente novamente; se persistir: docker compose restart ollama service-ai.`
+      : `Senhor, o serviço Ollama não respondeu. Verifique se está em execução: docker compose up ollama && docker exec myjarvis-ollama-1 ollama pull ${this.model}.`;
 
     return {
-      reply: hasActions
-        ? buildActionAcknowledgement(actions, userMessage)
-        : `Senhor, o serviço Ollama não respondeu. Verifique se está em execução: docker compose up ollama && docker exec myjarvis-ollama-1 ollama pull ${this.model}.`,
+      reply: hasActions ? buildActionAcknowledgement(actions, userMessage) : fallback,
       actions,
     };
   }

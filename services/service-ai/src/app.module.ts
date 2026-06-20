@@ -31,7 +31,7 @@ import { LearningController } from './presentation/learning.controller';
     HttpModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        timeout: Number(config.get('OLLAMA_TIMEOUT_MS', 180_000)) + 30_000,
+        timeout: Number(config.get('OLLAMA_TIMEOUT_MS', 360_000)) + 30_000,
       }),
       inject: [ConfigService],
     }),
