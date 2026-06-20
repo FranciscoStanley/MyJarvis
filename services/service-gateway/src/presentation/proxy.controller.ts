@@ -35,6 +35,13 @@ export class ProxyController {
     return this.handleProxy('ai', req, body, headers, '/api/chat', req.user);
   }
 
+  @All('learning/*path')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Proxy para service-ai (memória de aprendizado)' })
+  async proxyLearning(@Req() req: AuthenticatedRequest, @Body() body: unknown, @Headers() headers: Record<string, string>) {
+    return this.handleProxy('ai', req, body, headers, '/api/learning', req.user);
+  }
+
   @All('voice/*path')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Proxy para service-voice' })
@@ -71,7 +78,7 @@ export class ProxyController {
     pathPrefix = '/api/auth',
     user?: AuthenticatedRequest['user'],
   ) {
-    const subPath = req.url.replace(/^\/api\/(auth|chat|voice|search|notifications|media)/, '');
+    const subPath = req.url.replace(/^\/api\/(auth|chat|learning|voice|search|notifications|media)/, '');
     const targetPath = sanitizeProxyPath(`${pathPrefix}${subPath || ''}`);
 
     const safe = pickSafeForwardHeaders(headers, ['authorization', 'accept', 'accept-language']);
