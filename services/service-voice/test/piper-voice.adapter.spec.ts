@@ -8,7 +8,7 @@ describe('PiperVoiceAdapter', () => {
     get: vi.fn((key: string, fallback?: string) => {
       const map: Record<string, string> = {
         PIPER_URL: 'http://piper:5000',
-        PIPER_VOICE: 'en_GB-alan-medium.onnx',
+        PIPER_VOICE: 'pt_BR-faber-medium.onnx',
         PIPER_LENGTH_SCALE: '1.08',
       };
       return map[key] ?? fallback;
@@ -34,7 +34,7 @@ describe('PiperVoiceAdapter', () => {
       'http://piper:5000/',
       expect.objectContaining({
         text: 'Good morning, sir.',
-        voice: 'en_GB-alan-medium.onnx',
+        voice: 'pt_BR-faber-medium.onnx',
         length_scale: 1.08,
       }),
       expect.objectContaining({ responseType: 'arraybuffer' }),

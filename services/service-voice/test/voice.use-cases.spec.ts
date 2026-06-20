@@ -13,7 +13,7 @@ describe('Voice Use Cases (free stack)', () => {
       format: 'wav',
       clientSide: false,
       text: 'Good morning, sir.',
-      voice: 'en_GB-alan-medium',
+      voice: 'pt_BR-faber-medium',
     });
     const uc = new SynthesizeSpeechUseCase(mock as never);
     const result = await uc.execute({ text: 'Good morning, sir.' });
