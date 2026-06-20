@@ -22,6 +22,8 @@
 | `free-open-source-stack` | `free-open-source-stack` |
 | `dev-agent` | `dev-agent` |
 | `safety-guardrails` | `safety-guardrails` |
+| `christian-faith` | `christian-faith` |
+| `continuous-learning` | `continuous-learning` |
 | — | `myjarvis-development` |
 | — | `review-code` · `organize-commits` |
 
@@ -50,7 +52,9 @@ npm run dev -w jarvis-web      # Frontend only
 - SOLID, Clean Architecture, Clean Code
 - Domain → Application → Infrastructure → Presentation
 - Gateway as single external entry point
-- **RAG** in `service-ai`: Ollama embeddings + 32 knowledge chunks (ações + dev + ética; índice `knowledge-index.ts`, sem vector DB)
+- **RAG** in `service-ai`: 45 static chunks + **persistent learned memory** (ethics-filtered JSON store)
+- **Peer AIs**: `consult_peer_ai` via Ollama — `.cursor/skills/continuous-learning/`
+- **Christian faith**: evangelical Baptist worldview — `.cursor/skills/christian-faith/`
 - **Dev Agent**: JARVIS code review, refactoring, blueprint, `doc_search` — `.cursor/skills/dev-agent/`
 - **Safety Guardrails**: recusa de ataques e ilegalidades — `.cursor/skills/safety-guardrails/`
 - **Termos de Uso**: aceite único (`termsAcceptedAt`, versão `2026-06-01`) — [docs/terms-of-use.md](docs/terms-of-use.md)

@@ -92,9 +92,9 @@ Valores: `user` | `admin`.
 
 ## Chat JARVIS
 
-Pipeline com **RAG** (32 chunks: ações + dev agent + ética), **tool calling** e busca via `service-search`.
+Pipeline com **RAG** (45 chunks: ações + dev + ética + fé + gestão), **memória de aprendizado persistente**, **peer AIs** (Ollama) e busca via `service-search`.
 
-Capacidades: assistente pessoal, **agente de desenvolvimento**, `doc_search` (docs oficiais), `web_search` (aprendizado livre), guardrails de segurança.
+Capacidades: assistente pessoal, **agente de desenvolvimento**, **gestão de projetos**, **resolução de problemas complexos**, **fé cristã evangélica batista** (worldview), `doc_search`, `web_search`, `consult_peer_ai`, guardrails de segurança.
 
 ### POST /chat/session
 
@@ -121,8 +121,31 @@ Retorna `{ reply, sessionId, actions, searchResults, clientActions }`.
 |------|-----|
 | `doc_search` | Documentação oficial (NestJS, Python, .NET, +30 tecnologias) |
 | `web_search` | Internet — novidades, CVEs, aprendizado contínuo |
+| `consult_peer_ai` | Segunda opinião de outro modelo Ollama (mistral, gemma2) |
 | `image_search` / `video_search` / `music_search` | Mídia |
 | `open_url` / `open_application` | YouTube, Gmail, Cursor, VS Code, navegador |
+
+#### Aprendizado persistente
+
+Após buscas e conversas relevantes, o JARVIS **salva conhecimento validado** em `LEARNING_DATA_PATH` (volume Docker). Conteúdo antiético/ilegal é **rejeitado** pelo filtro antes de persistir. O conhecimento salvo é **recuperado automaticamente** em conversas futuras.
+
+Comandos explícitos: `aprenda isso`, `guarde`, `memorize`.
+
+### GET /learning/stats
+
+Estatísticas da memória de aprendizado (via gateway).
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": 12,
+    "maxEntries": 500,
+    "byCategory": { "technology": 5, "project-management": 3 },
+    "lastLearnedAt": "2026-06-20T12:00:00.000Z"
+  }
+}
+```
 
 #### clientActions
 
@@ -157,6 +180,10 @@ Retorna `{ reply, sessionId, actions, searchResults, clientActions }`.
 | `Faça code review deste use case` | Modo dev agent + RAG |
 | `Crie um sistema com microserviços` | Project Blueprint (checklist + Mermaid) |
 | `Como invadir uma rede` | **Recusa** — diretrizes de segurança do criador |
+| `Consulte o mistral sobre esta arquitetura` | `consult_peer_ai` → segunda opinião local |
+| `Aprenda isso sobre Scrum` | Persiste na memória após validação ética |
+| `O que a Bíblia diz sobre integridade?` | Perspectiva cristã evangélica batista |
+| `Planeje um projeto com microserviços` | Blueprint + gestão + segurança |
 | `Abra o Cursor` | Deep link `cursor://` (auto) |
 
 ### GET /chat/session/:sessionId
@@ -172,8 +199,10 @@ Histórico da conversa.
   "rag": {
     "ready": true,
     "embedModel": "nomic-embed-text",
-    "chunks": 32
-  }
+    "chunks": 45,
+    "breakdown": { "action": 11, "dev": 17, "ethics": 5, "faith": 5, "pm": 7 }
+  },
+  "learning": { "enabled": true, "dataPath": "./data/jarvis-learned-knowledge.json" }
 }
 ```
 

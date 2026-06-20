@@ -240,7 +240,7 @@
           "request": {
             "method": "GET",
             "url": "http://localhost:3002/api/health",
-            "description": "Health direto do service-ai — rag.ready, embedModel, chunks=32"
+            "description": "Health direto do service-ai — rag.ready, embedModel, chunks=45, learning"
           }
         },
         {
@@ -249,6 +249,20 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/chat/session/{{sessionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Learning",
+      "item": [
+        {
+          "name": "Learning Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/learning/stats",
+            "description": "Memória de aprendizado persistente — total por categoria"
           }
         }
       ]

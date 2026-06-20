@@ -142,9 +142,11 @@ flowchart LR
 |------------------|---------|
 | Conversação | Sessões, histórico, envio de mensagens ao JARVIS |
 | IA | Integração Ollama (modelo local, ex.: Llama 3.2) |
-| **RAG** | 32 chunks: `action-knowledge.ts` + `dev-knowledge.ts` + `ethics-knowledge.ts` |
-| Personalidade | System prompt + guardrails em `domain/constants/jarvis-prompt.ts` |
-| Ferramentas | `doc_search`, `web_search`, tool calling + `service-search` |
+| **RAG** | 45 chunks: ações + dev + ética + fé + PM (`knowledge-index.ts`) |
+| **Aprendizado** | Memória persistente JSON + `learning-validator` + recall no prompt |
+| **Peer AIs** | `consult_peer_ai` via Ollama (`OLLAMA_PEER_MODELS`) |
+| Personalidade | System prompt + guardrails + fé evangélica batista |
+| Ferramentas | `doc_search`, `web_search`, `consult_peer_ai`, tool calling + `service-search` |
 | Ações cliente | `clientActions` (YouTube, Google, Cursor, VS Code, embed) |
 
 **Não faz:** renderizar UI nem hospedar o modelo (Ollama é processo separado).
@@ -156,7 +158,13 @@ Estrutura RAG em `services/service-ai/src/`:
 | `domain/knowledge/action-knowledge.ts` | Chunks de ações (browser, YouTube, Cursor, VS Code) |
 | `domain/knowledge/dev-knowledge.ts` | Agente de desenvolvimento (review, refactor, blueprint) |
 | `domain/knowledge/ethics-knowledge.ts` | Guardrails de segurança e ética |
-| `domain/knowledge/knowledge-index.ts` | Índice unificado RAG (32 chunks) |
+| `domain/knowledge/faith-knowledge.ts` | Fé cristã evangélica batista |
+| `domain/knowledge/pm-knowledge.ts` | Gestão de projetos e problemas complexos |
+| `domain/knowledge/knowledge-index.ts` | Índice unificado RAG (45 chunks) |
+| `domain/services/learning-validator.ts` | Filtro ético antes de persistir aprendizado |
+| `infrastructure/adapters/file-learning-store.adapter.ts` | Memória persistente JSON |
+| `infrastructure/adapters/ollama-peer.adapter.ts` | Consulta a outros modelos Ollama |
+| `application/services/context-enrichment.service.ts` | RAG + memória aprendida no prompt |
 | `domain/constants/doc-registry.ts` | Mapa de documentações oficiais (30+ tecnologias) |
 | `domain/services/doc-search.ts` | Queries `site:dominio` para `doc_search` |
 | `domain/ports/rag.port.ts` | Interface `RagPort` |

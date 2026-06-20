@@ -98,12 +98,14 @@ Modelos recomendados (todos gratuitos):
 
 ## RAG — contexto para ações, dev agent e ética
 
-O `service-ai` usa RAG local com **32 chunks** (ações + desenvolvimento + ética) e ferramentas gratuitas:
+O `service-ai` usa RAG local com **45 chunks** (ações + dev + ética + fé + PM), **memória aprendida** e ferramentas gratuitas:
 
 | Capacidade | Implementação gratuita |
 |------------|------------------------|
 | Embeddings | Ollama `nomic-embed-text` |
 | `doc_search` | DuckDuckGo `site:dominio` (docs oficiais) |
+| `consult_peer_ai` | Outros modelos Ollama locais (mistral, gemma2) |
+| Aprendizado | JSON persistente (`LEARNING_DATA_PATH`) — filtrado por ética |
 | `web_search` | DuckDuckGo (aprendizado contínuo) |
 | Guardrails | Chunks `ethics-knowledge.ts` + prompt (sem API paga) |
 
@@ -111,7 +113,7 @@ O `service-ai` usa RAG local com **32 chunks** (ações + desenvolvimento + éti
 # Modelo de embedding (docker compose puxa automaticamente via ollama-init)
 docker compose exec ollama ollama pull nomic-embed-text
 
-# Verificar índice RAG (chunks: 32)
+# Verificar índice RAG (chunks: 45) + memória aprendida
 curl http://localhost:3002/api/health
 ```
 

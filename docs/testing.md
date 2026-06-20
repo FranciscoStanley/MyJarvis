@@ -66,7 +66,8 @@ packages/shared/test/           # hasAcceptedCurrentTerms, TERMS_VERSION
 
 | Arquivo | O que testa |
 |---------|-------------|
-| `test/ollama-rag.adapter.spec.ts` | Retrieve por keywords/embeddings; chunks ação + dev + **ética** |
+| `test/learning.spec.ts` | Validator, extractor, file-learning-store, filtro ético |
+| `test/ollama-rag.adapter.spec.ts` | Retrieve; chunks ação + dev + ética + fé + PM |
 | `test/doc-search.spec.ts` | `buildDocSearchQuery`, `doc-registry`, tecnologias suportadas |
 | `test/action-detector.spec.ts` | YouTube, Google, docs, segurança; word boundaries (`\bsom\b`) |
 | `test/action-intent.spec.ts` | Execução imediata vs confirmação |
@@ -126,5 +127,5 @@ Testes live/performance/stress são skipped automaticamente se serviços estiver
 |--------|--------|
 | `@myjarvis/shared` | 8 |
 | `service-auth` | 4+ |
-| `service-ai` | 54+ |
+| `service-ai` | 61+ |
 | `jarvis-web` | 16+ |

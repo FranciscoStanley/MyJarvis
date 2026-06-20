@@ -39,7 +39,7 @@
       "_type": "request",
       "_id": "req_ai_health",
       "parentId": "fld_health",
-      "name": "AI Service Health (RAG 32 chunks)",
+      "name": "AI Service Health (RAG 45 chunks + learning)",
       "method": "GET",
       "url": "http://localhost:3002/api/health"
     },

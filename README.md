@@ -35,7 +35,7 @@ flowchart TB
     GW --> NOTIF[service-notifications :3005]
     GW --> MEDIA[service-media :3006]
 
-    AI --> OLLAMA[(Ollama :11434<br/>chat + RAG 32 chunks)]
+    AI --> OLLAMA[(Ollama :11434<br/>chat + RAG 45 chunks)]
     AI --> SEARCH
     VOICE --> PIPER[(Piper :5000)]
     SEARCH --> DDG[DuckDuckGo / Wikimedia / Archive.org]
@@ -77,7 +77,7 @@ docker compose up -d --build
 |---------|-------|---------------------|
 | `service-gateway` | 3000 | Proxy, JWT, RBAC |
 | `service-auth` | 3001 | PostgreSQL, LDAP, JWT |
-| `service-ai` | 3002 | Ollama + **RAG** (32 chunks: ações + dev + ética) + `doc_search` + tool calling |
+| `service-ai` | 3002 | Ollama + **RAG** (45 chunks) + memória aprendida + `doc_search` + `consult_peer_ai` |
 | `service-voice` | 3003 | Piper TTS (STT no browser) |
 | `service-search` | 3004 | DuckDuckGo + Wikimedia + Archive.org |
 | `service-notifications` | 3005 | Notificações in-memory |
@@ -147,6 +147,8 @@ Lista completa: [.env.example](.env.example)
 | `free-open-source-stack` | `free-open-source-stack` |
 | `dev-agent` | `dev-agent` |
 | `safety-guardrails` | `safety-guardrails` |
+| `christian-faith` | `christian-faith` |
+| `continuous-learning` | `continuous-learning` |
 | — | `myjarvis-development` (orquestrador) |
 | — | `review-code` · `organize-commits` |
 

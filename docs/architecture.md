@@ -33,7 +33,7 @@ flowchart TB
 
     subgraph Infra["Infraestrutura"]
         PG[(PostgreSQL)]
-        OLLAMA[(Ollama :11434<br/>chat + RAG 32 chunks)]
+        OLLAMA[(Ollama :11434<br/>chat + RAG 45 chunks)]
         PIPER[(Piper TTS :5000)]
         REDIS[(Redis — reservado)]
     end
@@ -151,9 +151,9 @@ sequenceDiagram
     end
     W->>G: POST /api/chat/message
     G->>AI: Forward
-    AI->>RAG: retrieve(mensagem)
-    RAG-->>AI: Contexto (ações, dev, ética, docs…)
-    AI->>O: POST /api/chat + tools (doc_search, web_search…)
+    AI->>RAG: retrieve + memória aprendida
+    RAG-->>AI: Contexto (ações, dev, ética, fé, PM, aprendido…)
+    AI->>O: POST /api/chat + tools (doc_search, web_search, consult_peer_ai…)
     O-->>AI: Resposta + tool calls
     opt Busca necessária
         AI->>S: POST /api/search/*
@@ -181,6 +181,37 @@ sequenceDiagram
         W->>W: Reproduz áudio (fallback speechSynthesis pt-BR)
     end
     W-->>U: Texto + ações + embed
+```
+
+## Aprendizado Contínuo e Peer AIs
+
+```mermaid
+sequenceDiagram
+    participant U as Usuário
+    participant AI as service-ai
+    participant O as Ollama
+    participant P as Peer (mistral/gemma2)
+    participant S as service-search
+    participant V as learning-validator
+    participant M as Memória JSON
+
+    U->>AI: Mensagem / "aprenda isso"
+    AI->>O: chat + RAG + memória aprendida
+    opt Segunda opinião
+        AI->>P: consult_peer_ai
+        P-->>AI: Resposta peer
+    end
+    opt Busca
+        AI->>S: web_search / doc_search
+        S-->>AI: Resultados
+    end
+    AI->>V: Candidato a aprendizado
+    alt Conteúdo ético
+        V->>M: Persistir entrada
+    else Bloqueado
+        V-->>AI: Rejeitar (log)
+    end
+    AI-->>U: Resposta + conhecimento aplicado
 ```
 
 ## Autenticação e Termos de Uso
@@ -237,9 +268,10 @@ flowchart LR
 
 - **Gateway único**: frontend nunca acessa serviços internos diretamente
 - **Ports & Adapters**: Ollama, DuckDuckGo, Piper etc. são substituíveis sem alterar use cases
-- **RAG local**: 32 chunks em `action-knowledge.ts` + `dev-knowledge.ts` + `ethics-knowledge.ts` (índice `knowledge-index.ts`), embeddings Ollama ou fallback keywords
-- **Dev Agent**: code review, refactor, blueprint de projetos, `doc_search` — `.cursor/skills/dev-agent/`
-- **Safety Guardrails**: recusa de ataques/ilegalidades; cita diretrizes do criador — `.cursor/skills/safety-guardrails/`
+- **RAG local**: 45 chunks (ações + dev + ética + fé + PM) + **memória aprendida persistente** filtrada por ética
+- **Peer AIs**: `consult_peer_ai` via Ollama (`OLLAMA_PEER_MODELS`) — stack gratuita
+- **Fé cristã evangélica batista**: worldview do JARVIS — `.cursor/skills/christian-faith/`
+- **Gestão de projetos**: Scrum, problemas complexos, entrega segura — chunks `pm-knowledge.ts`
 - **Termos de Uso**: aceite único no cadastro (`termsAcceptedAt`) — [terms-of-use.md](terms-of-use.md)
 - **Aprendizado contínuo**: `web_search` + `doc_search` — JARVIS não limitado ao RAG estático
 - **Sessões in-memory**: conversas em memória (Redis reservado para produção futura)
