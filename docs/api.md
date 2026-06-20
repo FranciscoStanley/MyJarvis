@@ -63,7 +63,13 @@ Cria nova sessão de conversa.
 ```json
 { "message": "JARVIS, busque notícias sobre IA", "sessionId": "uuid-opcional" }
 ```
-Retorna `{ reply, sessionId, actions, searchResults }`.
+Retorna `{ reply, sessionId, actions, searchResults, clientActions }`.
+
+- `reply` — resposta conversacional sintetizada (estilo JARVIS)
+- `searchResults` — resultados de busca quando aplicável
+- `clientActions` — ações executáveis no cliente (abrir URL, YouTube, Spotify, reproduzir embed). Com `requiresConfirmation: true` até o usuário confirmar ("sim", botão na UI ou voz)
+
+Fluxo de confirmação: após busca, JARVIS pergunta se deseja abrir/reproduzir → usuário responde `sim`, `não`, ou escolhe opção específica (`abre no spotify`) → `clientActions` retornam com `requiresConfirmation: false` para execução imediata no navegador/PWA.
 
 ### GET /chat/session/:sessionId
 Histórico da conversa.
@@ -71,6 +77,8 @@ Histórico da conversa.
 ## Voz (gratuito — Web Speech API)
 
 A transcrição e síntese acontecem **no navegador** (Chrome/Edge). O backend retorna metadados `clientSide: true`.
+
+TTS no frontend usa voz **en-GB** quando disponível (estilo JARVIS), com tom grave e pausado. Não replica a voz original do filme (direitos autorais); aproxima via `speechSynthesis` nativo.
 
 ### POST /voice/transcribe
 Preferir microfone no app. Endpoint orienta uso do Web Speech API.

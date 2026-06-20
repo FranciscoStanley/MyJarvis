@@ -57,8 +57,8 @@ LDAP_ENABLED=true
 LDAP_URL=ldap://seu-servidor:389
 LDAP_BASE_DN=dc=empresa,dc=com
 LDAP_ADMIN_GROUP_DN=cn=admins,ou=groups,dc=empresa,dc=com
-ADMIN_SEED_EMAIL=admin@myjarvis.local
-ADMIN_SEED_PASSWORD=...
+ADMIN_SEED_EMAIL=franciscothestanley@gmail.com
+ADMIN_SEED_PASSWORD="Root@password#2100"
 ```
 
 ### Dev sem LDAP

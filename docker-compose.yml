@@ -41,6 +41,18 @@ services:
       retries: 5
       start_period: 30s
 
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c", "OLLAMA_HOST=http://ollama:11434 ollama pull $${OLLAMA_MODEL:-llama3.2}"]
+    environment:
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+
   service-auth:
     build:
       context: .
@@ -52,8 +64,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-myjarvis}:${POSTGRES_PASSWORD:-myjarvis_secret}@postgres:5432/${POSTGRES_DB:-myjarvis}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@myjarvis.local}
-      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-AdminSeguro123!}
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-franciscothestanley@gmail.com}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-Root@password#2100}
       ADMIN_SEED_NAME: ${ADMIN_SEED_NAME:-Administrador}
       LDAP_ENABLED: ${LDAP_ENABLED:-false}
       LDAP_URL: ${LDAP_URL:-ldap://ldap:389}
@@ -81,8 +93,12 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
       SEARCH_SERVICE_URL: http://service-search:3004
     depends_on:
-      - ollama
-      - service-search
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+      service-search:
+        condition: service_started
 
   service-voice:
     build:
