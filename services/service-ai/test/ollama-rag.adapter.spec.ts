@@ -24,4 +24,9 @@ describe('OllamaRagAdapter', () => {
     const context = await adapter.retrieve('busque no google notícias de IA', 2);
     expect(context.toLowerCase()).toMatch(/google|busca/);
   });
+
+  it('should return creator identity for origin questions', async () => {
+    const context = await adapter.retrieve('quem te criou?', 2);
+    expect(context).toContain('Francisco Stanley Rodrigues Albuquerque');
+  });
 });
