@@ -15,11 +15,13 @@ export type ServiceName =
 @Injectable()
 export class ProxyService {
   private readonly serviceUrls: Record<ServiceName, string>;
+  private readonly aiProxyTimeoutMs: number;
 
   constructor(
     private readonly http: HttpService,
     config: ConfigService,
   ) {
+    this.aiProxyTimeoutMs = Number(config.get('AI_PROXY_TIMEOUT_MS', 360_000));
     this.serviceUrls = {
       auth: config.get('AUTH_SERVICE_URL', 'http://localhost:3001'),
       ai: config.get('AI_SERVICE_URL', 'http://localhost:3002'),
@@ -59,7 +61,7 @@ export class ProxyService {
           ...headers,
         },
         maxRedirects: 0,
-        timeout: service === 'ai' ? 120_000 : 30_000,
+        timeout: service === 'ai' ? this.aiProxyTimeoutMs : 30_000,
         validateStatus: (status) => status < 500,
       }),
     );
