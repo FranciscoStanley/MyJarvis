@@ -61,7 +61,7 @@ export class HealthController {
 }
 ```
 
-`service-ai` inclui status RAG: `{ rag: { ready, embedModel, chunks: 8 } }`.
+`service-ai` inclui status RAG: `{ rag: { ready, embedModel, chunks } }` (total dinâmico via `knowledge-index.ts`).
 
 ## Testes (Vitest)
 

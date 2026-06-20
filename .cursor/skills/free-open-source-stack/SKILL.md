@@ -34,7 +34,8 @@ flowchart TB
 | Necessidade | Solução | Licença |
 |-------------|---------|---------|
 | IA / Chat | Ollama + Llama 3.2 | MIT |
-| RAG / Embeddings | Ollama + nomic-embed-text | Apache 2.0 |
+| RAG / Embeddings | Ollama + nomic-embed-text (32 chunks locais) | Apache 2.0 |
+| Docs oficiais | `doc_search` via DuckDuckGo `site:` | MIT |
 | Busca web | DuckDuckGo + duck-duck-scrape | MIT |
 | Imagens | DuckDuckGo + Wikimedia Commons | MIT / CC |
 | Vídeos | DuckDuckGo Videos | MIT |

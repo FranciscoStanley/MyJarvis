@@ -19,6 +19,8 @@ Skill principal de workflow. Carregue skills específicas conforme o domínio.
 | [free-open-source-stack](free-open-source-stack/SKILL.md) | Dependências, integrações externas |
 | [review-code](review-code/SKILL.md) | Code review, CI 3 etapas, antes de push |
 | [organize-commits](organize-commits/SKILL.md) | Separar e commitar de forma organizada |
+| [dev-agent](dev-agent/SKILL.md) | Agente de codificação, review, refactor, doc_search, blueprint |
+| [safety-guardrails](safety-guardrails/SKILL.md) | Ética, recusa de ataques, LGPD, diretrizes do criador |
 
 Índice completo: [.cursor/skills/README.md](README.md)
 
@@ -61,16 +63,18 @@ npm run ci:pipeline   # 3 etapas — obrigatório antes de push
 
 System prompt em `services/service-ai/src/domain/constants/jarvis-prompt.ts`:
 
-- Tom britânico elegante, inteligente, levemente irônico
-- Proativo como assistente pessoal
-- Humor sutil quando apropriado
+- Tom britânico elegante, inteligente, humor seco estilo Homem de Ferro
+- Proativo como assistente pessoal **e** agente de desenvolvimento
+- Code review, refatoração, skills/rules, documentação com precisão técnica
 - Responde no idioma do usuário (padrão: português)
+
+Skill do agente de codificação: [dev-agent](dev-agent/SKILL.md)
 
 ## Integrações por Serviço
 
 | Serviço | Integração gratuita |
 |---------|---------------------|
-| service-ai | Ollama `/api/chat` + **RAG** (`nomic-embed-text`) + tool calling |
+| service-ai | Ollama `/api/chat` + **RAG** + `doc_search` (docs oficiais) + `web_search` (aprendizado livre) + tool calling |
 | service-search | DuckDuckGo, Wikimedia, Archive.org |
 | service-voice | Piper TTS HTTP (`pt_BR-faber-medium`); STT `clientSide: true` |
 | jarvis-web | Web Speech STT; TTS via `/api/voice/synthesize` + fallback browser |
@@ -84,6 +88,7 @@ Ao mudar funcionalidades, sempre:
 3. `docs/postman/myjarvis.postman_collection.json`
 4. `docs/insomnia/myjarvis.insomnia.json`
 5. `docs/api.md` + README do serviço
+6. `docs/terms-of-use.md` / `docs/privacy-policy.md` se mudar versão legal (`TERMS_VERSION` em `@myjarvis/shared`)
 
 ## Rules Correspondentes
 

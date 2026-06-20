@@ -23,7 +23,8 @@ Skill correspondente à regra `.cursor/rules/nextjs-frontend.mdc`.
 ```mermaid
 flowchart TB
     SRC[src/] --> APP[app/<br/>layout · page · globals.css]
-    SRC --> COMP[components/jarvis/<br/>Orb · Chat · Input · Auth]
+    SRC --> COMP[components/jarvis/<br/>Orb · Chat · Auth · TermsAccept]
+    SRC --> PAGES[app/terms · app/privacy]
     SRC --> HOOKS[hooks/<br/>useVoice.ts]
     SRC --> LIB[lib/<br/>api.ts → Gateway]
     SRC --> STORES[stores/<br/>jarvis.store.ts]
@@ -49,9 +50,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 ```
 
 Endpoints usados:
-- `POST /api/auth/login`, `/register`
+- `POST /api/auth/login`, `/register` (com `acceptTerms`), `/accept-terms`
+- `GET /api/auth/profile` — `hasAcceptedTerms`
 - `POST /api/chat/session`, `/message`
 - Nunca chamar serviços internos (3001–3006) diretamente
+
+## Termos de Uso (gate de acesso)
+
+- `jarvis.store.ts`: `needsTermsAcceptance` derivado de `user.hasAcceptedTerms`
+- `page.tsx`: exibe `TermsAcceptModal` antes do chat se necessário
+- Links legais: `/terms`, `/privacy` — conteúdo em `docs/terms-of-use.md` e `docs/privacy-policy.md`
 
 ## Voz (STT browser + TTS Piper)
 

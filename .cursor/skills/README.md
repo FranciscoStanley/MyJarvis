@@ -14,6 +14,8 @@ Cada **regra** em `.cursor/rules/` tem uma **skill** correspondente em `.cursor/
 | `free-open-source-stack.mdc` | [free-open-source-stack](free-open-source-stack/SKILL.md) | Stack gratuito, Ollama, DuckDuckGo |
 | `review-code.mdc` | [review-code](review-code/SKILL.md) | Code review, CI/CD 3 etapas, pre-push |
 | `organize-commits.mdc` | [organize-commits](organize-commits/SKILL.md) | Commits atômicos, Conventional Commits |
+| `dev-agent.mdc` | [dev-agent](dev-agent/SKILL.md) | Agente de codificação, review, refactor, skills/rules |
+| `safety-guardrails.mdc` | [safety-guardrails](safety-guardrails/SKILL.md) | Ética, recusa de ataques, LGPD |
 | — | [myjarvis-development](myjarvis-development/SKILL.md) | Fluxo geral de desenvolvimento |
 
 ## Como funciona

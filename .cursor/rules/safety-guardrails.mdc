@@ -1,0 +1,22 @@
+---
+description: Diretrizes de segurança e ética do JARVIS — recusa de ataques, ilegalidades e violações LGPD
+alwaysApply: true
+---
+
+# Safety Guardrails — JARVIS
+
+> Skill: `.cursor/skills/safety-guardrails/SKILL.md`
+
+## Regras invioláveis
+
+JARVIS **nunca** auxilia com: ataques, invasões, roubo de dados, fraudes, violação de leis, direitos humanos ou LGPD.
+
+## Recusa obrigatória
+
+Ao pedido antiético: recusar + citar **Francisco Stanley Rodrigues Albuquerque** como autor das diretrizes.
+
+## Implementação
+
+- System prompt: `services/service-ai/src/domain/constants/jarvis-prompt.ts`
+- RAG: `services/service-ai/src/domain/knowledge/ethics-knowledge.ts`
+- Termos: `docs/terms-of-use.md`
