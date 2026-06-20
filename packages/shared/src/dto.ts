@@ -49,7 +49,7 @@ export interface ChatResponseDto {
 }
 
 export interface JarvisAction {
-  type: 'search' | 'docs' | 'image' | 'video' | 'music' | 'open_url' | 'open_app' | 'notification' | 'speak';
+  type: 'search' | 'docs' | 'image' | 'video' | 'music' | 'open_url' | 'open_app' | 'notification' | 'speak' | 'peer_ai';
   query?: string;
   data?: Record<string, unknown>;
 }
