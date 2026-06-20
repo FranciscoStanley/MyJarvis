@@ -33,8 +33,9 @@ flowchart TB
 
     subgraph Infra["Infraestrutura"]
         PG[(PostgreSQL)]
-        REDIS[(Redis)]
-        OLLAMA[(Ollama :11434)]
+        OLLAMA[(Ollama :11434<br/>chat + embeddings)]
+        PIPER[(Piper TTS :5000)]
+        REDIS[(Redis — reservado)]
     end
 
     subgraph External["APIs públicas gratuitas"]
@@ -46,6 +47,7 @@ flowchart TB
     AUTH --> PG
     AI --> OLLAMA
     AI --> SEARCH
+    VOICE --> PIPER
     SEARCH --> DDG & WIKI & ARCH
     MEDIA --> SEARCH
 ```
@@ -59,7 +61,7 @@ flowchart TB
     ROOT --> CURSOR[".cursor/<br/>rules + skills"]
     ROOT --> SERVICES["services/<br/>7 microserviços"]
     ROOT --> FRONTENDS["frontends/<br/>jarvis-web"]
-    ROOT --> PACKAGES["packages/<br/>shared"]
+    ROOT --> PACKAGES["packages/<br/>shared · nest-auth · nest-security · nest-vitest"]
     ROOT --> DOCS["docs/"]
     ROOT --> DOCKER["docker-compose.yml"]
 
@@ -138,6 +140,8 @@ sequenceDiagram
     participant RAG as RAG (OllamaRagAdapter)
     participant O as Ollama
     participant S as service-search
+    participant V as service-voice
+    participant P as Piper
     participant DDG as DuckDuckGo
 
     U->>W: Fala ou digita
@@ -169,10 +173,12 @@ sequenceDiagram
         W->>W: window.open / embed
     end
     opt Resposta falada
-        W->>V: POST /voice/synthesize (Piper en_GB-alan)
-        V->>P: HTTP TTS
-        W->>W: Reproduz áudio WAV (fallback speechSynthesis)
-        B-->>U: Áudio
+        W->>G: POST /api/voice/synthesize
+        G->>V: Forward
+        V->>P: HTTP TTS (pt_BR-faber-medium)
+        P-->>V: WAV
+        V-->>W: audioBase64
+        W->>W: Reproduz áudio (fallback speechSynthesis pt-BR)
     end
     W-->>U: Texto + ações + embed
 ```
@@ -204,22 +210,26 @@ flowchart LR
         direction TB
         WEB_C[jarvis-web :3100]
         GW_C[service-gateway :3000]
-        MS_C[6 microserviços]
+        MS_C[7 microserviços NestJS]
         PG_C[(postgres)]
-        RD_C[(redis)]
         OL_C[(ollama)]
+        OL_I[ollama-init]
+        PP_C[piper :5000]
     end
 
     WEB_C --> GW_C --> MS_C
-    MS_C --> PG_C & RD_C
+    MS_C --> PG_C
     MS_C --> OL_C
+    OL_I --> OL_C
+    MS_C --> PP_C
 ```
 
 ## Decisões de Design
 
 - **Gateway único**: frontend nunca acessa serviços internos diretamente
-- **Ports & Adapters**: Ollama, DuckDuckGo etc. são substituíveis sem alterar use cases
-- **Sessões in-memory**: conversas em memória (Redis em produção futura)
+- **Ports & Adapters**: Ollama, DuckDuckGo, Piper etc. são substituíveis sem alterar use cases
+- **RAG local**: 8 chunks estáticos em `action-knowledge.ts`, embeddings Ollama (`nomic-embed-text`) ou fallback por keywords — sem vector DB
+- **Sessões in-memory**: conversas em memória (Redis reservado para produção futura)
 - **PWA**: mobile via Progressive Web App, sem app nativo separado
 - **Stack gratuito**: sem APIs pagas — ver [free-stack.md](free-stack.md)
 

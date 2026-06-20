@@ -4,7 +4,7 @@
 
 - `services/` — NestJS microservices (Clean Architecture)
 - `frontends/jarvis-web/` — Next.js PWA
-- `packages/shared/` — Shared types and DTOs
+- `packages/` — `@myjarvis/shared`, `nest-auth`, `nest-security`, `nest-vitest`
 - `docs/` — Documentation, Postman, Insomnia collections
 
 ## Cursor — Rules & Skills
@@ -30,12 +30,12 @@ Comece por `myjarvis-development` e carregue a skill do domínio. Índice: `.cur
 2. Update Swagger decorators on API changes
 3. Update Vitest tests
 4. Update `docs/postman/` and `docs/insomnia/` collections
-5. Update relevant README files
+5. Update relevant README files and Mermaid diagrams in `docs/`
 
 ## Key Commands
 
 ```bash
-docker compose up -d --build   # Full stack
+docker compose up -d --build   # Full stack (ollama-init + piper)
 npm test                       # All tests
 npm run dev -w jarvis-web      # Frontend only
 ```
@@ -45,11 +45,15 @@ npm run dev -w jarvis-web      # Frontend only
 - SOLID, Clean Architecture, Clean Code
 - Domain → Application → Infrastructure → Presentation
 - Gateway as single external entry point
+- **RAG** in `service-ai`: Ollama embeddings + 8 static chunks (no vector DB)
 - **Diagramas de arquitetura em Mermaid** — ver [docs/architecture.md](docs/architecture.md)
 
 ```mermaid
 flowchart LR
-    WEB[jarvis-web] --> GW[gateway] --> MS[microserviços]
-    MS --> OLLAMA[(Ollama)]
-    MS --> PG[(PostgreSQL)]
+    WEB[jarvis-web :3100] --> GW[gateway :3000]
+    GW --> AUTH[auth] & AI[ai + RAG] & VOICE[voice] & SEARCH[search] & NOTIF[notif] & MEDIA[media]
+    AI --> OLLAMA[(Ollama)]
+    AI --> SEARCH
+    VOICE --> PIPER[(Piper TTS)]
+    AUTH --> PG[(PostgreSQL)]
 ```

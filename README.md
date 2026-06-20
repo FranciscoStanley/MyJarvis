@@ -10,9 +10,11 @@ Assistente de IA pessoal inspirado no **JARVIS** — inteligente, com humor, voz
 
 | Componente | Tecnologia | Licença |
 |------------|-----------|---------|
-| IA | Ollama + Llama 3.2 | MIT |
+| IA / Chat | Ollama + Llama 3.2 | MIT |
+| RAG / Embeddings | Ollama + nomic-embed-text | Apache 2.0 |
 | Busca | DuckDuckGo, Wikimedia, Internet Archive | MIT / CC |
-| Voz | Web Speech API (navegador) | W3C |
+| Voz (STT) | Web Speech API (navegador, pt-BR) | W3C |
+| Voz (TTS) | Piper (`pt_BR-faber-medium`) + fallback browser | MIT / W3C |
 | Backend | NestJS | MIT |
 | Frontend | Next.js PWA | MIT |
 
@@ -33,8 +35,9 @@ flowchart TB
     GW --> NOTIF[service-notifications :3005]
     GW --> MEDIA[service-media :3006]
 
-    AI --> OLLAMA[(Ollama :11434)]
+    AI --> OLLAMA[(Ollama :11434<br/>chat + RAG)]
     AI --> SEARCH
+    VOICE --> PIPER[(Piper :5000)]
     SEARCH --> DDG[DuckDuckGo / Wikimedia / Archive.org]
     AUTH --> PG[(PostgreSQL)]
 ```
@@ -55,11 +58,8 @@ Mapa de pastas: [docs/project-structure.md](docs/project-structure.md)
 ```bash
 cp .env.example .env
 
-# Subir infraestrutura + serviços
+# Subir infraestrutura + serviços (ollama-init baixa llama3.2 + nomic-embed-text)
 docker compose up -d --build
-
-# Baixar modelo de IA (primeira vez)
-docker compose exec ollama ollama pull llama3.2
 ```
 
 ### URLs
@@ -68,16 +68,22 @@ docker compose exec ollama ollama pull llama3.2
 |---------|-----|
 | Frontend | http://localhost:3100 |
 | API Gateway | http://localhost:3000/api |
+| Swagger (gateway) | http://localhost:3000/api/docs |
 | Ollama | http://localhost:11434 |
 
 ## Microserviços
 
 | Serviço | Porta | Tecnologia gratuita |
 |---------|-------|---------------------|
-| `service-ai` | 3002 | Ollama (LLM local) |
+| `service-gateway` | 3000 | Proxy, JWT, RBAC |
+| `service-auth` | 3001 | PostgreSQL, LDAP, JWT |
+| `service-ai` | 3002 | Ollama + **RAG** (8 chunks, tool calling) |
+| `service-voice` | 3003 | Piper TTS (STT no browser) |
 | `service-search` | 3004 | DuckDuckGo + Wikimedia + Archive.org |
-| `service-voice` | 3003 | Web Speech API (via frontend) |
-| Demais | — | NestJS + PostgreSQL + Redis |
+| `service-notifications` | 3005 | Notificações in-memory |
+| `service-media` | 3006 | URLs de mídia via search |
+
+Infra Docker adicional: **Piper** (:5000), **ollama-init** (pull automático de modelos).
 
 ## Testes & CI/CD
 
@@ -114,9 +120,15 @@ Documentação: [docs/testing.md](docs/testing.md)
 | Variável | Descrição |
 |----------|-----------|
 | `OLLAMA_BASE_URL` | URL do Ollama (padrão: http://localhost:11434) |
-| `OLLAMA_MODEL` | Modelo local (padrão: llama3.2) |
+| `OLLAMA_MODEL` | Modelo de chat (padrão: llama3.2) |
+| `OLLAMA_EMBED_MODEL` | Modelo RAG (padrão: nomic-embed-text) |
+| `PIPER_URL` / `PIPER_VOICE` | TTS Piper local (pt_BR-faber-medium) |
+| `SEARCH_SERVICE_URL` | URL interna do service-search |
 | `JWT_SECRET` | Secret JWT (produção) |
 | `DATABASE_URL` | PostgreSQL |
+| `ENABLE_SWAGGER` | Swagger em produção (`true` para habilitar) |
+
+Lista completa: [.env.example](.env.example)
 
 ## Cursor — Rules & Skills
 

@@ -114,7 +114,7 @@ Fluxo de confirmação: após busca não imperativa, JARVIS pergunta se deseja a
 ### GET /chat/session/:sessionId
 Histórico da conversa.
 
-### GET /health (service-ai :3002)
+### GET /api/health (service-ai :3002)
 
 Health do serviço de IA inclui status RAG:
 
@@ -122,7 +122,7 @@ Health do serviço de IA inclui status RAG:
 {
   "status": "ok",
   "service": "service-ai",
-  "rag": { "ready": true, "embedModel": "nomic-embed-text", "chunks": 7 }
+  "rag": { "ready": true, "embedModel": "nomic-embed-text", "chunks": 8 }
 }
 ```
 
@@ -169,12 +169,19 @@ Fallback: `{ clientSide: true, format: "browser-tts", text }`.
 
 ## Health
 
-### GET /health
-Todos os serviços expõem health check.
+### GET /api/health
+Todos os serviços expõem health check (prefixo global `/api`).
 
 ## Swagger
 
-Documentação interativa disponível em cada serviço:
-- Gateway: http://localhost:3000/api/docs
-- Auth: http://localhost:3001/api/docs
-- AI: http://localhost:3002/api/docs
+Documentação interativa em `/api/docs` de cada serviço (dev ou `ENABLE_SWAGGER=true`):
+
+| Serviço | URL |
+|---------|-----|
+| Gateway | http://localhost:3000/api/docs |
+| Auth | http://localhost:3001/api/docs |
+| AI | http://localhost:3002/api/docs |
+| Voice | http://localhost:3003/api/docs |
+| Search | http://localhost:3004/api/docs |
+| Notifications | http://localhost:3005/api/docs |
+| Media | http://localhost:3006/api/docs |

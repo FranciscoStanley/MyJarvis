@@ -237,7 +237,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Good morning, sir. All systems operational.\",\n  \"voice\": \"en_GB-alan-medium\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Good morning, sir. All systems operational.\",\n  \"voice\": \"pt_BR-faber-medium\"\n}" },
             "url": "{{baseUrl}}/voice/synthesize"
           }
         }

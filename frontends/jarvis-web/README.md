@@ -10,8 +10,9 @@ Frontend Next.js — interface web e mobile (PWA) do MyJarvis.
 ## Features
 
 - Orb animado JARVIS
-- Chat por texto e voz (Web Speech API)
-- TTS para respostas
+- Chat por texto e voz (Web Speech API STT, pt-BR)
+- TTS via Piper (`pt_BR-faber-medium`) com fallback `speechSynthesis`
+- Execução automática de `clientActions` (YouTube, Google, navegador)
 - Tema escuro elegante
 - Responsivo mobile-first
 
@@ -20,6 +21,7 @@ Frontend Next.js — interface web e mobile (PWA) do MyJarvis.
 ```bash
 npm run dev -w jarvis-web
 npm run test -w jarvis-web
+npm run test:e2e -w jarvis-web
 ```
 
 Configure `NEXT_PUBLIC_API_URL=http://localhost:3000` no `.env`.

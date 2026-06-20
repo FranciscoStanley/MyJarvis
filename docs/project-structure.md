@@ -46,7 +46,7 @@ Arquivos e pastas no nível superior do projeto.
 |------|------|------------------|
 | `package.json` | Arquivo | Workspace raiz: scripts globais (`dev`, `build`, `ci:pipeline`, testes) |
 | `package-lock.json` | Arquivo | Lock de dependências de todo o monorepo |
-| `docker-compose.yml` | Arquivo | Orquestra PostgreSQL, Redis, Ollama e todos os containers |
+| `docker-compose.yml` | Arquivo | Orquestra PostgreSQL, Ollama, Piper, ollama-init e todos os containers |
 | `.env.example` | Arquivo | Modelo de variáveis de ambiente (copiar para `.env`) |
 | `LICENSE` | Arquivo | Licença MIT e copyright |
 | `README.md` | Arquivo | Visão geral, início rápido e links para documentação |
@@ -89,7 +89,7 @@ Cada serviço é um app **NestJS** independente: `package.json`, `Dockerfile`, t
 | `service-gateway` | 3000 | Proxy, JWT, rate limit, CORS — **única API pública** |
 | `service-auth` | 3001 | Login, registro, LDAP, RBAC, usuários |
 | `service-ai` | 3002 | Chat JARVIS via Ollama, sessões, personalidade |
-| `service-voice` | 3003 | Metadados de voz; STT/TTS orientados ao client-side |
+| `service-voice` | 3003 | TTS via Piper (HTTP); STT no browser (Web Speech API) |
 | `service-search` | 3004 | Busca web, imagens, vídeos, músicas (fontes gratuitas) |
 | `service-notifications` | 3005 | Enviar, listar e marcar notificações |
 | `service-media` | 3006 | Resolver URLs de mídia (música/vídeo) via search |
@@ -152,7 +152,7 @@ Estrutura RAG em `services/service-ai/src/`:
 
 | Pasta / arquivo | Função |
 |-----------------|--------|
-| `domain/knowledge/action-knowledge.ts` | Chunks de conhecimento (7 categorias) |
+| `domain/knowledge/action-knowledge.ts` | Chunks de conhecimento (8 categorias) |
 | `domain/ports/rag.port.ts` | Interface `RagPort` |
 | `infrastructure/adapters/ollama-rag.adapter.ts` | Retrieve + embeddings |
 | `domain/services/action-intent.ts` | Detecção de execução imediata |
@@ -171,8 +171,9 @@ Estrutura RAG em `services/service-ai/src/`:
 
 | Responsabilidade | Detalhe |
 |------------------|---------|
-| API de voz | Endpoints de transcrição e síntese (metadados/contrato) |
-| Client-side | Reconhecimento e fala real ocorrem no browser (Web Speech API) |
+| TTS | Síntese via Piper HTTP (`PiperVoiceAdapter`) — voz `pt_BR-faber-medium` |
+| STT | Orienta uso do Web Speech API no browser (`clientSide: true`) |
+| Fallback | Retorna metadados para `speechSynthesis` quando Piper offline |
 
 #### `service-notifications`
 
@@ -361,6 +362,7 @@ sequenceDiagram
     participant G as service-gateway
     participant A as service-auth
     participant I as service-ai
+    participant R as RAG
     participant O as Ollama
 
     U->>W: Login / chat / voz
@@ -370,8 +372,10 @@ sequenceDiagram
         A-->>G: JWT + user
     else Chat
         G->>I: Proxy /chat/* + headers de identidade
-        I->>O: Prompt + modelo local
-        O-->>I: Resposta
+        I->>R: retrieve(mensagem, topK=3)
+        R-->>I: Contexto (YouTube, Google, navegador…)
+        I->>O: Prompt + RAG + tools
+        O-->>I: Resposta + clientActions
         I-->>G: Mensagem JARVIS
     end
     G-->>W: JSON

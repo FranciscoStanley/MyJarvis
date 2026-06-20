@@ -58,7 +58,7 @@ frontends/jarvis-web/
 
 | Arquivo | O que testa |
 |---------|-------------|
-| `test/ollama-rag.adapter.spec.ts` | Retrieve por keywords / embeddings |
+| `test/ollama-rag.adapter.spec.ts` | Retrieve por keywords / embeddings; base com 8 chunks |
 | `test/action-detector.spec.ts` | Detecção YouTube, Google, navegador |
 | `test/action-intent.spec.ts` | Execução imediata vs confirmação |
 | `test/client-action-builder.spec.ts` | `clientActions` + `requiresConfirmation` |
@@ -71,6 +71,14 @@ frontends/jarvis-web/
 | `src/lib/client-actions.spec.ts` | `window.open`, `executeClientActions`, TTS strip |
 | `src/stores/jarvis.store.spec.ts` | Auto-execução de `clientActions` |
 | `e2e/home.spec.ts` | Chat com resposta e ações mockadas |
+
+### Cobertura voz (service-voice)
+
+| Arquivo | O que testa |
+|---------|-------------|
+| `test/piper-voice.adapter.spec.ts` | Síntese Piper WAV + fallback browser |
+| `test/voice.use-cases.spec.ts` | Use cases transcribe/synthesize |
+| `test/integration/voice.integration.spec.ts` | Endpoints HTTP |
 
 ## Pré-requisitos
 
