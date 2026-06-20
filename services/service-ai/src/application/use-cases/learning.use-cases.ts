@@ -68,6 +68,7 @@ export function mergeSearchWithPeer(
       title: `Segunda opinião — modelo ${peerId}`,
       url: `peer://${peerId}`,
       snippet: peerAnswer.trim().slice(0, 500),
+      type: 'web',
     },
     ...searchResults,
   ];
