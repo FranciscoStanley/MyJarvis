@@ -9,7 +9,7 @@ export function isExplicitExecuteCommand(text: string): boolean {
 
 /** Gera resposta quando o LLM retorna tool_calls sem texto. */
 export function buildActionAcknowledgement(
-  actions: { type: string; query?: string }[],
+  actions: { type: string; query?: string; data?: Record<string, unknown> }[],
   userMessage: string,
 ): string {
   const withQuery = actions.find((a) => a.query);
@@ -20,6 +20,12 @@ export function buildActionAcknowledgement(
   }
   if (actions.some((a) => a.type === 'search')) {
     return `Senhor, pesquisando «${query}» agora.`;
+  }
+  if (actions.some((a) => a.type === 'docs')) {
+    const tech = actions.find((a) => a.type === 'docs')?.data?.technology;
+    return tech
+      ? `Permita-me consultar a documentação oficial de ${tech}, senhor.`
+      : `Senhor, consultando a documentação técnica sobre «${query}».`;
   }
   if (actions.some((a) => a.type === 'open_url' || a.type === 'open_app')) {
     return 'À sua disposição, senhor. Abrindo conforme solicitado.';

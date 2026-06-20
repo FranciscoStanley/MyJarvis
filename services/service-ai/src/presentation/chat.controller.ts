@@ -13,7 +13,7 @@ import {
   CreateSessionUseCase,
 } from '../application/use-cases/chat.use-cases';
 import { RAG_PORT, RagPort } from '../domain/ports/rag.port';
-import { ACTION_KNOWLEDGE_CHUNKS } from '../domain/knowledge/action-knowledge';
+import { KNOWLEDGE_STATS } from '../domain/knowledge/knowledge-index';
 
 @ApiTags('Chat')
 @Controller('chat')
@@ -38,9 +38,9 @@ export class ChatController {
   @ApiOperation({
     summary: 'Enviar mensagem ao JARVIS',
     description:
-      'Pipeline: RAG recupera contexto de ações → Ollama responde + tool calls → buscas via service-search → ' +
-      'clientActions para o PWA (YouTube, Google, navegador, Spotify). Comandos imperativos (abra, toque, entre) ' +
-      'retornam requiresConfirmation=false para execução imediata via window.open.',
+      'Pipeline: RAG recupera contexto (ações + agente de desenvolvimento) → Ollama responde + tool calls → ' +
+      'buscas via service-search → clientActions para o PWA. Suporta code review, refatoração, skills/rules e ' +
+      'abertura de apps (YouTube, Cursor, VS Code). Comandos imperativos retornam requiresConfirmation=false.',
   })
   @ApiResponse({ status: 200, description: 'Resposta do JARVIS com ações opcionais', type: SendMessageResponseDto })
   async message(@Body() dto: SendMessageRequestDto) {
@@ -77,7 +77,7 @@ export class HealthController {
       rag: {
         ready: this.rag?.isReady() ?? false,
         embedModel: this.config.get('OLLAMA_EMBED_MODEL', 'nomic-embed-text'),
-        chunks: ACTION_KNOWLEDGE_CHUNKS.length,
+        chunks: KNOWLEDGE_STATS.total,
       },
     };
   }

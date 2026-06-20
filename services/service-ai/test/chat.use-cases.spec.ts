@@ -54,6 +54,21 @@ describe('SendMessageUseCase', () => {
     expect(result.clientActions?.length).toBeGreaterThan(0);
   });
 
+  it('should execute doc_search with site-restricted query', async () => {
+    mockAi.generateResponse.mockResolvedValue({
+      reply: 'Consultando a documentação.',
+      actions: [{ type: 'docs', query: 'guards', data: { technology: 'nestjs' } }],
+    });
+    mockSearch.search.mockResolvedValue([
+      { title: 'Guards | NestJS', url: 'https://docs.nestjs.com/guards', snippet: 'Guards...', type: 'web' },
+    ]);
+    mockAi.synthesizeWithResults.mockResolvedValue('Senhor, guards no NestJS protegem rotas com CanActivate.');
+
+    const result = await useCase.execute({ message: 'como usar guards no NestJS' });
+    expect(mockSearch.search).toHaveBeenCalledWith('web', 'site:docs.nestjs.com guards');
+    expect(result.reply).toContain('guards');
+  });
+
   it('should handle confirmation yes and return executable actions', async () => {
     const pending = [{
       id: 'a1',

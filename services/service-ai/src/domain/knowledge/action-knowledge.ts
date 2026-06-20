@@ -87,4 +87,24 @@ export const ACTION_KNOWLEDGE_CHUNKS: KnowledgeChunk[] = [
 - Referência a ação anterior: abrir nova aba com URL do resultado da busca anterior
 - requiresConfirmation=false para comandos imperativos claros`,
   },
+  {
+    id: 'open-cursor',
+    category: 'dev-tools',
+    keywords: ['cursor', 'abrir cursor', 'abra o cursor', 'editor cursor', 'ide cursor'],
+    content: `ABRIR CURSOR:
+- Comandos: "abra o Cursor", "abrir Cursor", "open Cursor"
+- Ferramenta: open_application app=cursor, url=cursor://file/
+- Execução: deep link no cliente
+- Resposta: confirme com tom JARVIS e execute em pedido explícito`,
+  },
+  {
+    id: 'open-vscode',
+    category: 'dev-tools',
+    keywords: ['vscode', 'vs code', 'visual studio code', 'abrir vscode', 'abra o vscode', 'visual studio'],
+    content: `ABRIR VS CODE:
+- Comandos: "abra o VS Code", "abrir Visual Studio Code", "open vscode"
+- Ferramenta: open_application app=vscode, url=vscode://file/
+- Diferenciar: "Visual Studio" (IDE Microsoft) ≠ "Visual Studio Code" (editor)
+- Execução imediata em pedidos explícitos`,
+  },
 ];

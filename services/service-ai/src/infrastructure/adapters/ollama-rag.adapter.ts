@@ -2,7 +2,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { ACTION_KNOWLEDGE_CHUNKS, KnowledgeChunk } from '../../domain/knowledge/action-knowledge';
+import { ALL_KNOWLEDGE_CHUNKS } from '../../domain/knowledge/knowledge-index';
+import { KnowledgeChunk } from '../../domain/knowledge/action-knowledge';
 import { RagPort } from '../../domain/ports/rag.port';
 
 interface IndexedChunk extends KnowledgeChunk {
@@ -33,7 +34,7 @@ export class OllamaRagAdapter implements RagPort, OnModuleInit {
     return this.indexed.length > 0;
   }
 
-  async retrieve(query: string, topK = 3): Promise<string> {
+  async retrieve(query: string, topK = 4): Promise<string> {
     if (!this.indexed.length) await this.buildIndex();
 
     const ranked = this.embeddingsAvailable
@@ -48,7 +49,7 @@ export class OllamaRagAdapter implements RagPort, OnModuleInit {
   }
 
   private async buildIndex() {
-    this.indexed = ACTION_KNOWLEDGE_CHUNKS.map((c) => ({ ...c, embedding: null }));
+    this.indexed = ALL_KNOWLEDGE_CHUNKS.map((c) => ({ ...c, embedding: null }));
 
     try {
       for (const chunk of this.indexed) {

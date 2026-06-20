@@ -60,4 +60,50 @@ describe('detectActionsFromText', () => {
     const actions = detectActionsFromText('busque no google inteligência artificial');
     expect(actions.some((a) => a.type === 'search')).toBe(true);
   });
+
+  it('should detect documentation search for NestJS', () => {
+    const actions = detectActionsFromText('como configurar guards no NestJS');
+    expect(actions).toEqual([{
+      type: 'docs',
+      query: expect.stringMatching(/guards/i),
+      data: { technology: 'NestJS' },
+    }]);
+  });
+
+  it('should detect documentation search for Python', () => {
+    const actions = detectActionsFromText('documentação do Python sobre asyncio');
+    expect(actions[0].type).toBe('docs');
+    expect(actions[0].data?.technology).toBe('Python');
+  });
+
+  it('should detect cybersecurity web search', () => {
+    const actions = detectActionsFromText('como proteger o servidor contra ransomware');
+    expect(actions.some((a) => a.type === 'search')).toBe(true);
+  });
+
+  it('should detect open Cursor command', () => {
+    const actions = detectActionsFromText('Abra o Cursor');
+    expect(actions).toEqual([{
+      type: 'open_app',
+      data: {
+        url: 'cursor://file/',
+        app: 'cursor',
+        label: 'Abrir Cursor',
+        description: 'Abrir Cursor IDE',
+      },
+    }]);
+  });
+
+  it('should detect open VS Code command', () => {
+    const actions = detectActionsFromText('Abra o VS Code');
+    expect(actions).toEqual([{
+      type: 'open_app',
+      data: {
+        url: 'vscode://file/',
+        app: 'vscode',
+        label: 'Abrir VS Code',
+        description: 'Abrir Visual Studio Code',
+      },
+    }]);
+  });
 });

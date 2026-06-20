@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ChatMessage, JarvisAction, SearchResult } from '@myjarvis/shared';
 import { AiPort } from '../../domain/ports/ai.port';
 import { RAG_PORT, RagPort } from '../../domain/ports/rag.port';
-import { JARVIS_SYSTEM_PROMPT, JARVIS_TOOLS, JARVIS_SYNTHESIS_PROMPT } from '../../domain/constants/jarvis-prompt';
+import { JARVIS_SYSTEM_PROMPT, JARVIS_TOOLS, JARVIS_SYNTHESIS_PROMPT, JARVIS_DOC_SYNTHESIS_PROMPT } from '../../domain/constants/jarvis-prompt';
 import { buildActionAcknowledgement } from '../../domain/services/action-intent';
 import { detectActionsFromText } from './action-detector';
 
@@ -84,7 +84,16 @@ export class OllamaAdapter implements AiPort {
       .map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`)
       .join('\n\n');
 
-    const prompt = `${JARVIS_SYNTHESIS_PROMPT}
+    const prompt = actionTypes.includes('docs')
+      ? `${JARVIS_DOC_SYNTHESIS_PROMPT}
+
+Pedido do usuário: "${userMessage}"
+
+Resultados da documentação:
+${resultsContext}
+
+Formule uma resposta técnica clara como JARVIS em português brasileiro (pt-BR).`
+      : `${JARVIS_SYNTHESIS_PROMPT}
 
 Pedido do usuário: "${userMessage}"
 Tipo de busca: ${actionTypes.join(', ') || 'geral'}
@@ -152,6 +161,7 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
     if (!msg.tool_calls?.length) return [];
 
     const typeMap: Record<string, JarvisAction['type']> = {
+      doc_search: 'docs',
       web_search: 'search',
       image_search: 'image',
       video_search: 'video',
@@ -164,6 +174,13 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
       const raw = call.function.arguments;
       const args = typeof raw === 'string' ? JSON.parse(raw) : raw;
       const type = typeMap[call.function.name] ?? 'search';
+      if (type === 'docs') {
+        return {
+          type: 'docs',
+          query: args?.topic ?? String(raw),
+          data: { technology: args?.technology },
+        };
+      }
       if (type === 'open_url' || type === 'open_app') {
         const url = this.normalizeActionUrl(args?.url);
         return {

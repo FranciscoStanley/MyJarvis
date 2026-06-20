@@ -23,4 +23,12 @@ describe('buildActionAcknowledgement', () => {
     const reply = buildActionAcknowledgement([{ type: 'open_app' }], 'abra youtube');
     expect(reply).toContain('Abrindo');
   });
+
+  it('should acknowledge docs search', () => {
+    const reply = buildActionAcknowledgement(
+      [{ type: 'docs', query: 'guards', data: { technology: 'NestJS' } }],
+      'documentação nestjs guards',
+    );
+    expect(reply).toContain('NestJS');
+  });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OllamaRagAdapter } from '../src/infrastructure/adapters/ollama-rag.adapter';
-import { ACTION_KNOWLEDGE_CHUNKS } from '../src/domain/knowledge/action-knowledge';
+import { KNOWLEDGE_STATS } from '../src/domain/knowledge/knowledge-index';
 
 describe('OllamaRagAdapter', () => {
   const mockHttp = { post: vi.fn() };
@@ -31,8 +31,44 @@ describe('OllamaRagAdapter', () => {
     expect(context).toContain('Francisco Stanley Rodrigues Albuquerque');
   });
 
-  it('should index all 8 knowledge chunks after retrieve', async () => {
-    expect(ACTION_KNOWLEDGE_CHUNKS.length).toBe(8);
+  it('should return dev agent knowledge for code review queries', async () => {
+    const context = await adapter.retrieve('faça um code review desse controller', 3);
+    expect(context.toUpperCase()).toMatch(/CODE REVIEW|REVIEW/);
+    expect(context).toMatch(/Critical|🔴|Veredito/i);
+  });
+
+  it('should return clean architecture knowledge for refactoring queries', async () => {
+    const context = await adapter.retrieve('refatorar para clean architecture com use cases', 3);
+    expect(context.toLowerCase()).toMatch(/clean architecture|use case|domain/);
+  });
+
+  it('should return skill/rule knowledge for cursor ecosystem queries', async () => {
+    const context = await adapter.retrieve('como criar uma skill e rule no cursor', 3);
+    expect(context.toLowerCase()).toMatch(/skill|rule|\.cursor/);
+  });
+
+  it('should return doc search knowledge for documentation queries', async () => {
+    const context = await adapter.retrieve('documentação oficial do NestJS guards', 3);
+    expect(context.toUpperCase()).toMatch(/DOC_SEARCH|DOCUMENTAÇÃO/);
+  });
+
+  it('should return project blueprint knowledge for system creation', async () => {
+    const context = await adapter.retrieve('criar um sistema robusto com microserviços', 3);
+    expect(context.toUpperCase()).toMatch(/BLUEPRINT|CHECKLIST/);
+  });
+
+  it('should return cybersecurity knowledge for defense queries', async () => {
+    const context = await adapter.retrieve('cibersegurança proteger servidor', 3);
+    expect(context.toUpperCase()).toMatch(/CIBERSEGURANÇA|OWASP/);
+  });
+
+  it('should return cursor open knowledge for IDE commands', async () => {
+    const context = await adapter.retrieve('abra o cursor', 2);
+    expect(context.toLowerCase()).toMatch(/cursor/);
+  });
+
+  it('should index all knowledge chunks after retrieve', async () => {
+    expect(KNOWLEDGE_STATS.total).toBeGreaterThan(26);
     await adapter.retrieve('youtube', 1);
     expect(adapter.isReady()).toBe(true);
   });

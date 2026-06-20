@@ -1,4 +1,9 @@
-import { JarvisAction, buildGmailUrl, buildGoogleSearchUrl, buildSpotifySearchUrl, buildYoutubeSearchUrl } from '@myjarvis/shared';
+import { JarvisAction, buildGmailUrl, buildGoogleSearchUrl, buildSpotifySearchUrl, buildYoutubeSearchUrl, buildCursorUrl, buildVscodeUrl } from '@myjarvis/shared';
+import {
+  detectTechnologyFromText,
+  extractDocTopic,
+  isDocumentationRequest,
+} from '../../domain/services/doc-search';
 
 /** Extrai o termo de busca de comandos em português como "busca no youtube a música Espírito Santo". */
 export function extractSearchQuery(text: string): string {
@@ -30,6 +35,16 @@ export function detectActionsFromText(text: string): JarvisAction[] {
   const lower = text.toLowerCase();
   const query = extractSearchQuery(text);
 
+  if (/ciberseguran[cç]a|cybersecurity|cve-|vulnerabil|owasp|ataque|hardening|firewall|malware|ransomware|proteger\s+(?:o\s+)?servidor|defesa\s+(?:do\s+)?host/i.test(lower)) {
+    return [{ type: 'search', query: `${extractSearchQuery(text)} security best practices 2025` }];
+  }
+
+  if (isDocumentationRequest(text)) {
+    const technology = detectTechnologyFromText(text) ?? 'general';
+    const topic = extractDocTopic(text, technology !== 'general' ? technology : null);
+    return [{ type: 'docs', query: topic, data: { technology } }];
+  }
+
   if (/^(abre|abra|abrir|open|entre|entrar|acesse|vá para|va para)\s/.test(lower)
       || /\b(?:preciso que|quero que)\s+(?:abra|abrir|entre|entrar)\b/.test(lower)) {
     if (/nova aba|aba (?:do )?navegador|aba em branco|new tab|navegador em branco/.test(lower)) {
@@ -57,6 +72,28 @@ export function detectActionsFromText(text: string): JarvisAction[] {
           app: 'spotify',
           label: 'Abrir Spotify',
           description: 'Abrir Spotify',
+        },
+      }];
+    }
+    if (/\bcursor\b/.test(lower)) {
+      return [{
+        type: 'open_app',
+        data: {
+          url: buildCursorUrl(),
+          app: 'cursor',
+          label: 'Abrir Cursor',
+          description: 'Abrir Cursor IDE',
+        },
+      }];
+    }
+    if (/vs\s*code|visual studio code/.test(lower)) {
+      return [{
+        type: 'open_app',
+        data: {
+          url: buildVscodeUrl(),
+          app: 'vscode',
+          label: 'Abrir VS Code',
+          description: 'Abrir Visual Studio Code',
         },
       }];
     }
@@ -108,16 +145,21 @@ export function detectActionsFromText(text: string): JarvisAction[] {
     return [{ type: 'search', query }];
   }
 
-  if (/m[uú]sica|musica|som|tocar|playlist|coloque.*m[uú]sica|ponha.*m[uú]sica|reproduz/.test(lower)) {
+  if (/m[uú]sica|musica|\bsom\b|tocar|playlist|coloque.*m[uú]sica|ponha.*m[uú]sica|reproduz/.test(lower)) {
     return [{ type: 'video', query }];
   }
 
-  if (/v[ií]deo|video|clip|clipes?/.test(lower)) {
+  if (/v[ií]deo|video|\bclip\b|clipes?/.test(lower)) {
     return [{ type: 'video', query }];
   }
 
   if (/imagem|foto|picture/.test(lower)) {
     return [{ type: 'image', query }];
+  }
+
+  if (/(?:aprend|pesquis|busc|novidade|novo|últim|atualiza|o que [eé]|como funciona)/i.test(lower)
+      && detectTechnologyFromText(text)) {
+    return [{ type: 'search', query: `${detectTechnologyFromText(text)} latest features documentation` }];
   }
 
   if (/busca|pesquis|not[ií]cia|informa[cç]|internet|web/.test(lower)) {

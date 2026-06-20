@@ -16,6 +16,7 @@ import {
   SearchClientPort,
 } from '../../domain/ports/ai.port';
 import { buildClientActions, clientActionsFromJarvisActions } from '../../domain/services/client-action-builder';
+import { buildDocSearchQuery } from '../../domain/services/doc-search';
 import {
   buildConfirmationPrompt,
   buildConfirmedReply,
@@ -69,17 +70,28 @@ export class SendMessageUseCase {
     const actionTypes: string[] = [];
 
     for (const action of actions) {
-      if (action.query) {
+      const needsSearch = action.query || action.type === 'docs';
+      if (needsSearch) {
         actionTypes.push(action.type);
         const typeMap: Record<string, string> = {
           search: 'web',
+          docs: 'web',
           image: 'images',
           video: 'videos',
           music: 'music',
         };
+
+        let query = action.query ?? '';
+        if (action.type === 'docs') {
+          query = buildDocSearchQuery({
+            technology: String(action.data?.technology ?? ''),
+            topic: String(action.query ?? action.data?.topic ?? input.message),
+          });
+        }
+
         const results = (await this.search.search(
           typeMap[action.type] ?? 'web',
-          action.query,
+          query,
         )) as SearchResult[];
         searchResults.push(...results);
       }

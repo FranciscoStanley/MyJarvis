@@ -15,6 +15,8 @@ const OPEN_APP_PATTERNS: { pattern: RegExp; url: string | ((q: string) => string
   { pattern: /gmail|e-?mail|correio/, url: buildGmailUrl(), app: 'gmail', label: 'Abrir Gmail' },
   { pattern: /youtube|yt\b/, url: 'https://www.youtube.com', app: 'youtube', label: 'Abrir YouTube' },
   { pattern: /spotify/, url: (q) => buildSpotifySearchUrl(q), app: 'spotify', label: 'Abrir Spotify' },
+  { pattern: /\bcursor\b/, url: 'cursor://file/', app: 'cursor', label: 'Abrir Cursor' },
+  { pattern: /vs\s*code|visual studio code/, url: 'vscode://file/', app: 'vscode', label: 'Abrir VS Code' },
 ];
 
 function resolveUrl(entry: typeof OPEN_APP_PATTERNS[number], query: string): string {
