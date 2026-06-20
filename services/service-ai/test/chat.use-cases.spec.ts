@@ -13,6 +13,8 @@ describe('SendMessageUseCase', () => {
   };
   const mockSearch = { search: vi.fn().mockResolvedValue([]) };
 
+  const mockPersistLearning = { execute: vi.fn().mockResolvedValue(false) };
+
   let useCase: SendMessageUseCase;
 
   beforeEach(() => {
@@ -22,7 +24,13 @@ describe('SendMessageUseCase', () => {
     mockStore.getMessages.mockReturnValue([]);
     mockStore.addMessage.mockReset();
     mockStore.createSession.mockReturnValue('session-1');
-    useCase = new SendMessageUseCase(mockAi as never, mockStore as never, mockSearch as never);
+    useCase = new SendMessageUseCase(
+      mockAi as never,
+      mockStore as never,
+      mockSearch as never,
+      undefined,
+      mockPersistLearning as never,
+    );
   });
 
   it('should send message and return reply', async () => {
