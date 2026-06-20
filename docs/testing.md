@@ -52,15 +52,17 @@ services/*/test/
 frontends/jarvis-web/
 ├── src/**/*.spec.ts(x)         # Componentes, store, client-actions
 └── e2e/*.spec.ts               # Playwright E2E (auto-execução mockada)
-packages/shared/test/           # hasAcceptedCurrentTerms, TERMS_VERSION
+packages/shared/src/            # constants.spec.ts — TERMS_VERSION, hasAcceptedCurrentTerms
 ```
 
-### Cobertura auth e termos (service-auth + shared)
+### Cobertura auth e termos (service-auth + shared + live)
 
 | Arquivo | O que testa |
 |---------|-------------|
 | `services/service-auth/test/auth.use-cases.spec.ts` | Registro com `acceptTerms`; rejeição sem aceite; `AcceptTermsUseCase` |
+| `services/service-auth/test/integration/auth.integration.spec.ts` | Register, login, `POST /accept-terms`, rejeição sem termos |
 | `packages/shared/src/constants.spec.ts` | `TERMS_VERSION`, `hasAcceptedCurrentTerms()` |
+| `tests/integration/gateway.live.spec.ts` | Register com `acceptTerms: true`, login e chat (requer Docker) |
 
 ### Cobertura RAG, dev agent e segurança (service-ai)
 

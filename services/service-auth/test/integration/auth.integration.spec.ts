@@ -86,6 +86,18 @@ describe('Auth Integration', () => {
     expect(res.status).toBe(200);
   });
 
+  it('POST /api/auth/register rejeita sem acceptTerms', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({
+        email: `no-terms-${Date.now()}@test.com`,
+        password: 'SenhaSegura123!',
+        name: 'No Terms',
+        acceptTerms: false,
+      });
+    expect(res.status).toBe(400);
+  });
+
   it('POST /api/auth/register cria usuário com role user', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/auth/register')
@@ -142,6 +154,24 @@ describe('Auth Integration', () => {
       .set('Authorization', `Bearer ${adminToken}`);
     expect(ok.status).toBe(200);
     expect(Array.isArray(ok.body.data)).toBe(true);
+  });
+
+  it('POST /api/auth/accept-terms aceita termos para usuário autenticado', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/accept-terms')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ acceptTerms: true });
+    expect([200, 201]).toContain(res.status);
+    expect(res.body.data.termsVersion).toBeDefined();
+    expect(res.body.data.termsAcceptedAt).toBeDefined();
+  });
+
+  it('POST /api/auth/accept-terms rejeita sem aceite', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/accept-terms')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ acceptTerms: false });
+    expect(res.status).toBe(400);
   });
 
   it('PATCH /api/auth/users/:id/role — admin promove usuário', async () => {

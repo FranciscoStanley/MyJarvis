@@ -37,7 +37,7 @@ flowchart TB
 
 - **Tema**: escuro — `#0a0e17`, ciano `#22d3ee`, dourado sutil `#fbbf24`
 - **Orb central**: pulso animado quando ouvindo/processando
-- **Mobile-first**: PWA via `public/manifest.json`
+- **Mobile-first**: PWA via `public/manifest.json` + ícones em `public/icon-192.png`, `public/icon-512.png` e `src/app/icon.png` (Next.js App Router)
 - **Acessibilidade**: ARIA labels, contraste WCAG AA
 - **Tipografia**: Inter (UI), JetBrains Mono (status)
 

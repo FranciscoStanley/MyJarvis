@@ -36,7 +36,7 @@
     "prepare": "node -e \"if(process.env.HUSKY==='0'||process.env.CI==='true')process.exit(0)\" && husky"
   },
   "devDependencies": {
-    "concurrently": "^10.0.3",
+    "concurrently": "^9.2.3",
     "husky": "^9.1.7"
   },
   "engines": {

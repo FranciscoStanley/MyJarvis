@@ -28,9 +28,14 @@ describe('Integration — Auth flow (live HTTP)', () => {
     const register = await fetch(`${SERVICE_URLS.gateway}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: 'SenhaSegura123!', name: 'Test User' }),
+      body: JSON.stringify({
+        email,
+        password: 'SenhaSegura123!',
+        name: 'Test User',
+        acceptTerms: true,
+      }),
     });
-    expect(register.status).toBeLessThan(500);
+    expect([200, 201]).toContain(register.status);
 
     const login = await fetch(`${SERVICE_URLS.gateway}/api/auth/login`, {
       method: 'POST',
@@ -51,7 +56,12 @@ describe('Integration — Chat (live HTTP)', () => {
     await fetch(`${SERVICE_URLS.gateway}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: 'SenhaSegura123!', name: 'Chat Test' }),
+      body: JSON.stringify({
+        email,
+        password: 'SenhaSegura123!',
+        name: 'Chat Test',
+        acceptTerms: true,
+      }),
     });
 
     const login = await fetch(`${SERVICE_URLS.gateway}/api/auth/login`, {

@@ -83,14 +83,17 @@ Skill do agente de codificação: [dev-agent](dev-agent/SKILL.md)
 
 ## Documentação a Atualizar
 
+**Fonte canônica:** pasta `docs/` no repositório. A wiki GitHub espelha estes arquivos.
+
 Ao mudar funcionalidades, sempre:
 
 1. Swagger decorators
-2. Testes Vitest
+2. Testes Vitest (incl. live tests com `acceptTerms: true` quando envolver auth)
 3. `docs/postman/myjarvis.postman_collection.json`
 4. `docs/insomnia/myjarvis.insomnia.json`
 5. `docs/api.md` + README do serviço
-6. `docs/terms-of-use.md` / `docs/privacy-policy.md` se mudar versão legal (`TERMS_VERSION` em `@myjarvis/shared`)
+6. `docs/getting-started.md`, `docs/deployment.md`, `docs/contributing.md` se mudar setup ou fluxo
+7. `docs/terms-of-use.md` / `docs/privacy-policy.md` se mudar versão legal (`TERMS_VERSION` em `@myjarvis/shared`)
 
 ## Rules Correspondentes
 

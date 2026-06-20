@@ -48,6 +48,7 @@ flowchart LR
 - Frontend consome apenas o Gateway, nunca serviços internos diretamente
 - Variáveis sensíveis sempre em `.env` — nunca commitar secrets
 - Ao alterar funcionalidades: atualizar Swagger, README, collections Postman/Insomnia e testes
+- **Documentação canônica** em `docs/` — wiki GitHub espelha; inclui `getting-started`, `deployment`, `contributing`, `environment-variables`
 - **Documentação de arquitetura**: sempre Mermaid em `docs/` e README
 
 ## Portas Padrão

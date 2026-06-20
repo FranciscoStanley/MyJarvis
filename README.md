@@ -109,6 +109,10 @@ Documentação: [docs/testing.md](docs/testing.md)
 
 ## Documentação
 
+- [Início Rápido](docs/getting-started.md)
+- [Deployment](docs/deployment.md)
+- [Variáveis de Ambiente](docs/environment-variables.md)
+- [Contribuindo](docs/contributing.md)
 - [Termos de Uso](docs/terms-of-use.md)
 - [Política de Privacidade](docs/privacy-policy.md)
 - [RBAC & LDAP](docs/rbac-ldap.md)
@@ -119,6 +123,8 @@ Documentação: [docs/testing.md](docs/testing.md)
 - [Testes & CI](docs/testing.md)
 - [Postman](docs/postman/myjarvis.postman_collection.json)
 - [Insomnia](docs/insomnia/myjarvis.insomnia.json)
+
+> Wiki GitHub espelha `docs/` — fonte canônica no repositório.
 
 ## Variáveis de Ambiente
 
@@ -133,7 +139,7 @@ Documentação: [docs/testing.md](docs/testing.md)
 | `DATABASE_URL` | PostgreSQL |
 | `ENABLE_SWAGGER` | Swagger em produção (`true` para habilitar) |
 
-Lista completa: [.env.example](.env.example)
+Lista completa: [docs/environment-variables.md](docs/environment-variables.md) · [.env.example](.env.example)
 
 ## Cursor — Rules & Skills
 

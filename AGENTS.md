@@ -5,7 +5,7 @@
 - `services/` — NestJS microservices (Clean Architecture)
 - `frontends/jarvis-web/` — Next.js PWA
 - `packages/` — `@myjarvis/shared`, `nest-auth`, `nest-security`, `nest-vitest`
-- `docs/` — Documentation, Postman, Insomnia collections
+- `docs/` — **Fonte canônica** de documentação (wiki GitHub espelha `docs/`)
 
 ## Cursor — Rules & Skills
 
@@ -38,6 +38,7 @@ Documentação legal: [docs/terms-of-use.md](docs/terms-of-use.md) · [docs/priv
 3. Update Vitest tests
 4. Update `docs/postman/` and `docs/insomnia/` collections
 5. Update relevant README files and Mermaid diagrams in `docs/`
+6. Keep `docs/getting-started.md`, `docs/deployment.md`, `docs/contributing.md` in sync with wiki when setup or workflow changes
 
 ## Key Commands
 
