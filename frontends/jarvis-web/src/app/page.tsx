@@ -9,10 +9,11 @@ import { StatusPanel } from '@/components/jarvis/StatusPanel';
 import { ChatPanel } from '@/components/jarvis/ChatPanel';
 import { InputBar } from '@/components/jarvis/InputBar';
 import { AuthModal } from '@/components/jarvis/AuthModal';
+import { TermsAcceptModal } from '@/components/jarvis/TermsAcceptModal';
 import { HudFrame } from '@/components/jarvis/HudFrame';
 
 export default function HomePage() {
-  const { isAuthenticated, restoreSession, logout } = useJarvisStore();
+  const { isAuthenticated, needsTermsAcceptance, restoreSession, logout } = useJarvisStore();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -38,6 +39,15 @@ export default function HomePage() {
       <>
         <HudBackground />
         <AuthModal />
+      </>
+    );
+  }
+
+  if (needsTermsAcceptance) {
+    return (
+      <>
+        <HudBackground />
+        <TermsAcceptModal />
       </>
     );
   }

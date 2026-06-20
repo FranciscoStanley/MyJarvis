@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Shield, Sparkles } from 'lucide-react';
 import { useJarvisStore } from '@/stores/jarvis.store';
@@ -14,6 +15,7 @@ export function AuthModal() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, loginLdap } = useJarvisStore();
@@ -26,8 +28,12 @@ export function AuthModal() {
       if (tab === 'ldap') {
         await loginLdap(username, password);
       } else if (tab === 'register') {
+        if (!accepted) {
+          setError('É necessário aceitar os Termos de Uso e a Política de Privacidade.');
+          return;
+        }
         const { api } = await import('@/lib/api');
-        await api.register(email, password, name);
+        await api.register(email, password, name, true);
         await login(email, password);
       } else {
         await login(email, password);
@@ -117,6 +123,27 @@ export function AuthModal() {
               minLength={tab === 'ldap' ? 1 : 8}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50 focus:ring-1 focus:ring-jarvis-cyan/20 transition-colors"
             />
+            {tab === 'register' && (
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                  className="mt-1 rounded border-white/20 bg-white/5 text-jarvis-cyan focus:ring-jarvis-cyan/50"
+                />
+                <span className="text-xs text-gray-400 leading-relaxed">
+                  Li e aceito os{' '}
+                  <Link href="/terms" target="_blank" className="text-jarvis-cyan hover:underline">
+                    Termos de Uso
+                  </Link>
+                  {' '}e a{' '}
+                  <Link href="/privacy" target="_blank" className="text-jarvis-cyan hover:underline">
+                    Política de Privacidade
+                  </Link>
+                  . Assumo as responsabilidades do uso da plataforma.
+                </span>
+              </label>
+            )}
             {error && (
               <p className="text-red-400 text-sm font-mono" role="alert">
                 {error}

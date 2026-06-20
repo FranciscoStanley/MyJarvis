@@ -6,6 +6,9 @@ export interface ApiUser {
   name: string;
   roles: UserRole[];
   authSource?: AuthSource;
+  termsAcceptedAt?: string | null;
+  termsVersion?: string | null;
+  hasAcceptedTerms?: boolean;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -82,8 +85,18 @@ class ApiClient {
     return this.request<ApiUser>('/auth/profile');
   }
 
-  register(email: string, password: string, name: string) {
-    return this.request('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) });
+  register(email: string, password: string, name: string, acceptTerms: boolean) {
+    return this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name, acceptTerms }),
+    });
+  }
+
+  acceptTerms() {
+    return this.request<ApiUser>('/auth/accept-terms', {
+      method: 'POST',
+      body: JSON.stringify({ acceptTerms: true }),
+    });
   }
 
   createSession() {

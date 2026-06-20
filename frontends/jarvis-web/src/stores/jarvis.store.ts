@@ -21,6 +21,7 @@ interface JarvisState {
   isSpeaking: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  needsTermsAcceptance: boolean;
   userName: string | null;
   userRoles: UserRole[];
   addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
@@ -32,6 +33,7 @@ interface JarvisState {
   login: (email: string, password: string) => Promise<void>;
   loginLdap: (username: string, password: string) => Promise<void>;
   restoreSession: () => Promise<boolean>;
+  acceptTerms: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
   logout: () => void;
 }
@@ -81,6 +83,18 @@ function applyExecutedActions(
   });
 }
 
+function applyAuthUser(
+  user: { name: string; roles: UserRole[]; hasAcceptedTerms?: boolean },
+  set: (partial: Partial<JarvisState>) => void,
+) {
+  set({
+    isAuthenticated: true,
+    userName: user.name,
+    userRoles: user.roles,
+    needsTermsAcceptance: !user.hasAcceptedTerms,
+  });
+}
+
 export const useJarvisStore = create<JarvisState>((set, get) => ({
   messages: [],
   sessionId: null,
@@ -89,6 +103,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
   isSpeaking: false,
   isLoading: false,
   isAuthenticated: false,
+  needsTermsAcceptance: false,
   userName: null,
   userRoles: [],
 
@@ -190,41 +205,41 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
   login: async (email, password) => {
     const result = await api.login(email, password);
     api.setToken(result.accessToken);
-    set({
-      isAuthenticated: true,
-      userName: result.user.name,
-      userRoles: result.user.roles,
-    });
-    await get().initSession();
+    applyAuthUser(result.user, set);
+    if (result.user.hasAcceptedTerms) {
+      await get().initSession();
+    }
   },
 
   loginLdap: async (username, password) => {
     const result = await api.loginLdap(username, password);
     api.setToken(result.accessToken);
-    set({
-      isAuthenticated: true,
-      userName: result.user.name,
-      userRoles: result.user.roles,
-    });
-    await get().initSession();
+    applyAuthUser(result.user, set);
+    if (result.user.hasAcceptedTerms) {
+      await get().initSession();
+    }
   },
 
   restoreSession: async () => {
     if (!api.getToken()) return false;
     try {
       const profile = await api.getProfile();
-      set({
-        isAuthenticated: true,
-        userName: profile.name,
-        userRoles: profile.roles,
-      });
-      await get().initSession();
+      applyAuthUser(profile, set);
+      if (profile.hasAcceptedTerms) {
+        await get().initSession();
+      }
       return true;
     } catch {
       api.clearToken();
-      set({ isAuthenticated: false, userName: null, userRoles: [] });
+      set({ isAuthenticated: false, needsTermsAcceptance: false, userName: null, userRoles: [] });
       return false;
     }
+  },
+
+  acceptTerms: async () => {
+    const profile = await api.acceptTerms();
+    applyAuthUser(profile, set);
+    await get().initSession();
   },
 
   hasRole: (role) => hasRole(get().userRoles, role),
@@ -233,6 +248,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
     api.clearToken();
     set({
       isAuthenticated: false,
+      needsTermsAcceptance: false,
       userName: null,
       userRoles: [],
       messages: [],
