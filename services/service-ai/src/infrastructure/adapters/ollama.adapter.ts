@@ -19,6 +19,8 @@ interface OllamaMessage {
 export class OllamaAdapter implements AiPort {
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly chatTimeoutMs: number;
+  private readonly synthesisTimeoutMs: number;
 
   constructor(
     private readonly http: HttpService,
@@ -27,6 +29,8 @@ export class OllamaAdapter implements AiPort {
   ) {
     this.baseUrl = config.get('OLLAMA_BASE_URL', 'http://localhost:11434');
     this.model = config.get('OLLAMA_MODEL', 'llama3.2');
+    this.chatTimeoutMs = Number(config.get('OLLAMA_TIMEOUT_MS', 180_000));
+    this.synthesisTimeoutMs = Number(config.get('OLLAMA_SYNTHESIS_TIMEOUT_MS', 120_000));
   }
 
   async generateResponse(
@@ -55,7 +59,7 @@ export class OllamaAdapter implements AiPort {
             stream: false,
             options: { temperature: 0.85 },
           },
-          { timeout: 120_000 },
+          { timeout: this.chatTimeoutMs },
         ),
       );
 
@@ -100,7 +104,7 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
             stream: false,
             options: { temperature: 0.75 },
           },
-          { timeout: 90_000 },
+          { timeout: this.synthesisTimeoutMs },
         ),
       );
 

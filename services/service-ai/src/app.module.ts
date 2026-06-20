@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { AI_PORT, CONVERSATION_STORE, SEARCH_CLIENT } from './domain/ports/ai.port';
 import { RAG_PORT } from './domain/ports/rag.port';
@@ -17,7 +17,13 @@ import { ChatController, HealthController } from './presentation/chat.controller
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    HttpModule.register({ timeout: 120_000 }),
+    HttpModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        timeout: Number(config.get('OLLAMA_TIMEOUT_MS', 180_000)) + 30_000,
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [ChatController, HealthController],
   providers: [
