@@ -23,7 +23,7 @@ flowchart TB
     GW --> NOTIF[service-notifications :3005]
     GW --> MEDIA[service-media :3006]
 
-    AI --> OLLAMA[(Ollama :11434<br/>chat + RAG 32 chunks)]
+    AI --> OLLAMA[(Ollama :11434<br/>chat + RAG 45 chunks)]
     VOICE --> PIPER[(Piper :5000)]
     AUTH --> PG[(PostgreSQL)]
     SEARCH --> EXT[DuckDuckGo · Wikimedia · Archive.org]

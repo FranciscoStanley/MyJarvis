@@ -21,6 +21,8 @@ Skill principal de workflow. Carregue skills específicas conforme o domínio.
 | [organize-commits](organize-commits/SKILL.md) | Separar e commitar de forma organizada |
 | [dev-agent](dev-agent/SKILL.md) | Agente de codificação, review, refactor, doc_search, blueprint |
 | [safety-guardrails](safety-guardrails/SKILL.md) | Ética, recusa de ataques, LGPD, diretrizes do criador |
+| [christian-faith](christian-faith/SKILL.md) | Fé evangélica batista, ética bíblica, tom respeitoso |
+| [continuous-learning](continuous-learning/SKILL.md) | Memória persistente, peer AIs, filtro de aprendizado |
 
 Índice completo: [.cursor/skills/README.md](README.md)
 

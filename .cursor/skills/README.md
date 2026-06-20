@@ -16,6 +16,8 @@ Cada **regra** em `.cursor/rules/` tem uma **skill** correspondente em `.cursor/
 | `organize-commits.mdc` | [organize-commits](organize-commits/SKILL.md) | Commits atômicos, Conventional Commits |
 | `dev-agent.mdc` | [dev-agent](dev-agent/SKILL.md) | Agente de codificação, review, refactor, skills/rules |
 | `safety-guardrails.mdc` | [safety-guardrails](safety-guardrails/SKILL.md) | Ética, recusa de ataques, LGPD |
+| `christian-faith.mdc` | [christian-faith](christian-faith/SKILL.md) | Fé evangélica batista, worldview JARVIS |
+| `continuous-learning.mdc` | [continuous-learning](continuous-learning/SKILL.md) | Memória persistente, peer AIs |
 | — | [myjarvis-development](myjarvis-development/SKILL.md) | Fluxo geral de desenvolvimento |
 
 ## Como funciona

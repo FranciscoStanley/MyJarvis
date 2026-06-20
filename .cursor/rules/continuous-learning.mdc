@@ -1,0 +1,13 @@
+---
+description: Aprendizado persistente JARVIS — memória ética, peer AIs, recall
+globs: services/service-ai/**/learning*.ts,services/service-ai/**/file-learning-store*.ts,services/service-ai/**/ollama-peer*.ts
+---
+
+# JARVIS — Aprendizado Contínuo
+
+> Skill: `.cursor/skills/continuous-learning/SKILL.md`
+
+- Memória persistente em `LEARNING_DATA_PATH` — filtrada por `learning-validator`
+- Peer AIs via `OLLAMA_PEER_MODELS` (Ollama gratuito)
+- Recall automático no prompt via `ContextEnrichmentService`
+- Não absorver aprendizados que violem `ethics-knowledge` e `safety-guardrails`
