@@ -52,7 +52,7 @@ flowchart TB
 | **Vídeos** | DuckDuckGo Videos | MIT | Grátis |
 | **Música** | Internet Archive | Domínio público | Grátis |
 | **Voz (STT)** | Web Speech API (navegador) | W3C padrão | Grátis |
-| **Voz (TTS)** | Piper TTS (`en_GB-alan-medium`) + fallback Web Speech | MIT / W3C | Grátis |
+| **Voz (TTS)** | Piper TTS (`pt_BR-faber-medium`) + fallback Web Speech pt-BR | MIT / W3C | Grátis |
 | **Backend** | NestJS | MIT | Grátis |
 | **Frontend** | Next.js | MIT | Grátis |
 | **Banco** | PostgreSQL | PostgreSQL License | Grátis |
@@ -110,8 +110,8 @@ Variável: `OLLAMA_EMBED_MODEL=nomic-embed-text` (ver `.env.example`).
 ## Voz — Piper TTS + navegador
 
 - **Entrada (STT):** Web Speech API no Chrome/Edge (pt-BR)
-- **Saída (TTS):** Piper no Docker (`piper` service) — voz britânica `en_GB-alan-medium`
-- **Fallback:** se Piper estiver offline, o app usa `speechSynthesis` en-GB
+- **Saída (TTS):** Piper no Docker (`piper` service) — voz masculina `pt_BR-faber-medium`
+- **Fallback:** se Piper estiver offline, o app usa `speechSynthesis` pt-BR
 
 ```bash
 # Subir stack (inclui piper na porta 5000)

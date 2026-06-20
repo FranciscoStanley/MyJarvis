@@ -129,7 +129,7 @@ Health do serviço de IA inclui status RAG:
 ## Voz (gratuito — Piper TTS + Web Speech API)
 
 - **STT (entrada):** Web Speech API no navegador (pt-BR)
-- **TTS (saída):** [Piper](https://github.com/OHF-Voice/piper1-gpl) local via `service-voice` — voz britânica masculina `en_GB-alan-medium` (estilo JARVIS). Se Piper estiver offline, o frontend usa fallback `speechSynthesis` en-GB.
+- **TTS (saída):** [Piper](https://github.com/OHF-Voice/piper1-gpl) local via `service-voice` — voz `pt_BR-faber-medium` (português brasileiro). Se Piper estiver offline, o frontend usa fallback `speechSynthesis` pt-BR.
 
 Não replica a voz original do filme (direitos autorais da Marvel/Disney).
 
@@ -138,7 +138,7 @@ Preferir microfone no app. Endpoint orienta uso do Web Speech API.
 
 ### POST /voice/synthesize
 ```json
-{ "text": "Good morning, sir.", "voice": "en_GB-alan-medium" }
+{ "text": "Bom dia, senhor.", "voice": "pt_BR-faber-medium" }
 ```
 Retorna `{ audioBase64, format: "wav", clientSide: false, voice }` quando Piper está disponível.
 Fallback: `{ clientSide: true, format: "browser-tts", text }`.
