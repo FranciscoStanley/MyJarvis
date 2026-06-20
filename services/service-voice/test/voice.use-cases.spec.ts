@@ -7,10 +7,18 @@ describe('Voice Use Cases (free stack)', () => {
     synthesize: vi.fn().mockResolvedValue({ audioBase64: '', format: 'browser-tts', clientSide: true, text: 'Olá' }),
   };
 
-  it('should synthesize via client-side TTS metadata', async () => {
+  it('should synthesize via Piper wav by default', async () => {
+    mock.synthesize.mockResolvedValue({
+      audioBase64: 'UklGRg==',
+      format: 'wav',
+      clientSide: false,
+      text: 'Good morning, sir.',
+      voice: 'en_GB-alan-medium',
+    });
     const uc = new SynthesizeSpeechUseCase(mock as never);
-    const result = await uc.execute({ text: 'Olá' });
-    expect(result.format).toBe('browser-tts');
+    const result = await uc.execute({ text: 'Good morning, sir.' });
+    expect(result.format).toBe('wav');
+    expect(result.clientSide).toBe(false);
   });
 
   it('should delegate transcribe to port', async () => {
