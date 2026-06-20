@@ -149,18 +149,23 @@ sequenceDiagram
     AI->>O: POST /api/chat + tools
     O-->>AI: Resposta + tool calls
     opt Busca necessária
-        AI->>S: POST /api/search/web
+        AI->>S: POST /api/search/*
         S->>DDG: Query
         DDG-->>S: Resultados
         S-->>AI: JSON
+        AI->>O: Sintetizar resposta com contexto
+        O-->>AI: Resposta conversacional
     end
-    AI-->>G: Resposta JARVIS
+    AI-->>G: reply + clientActions (confirmação)
     G-->>W: JSON
+    opt Usuário confirma ("sim" ou botão)
+        W->>W: window.open / embed YouTube / Spotify
+    end
     opt Resposta falada
-        W->>B: TTS gratuito
+        W->>B: TTS en-GB (estilo JARVIS)
         B-->>U: Áudio
     end
-    W-->>U: Texto + resultados
+    W-->>U: Texto + ações + embed
 ```
 
 ## Autenticação
