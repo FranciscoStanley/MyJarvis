@@ -46,12 +46,13 @@ flowchart TB
 | Função | Tecnologia | Licença | Custo |
 |--------|-----------|---------|-------|
 | **IA / Chat** | [Ollama](https://ollama.com) + Llama 3.2 | MIT | Grátis (local) |
+| **RAG / Embeddings** | Ollama + nomic-embed-text | Apache 2.0 | Grátis (local) |
 | **Busca web** | DuckDuckGo API + duck-duck-scrape | MIT | Grátis |
 | **Imagens** | DuckDuckGo + Wikimedia Commons | MIT / CC | Grátis |
 | **Vídeos** | DuckDuckGo Videos | MIT | Grátis |
 | **Música** | Internet Archive | Domínio público | Grátis |
 | **Voz (STT)** | Web Speech API (navegador) | W3C padrão | Grátis |
-| **Voz (TTS)** | Web Speech Synthesis (navegador) | W3C padrão | Grátis |
+| **Voz (TTS)** | Piper TTS (`en_GB-alan-medium`) + fallback Web Speech | MIT / W3C | Grátis |
 | **Backend** | NestJS | MIT | Grátis |
 | **Frontend** | Next.js | MIT | Grátis |
 | **Banco** | PostgreSQL | PostgreSQL License | Grátis |
@@ -85,15 +86,47 @@ curl http://localhost:11434/api/chat -d '{
 ```
 
 Modelos recomendados (todos gratuitos):
-- `llama3.2` — equilíbrio qualidade/velocidade
+- `llama3.2` — equilíbrio qualidade/velocidade (chat)
+- `nomic-embed-text` — embeddings RAG (~274MB)
 - `mistral` — rápido, bom em português
 - `gemma2` — leve para máquinas modestas
 
-## Voz no navegador
+## RAG — contexto para ações JARVIS
 
-A transcrição e síntese de voz acontecem **no dispositivo do usuário** via APIs nativas do Chrome/Edge/Safari — sem enviar áudio para serviços pagos.
+O `service-ai` usa RAG local para melhorar detecção de intenções (abrir navegador, YouTube, Google, música):
 
-Requisitos:
+```bash
+# Modelo de embedding (docker compose puxa automaticamente via ollama-init)
+docker compose exec ollama ollama pull nomic-embed-text
+
+# Verificar índice RAG
+curl http://localhost:3002/api/health
+```
+
+Se embeddings estiverem offline, o RAG usa **fallback por keywords** — continua funcional com precisão reduzida.
+
+Variável: `OLLAMA_EMBED_MODEL=nomic-embed-text` (ver `.env.example`).
+
+## Voz — Piper TTS + navegador
+
+- **Entrada (STT):** Web Speech API no Chrome/Edge (pt-BR)
+- **Saída (TTS):** Piper no Docker (`piper` service) — voz britânica `en_GB-alan-medium`
+- **Fallback:** se Piper estiver offline, o app usa `speechSynthesis` en-GB
+
+```bash
+# Subir stack (inclui piper na porta 5000)
+docker compose up -d piper service-voice
+
+# Testar síntese
+curl -X POST http://localhost:3000/api/voice/synthesize \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Good morning, sir."}'
+```
+
+Variáveis: `PIPER_URL`, `PIPER_VOICE`, `PIPER_LENGTH_SCALE` (ver `.env.example`).
+
+Requisitos STT no navegador:
 - Chrome ou Edge (melhor suporte STT em pt-BR)
 - HTTPS ou localhost
 - Permissão de microfone

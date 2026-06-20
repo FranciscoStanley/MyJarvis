@@ -56,35 +56,92 @@ Valores: `user` | `admin`.
 
 ## Chat JARVIS
 
+Pipeline com **RAG** (Ollama + `nomic-embed-text`): antes de cada resposta, o `service-ai` recupera chunks de conhecimento sobre ações (YouTube, Google, navegador, Spotify) e injeta no system prompt.
+
 ### POST /chat/session
 Cria nova sessão de conversa.
 
 ### POST /chat/message
 ```json
-{ "message": "JARVIS, busque notícias sobre IA", "sessionId": "uuid-opcional" }
+{ "message": "Abra o YouTube na música Espírito Santo", "sessionId": "uuid-opcional" }
 ```
+
 Retorna `{ reply, sessionId, actions, searchResults, clientActions }`.
 
-- `reply` — resposta conversacional sintetizada (estilo JARVIS)
-- `searchResults` — resultados de busca quando aplicável
-- `clientActions` — ações executáveis no cliente (abrir URL, YouTube, Spotify, reproduzir embed). Com `requiresConfirmation: true` até o usuário confirmar ("sim", botão na UI ou voz)
+| Campo | Descrição |
+|-------|-----------|
+| `reply` | Resposta conversacional JARVIS (RAG + síntese com resultados de busca) |
+| `actions` | Ações internas detectadas (`search`, `video`, `open_url`, etc.) |
+| `searchResults` | Resultados DuckDuckGo/YouTube quando houve busca |
+| `clientActions` | Ações executáveis no PWA — ver tabela abaixo |
 
-Fluxo de confirmação: após busca, JARVIS pergunta se deseja abrir/reproduzir → usuário responde `sim`, `não`, ou escolhe opção específica (`abre no spotify`) → `clientActions` retornam com `requiresConfirmation: false` para execução imediata no navegador/PWA.
+#### clientActions
+
+```json
+{
+  "id": "uuid",
+  "type": "open_url",
+  "label": "Abrir no YouTube",
+  "description": "Abrir «Espírito Santo» no YouTube",
+  "url": "https://www.youtube.com/watch?v=...",
+  "app": "youtube",
+  "requiresConfirmation": false
+}
+```
+
+| `type` | Efeito no frontend |
+|--------|-------------------|
+| `open_url` | `window.open(url)` — Google, resultados web, vídeo YouTube |
+| `open_app` | `window.open(url)` — YouTube, Spotify, Gmail |
+| `play_embed` | Reproduz vídeo inline na UI (iframe YouTube) |
+
+| `requiresConfirmation` | Comportamento |
+|------------------------|---------------|
+| `false` | Execução imediata (comandos imperativos: *abra*, *toque*, *entre*) |
+| `true` | Aguarda confirmação (`sim`, botão ou voz) |
+
+**Exemplos de mensagens:**
+
+| Mensagem | Ação esperada |
+|----------|---------------|
+| `Abra o YouTube` | Abre youtube.com (auto) |
+| `Toque Espírito Santo no YouTube` | Busca vídeo → abre URL (auto) |
+| `Busque no Google inteligência artificial` | Busca web + opção abrir Google |
+| `Abrir uma nova aba do navegador` | `about:blank` (auto) |
+
+Fluxo de confirmação: após busca não imperativa, JARVIS pergunta se deseja abrir/reproduzir → usuário responde `sim`, `não`, ou escolhe opção (`abre no spotify`) → `clientActions` retornam com `requiresConfirmation: false`.
 
 ### GET /chat/session/:sessionId
 Histórico da conversa.
 
-## Voz (gratuito — Web Speech API)
+### GET /health (service-ai :3002)
 
-A transcrição e síntese acontecem **no navegador** (Chrome/Edge). O backend retorna metadados `clientSide: true`.
+Health do serviço de IA inclui status RAG:
 
-TTS no frontend usa voz **en-GB** quando disponível (estilo JARVIS), com tom grave e pausado. Não replica a voz original do filme (direitos autorais); aproxima via `speechSynthesis` nativo.
+```json
+{
+  "status": "ok",
+  "service": "service-ai",
+  "rag": { "ready": true, "embedModel": "nomic-embed-text", "chunks": 7 }
+}
+```
+
+## Voz (gratuito — Piper TTS + Web Speech API)
+
+- **STT (entrada):** Web Speech API no navegador (pt-BR)
+- **TTS (saída):** [Piper](https://github.com/OHF-Voice/piper1-gpl) local via `service-voice` — voz britânica masculina `en_GB-alan-medium` (estilo JARVIS). Se Piper estiver offline, o frontend usa fallback `speechSynthesis` en-GB.
+
+Não replica a voz original do filme (direitos autorais da Marvel/Disney).
 
 ### POST /voice/transcribe
 Preferir microfone no app. Endpoint orienta uso do Web Speech API.
 
 ### POST /voice/synthesize
-Retorna `{ clientSide: true, text }` para TTS no navegador.
+```json
+{ "text": "Good morning, sir.", "voice": "en_GB-alan-medium" }
+```
+Retorna `{ audioBase64, format: "wav", clientSide: false, voice }` quando Piper está disponível.
+Fallback: `{ clientSide: true, format: "browser-tts", text }`.
 
 ## Busca
 

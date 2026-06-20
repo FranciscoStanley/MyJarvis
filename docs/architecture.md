@@ -125,7 +125,7 @@ flowchart LR
     D -.-x|proibido| P
 ```
 
-## Fluxo de Conversa JARVIS
+## Fluxo de Conversa JARVIS (RAG + Ações)
 
 ```mermaid
 sequenceDiagram
@@ -135,6 +135,7 @@ sequenceDiagram
     participant B as Web Speech API
     participant G as service-gateway
     participant AI as service-ai
+    participant RAG as RAG (OllamaRagAdapter)
     participant O as Ollama
     participant S as service-search
     participant DDG as DuckDuckGo
@@ -146,7 +147,9 @@ sequenceDiagram
     end
     W->>G: POST /api/chat/message
     G->>AI: Forward
-    AI->>O: POST /api/chat + tools
+    AI->>RAG: retrieve(mensagem)
+    RAG-->>AI: Contexto (YouTube, Google, navegador…)
+    AI->>O: POST /api/chat + tools + contexto RAG
     O-->>AI: Resposta + tool calls
     opt Busca necessária
         AI->>S: POST /api/search/*
@@ -156,13 +159,19 @@ sequenceDiagram
         AI->>O: Sintetizar resposta com contexto
         O-->>AI: Resposta conversacional
     end
-    AI-->>G: reply + clientActions (confirmação)
+    AI-->>G: reply + clientActions
     G-->>W: JSON
-    opt Usuário confirma ("sim" ou botão)
-        W->>W: window.open / embed YouTube / Spotify
+    alt requiresConfirmation = false
+        W->>W: window.open / embed YouTube (imediato)
+    else requiresConfirmation = true
+        W->>U: Botões ou pergunta de confirmação
+        U->>W: sim / botão
+        W->>W: window.open / embed
     end
     opt Resposta falada
-        W->>B: TTS en-GB (estilo JARVIS)
+        W->>V: POST /voice/synthesize (Piper en_GB-alan)
+        V->>P: HTTP TTS
+        W->>W: Reproduz áudio WAV (fallback speechSynthesis)
         B-->>U: Áudio
     end
     W-->>U: Texto + ações + embed

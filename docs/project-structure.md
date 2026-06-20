@@ -141,10 +141,22 @@ flowchart LR
 |------------------|---------|
 | Conversação | Sessões, histórico, envio de mensagens ao JARVIS |
 | IA | Integração Ollama (modelo local, ex.: Llama 3.2) |
+| **RAG** | Embeddings Ollama (`nomic-embed-text`) + base `action-knowledge.ts` |
 | Personalidade | System prompt em `domain/constants/jarvis-prompt.ts` |
-| Ferramentas | Pode acionar busca via `service-search` |
+| Ferramentas | Tool calling + busca via `service-search` |
+| Ações cliente | `clientActions` (YouTube, Google, navegador, Spotify, embed) |
 
 **Não faz:** renderizar UI nem hospedar o modelo (Ollama é processo separado).
+
+Estrutura RAG em `services/service-ai/src/`:
+
+| Pasta / arquivo | Função |
+|-----------------|--------|
+| `domain/knowledge/action-knowledge.ts` | Chunks de conhecimento (7 categorias) |
+| `domain/ports/rag.port.ts` | Interface `RagPort` |
+| `infrastructure/adapters/ollama-rag.adapter.ts` | Retrieve + embeddings |
+| `domain/services/action-intent.ts` | Detecção de execução imediata |
+| `infrastructure/adapters/action-detector.ts` | Fallback regex quando LLM falha |
 
 #### `service-search`
 

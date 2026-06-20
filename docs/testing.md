@@ -22,7 +22,7 @@ Code review: `.cursor/skills/review-code/SKILL.md`
 
 | Tipo | Comando | Descrição |
 |------|---------|-----------|
-| **Unitários** | `npm run test:unit` | Use cases, adapters, stores, componentes |
+| **Unitários** | `npm run test:unit` | Use cases, adapters, RAG, stores, componentes |
 | **Integração (in-process)** | `npm run test:integration` | Supertest + NestJS TestingModule |
 | **Integração (live HTTP)** | `npm run test:live` | Requer `docker compose up` |
 | **Performance** | `npm run test:performance` | Autocannon + benchmarks Vitest |
@@ -46,13 +46,31 @@ Os testes E2E mockam a API do gateway — não exigem Docker.
 ```
 tests/                          # Cross-service: live, perf, stress, k6
 services/*/test/
-├── *.spec.ts                   # Unitários
+├── *.spec.ts                   # Unitários (RAG, action-detector, client-actions)
 ├── integration/*.integration.spec.ts
 └── performance/*.performance.spec.ts  (service-ai)
 frontends/jarvis-web/
-├── src/**/*.spec.tsx           # Componentes
-└── e2e/*.spec.ts               # Playwright E2E
+├── src/**/*.spec.ts(x)         # Componentes, store, client-actions
+└── e2e/*.spec.ts               # Playwright E2E (auto-execução mockada)
 ```
+
+### Cobertura RAG e ações (service-ai)
+
+| Arquivo | O que testa |
+|---------|-------------|
+| `test/ollama-rag.adapter.spec.ts` | Retrieve por keywords / embeddings |
+| `test/action-detector.spec.ts` | Detecção YouTube, Google, navegador |
+| `test/action-intent.spec.ts` | Execução imediata vs confirmação |
+| `test/client-action-builder.spec.ts` | `clientActions` + `requiresConfirmation` |
+| `test/chat.use-cases.spec.ts` | Fluxo completo + confirmação sim/não |
+
+### Cobertura frontend (jarvis-web)
+
+| Arquivo | O que testa |
+|---------|-------------|
+| `src/lib/client-actions.spec.ts` | `window.open`, `executeClientActions`, TTS strip |
+| `src/stores/jarvis.store.spec.ts` | Auto-execução de `clientActions` |
+| `e2e/home.spec.ts` | Chat com resposta e ações mockadas |
 
 ## Pré-requisitos
 

@@ -76,6 +76,47 @@
       }
     },
     {
+      "_type": "request",
+      "_id": "req_open_youtube",
+      "parentId": "fld_chat",
+      "name": "Open YouTube (auto-execute)",
+      "method": "POST",
+      "url": "{{ baseUrl }}/chat/message",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"Abra o YouTube\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
+      },
+      "description": "Comando imperativo — clientActions com requiresConfirmation=false"
+    },
+    {
+      "_type": "request",
+      "_id": "req_play_music",
+      "parentId": "fld_chat",
+      "name": "Play Music on YouTube",
+      "method": "POST",
+      "url": "{{ baseUrl }}/chat/message",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"Toque Espírito Santo no YouTube\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
+      }
+    },
+    {
+      "_type": "request",
+      "_id": "req_ai_health",
+      "parentId": "fld_health",
+      "name": "AI Service Health (RAG)",
+      "method": "GET",
+      "url": "http://localhost:3002/api/health"
+    },
+    {
       "_type": "request_group",
       "_id": "fld_search",
       "parentId": "wrk_myjarvis",

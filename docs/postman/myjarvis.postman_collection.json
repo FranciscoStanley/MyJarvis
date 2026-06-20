@@ -109,6 +109,61 @@
           }
         },
         {
+          "name": "Open YouTube (auto-execute)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Abra o YouTube\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/chat/message",
+            "description": "Comando imperativo — clientActions com requiresConfirmation=false"
+          }
+        },
+        {
+          "name": "Play Music on YouTube (RAG + search)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Toque Espírito Santo no YouTube\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/chat/message",
+            "description": "RAG + video_search + clientActions para abrir URL do vídeo"
+          }
+        },
+        {
+          "name": "Google Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Busque no Google inteligência artificial\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/chat/message"
+          }
+        },
+        {
+          "name": "AI Service Health (RAG status)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3002/api/health",
+            "description": "Health direto do service-ai — inclui rag.ready e embedModel"
+          }
+        },
+        {
           "name": "Get History",
           "request": {
             "method": "GET",
@@ -182,7 +237,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Bom dia, senhor. Todos os sistemas operacionais.\",\n  \"voice\": \"onyx\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Good morning, sir. All systems operational.\",\n  \"voice\": \"en_GB-alan-medium\"\n}" },
             "url": "{{baseUrl}}/voice/synthesize"
           }
         }
