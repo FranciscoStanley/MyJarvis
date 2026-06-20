@@ -27,15 +27,13 @@ declare global {
   }
 }
 
-/** Fallback: voz neural en-GB do sistema quando Piper está offline. */
+/** Fallback: voz pt-BR do sistema quando Piper está offline. */
 function selectBrowserVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
   const preferred = [
-    (v: SpeechSynthesisVoice) => v.name.includes('Google UK English Male'),
-    (v: SpeechSynthesisVoice) => v.name.includes('Microsoft Ryan') && v.lang.startsWith('en'),
-    (v: SpeechSynthesisVoice) => v.name.includes('Daniel') && v.lang.startsWith('en-GB'),
-    (v: SpeechSynthesisVoice) => v.name.includes('Microsoft George') && v.lang.startsWith('en-GB'),
-    (v: SpeechSynthesisVoice) => v.lang.startsWith('en-GB'),
-    (v: SpeechSynthesisVoice) => v.lang.startsWith('en'),
+    (v: SpeechSynthesisVoice) => v.lang === 'pt-BR' && /Antonio|Francisco|Google português/i.test(v.name),
+    (v: SpeechSynthesisVoice) => v.lang === 'pt-BR' && /Microsoft.*Portug/i.test(v.name),
+    (v: SpeechSynthesisVoice) => v.lang === 'pt-BR',
+    (v: SpeechSynthesisVoice) => v.lang.startsWith('pt'),
   ];
 
   for (const match of preferred) {
@@ -50,9 +48,9 @@ function speakWithBrowser(text: string, setSpeaking: (v: boolean) => void, voice
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   const voice = selectBrowserVoice(voices);
-  utterance.lang = voice?.lang ?? 'en-GB';
-  utterance.rate = 0.9;
-  utterance.pitch = 0.85;
+  utterance.lang = voice?.lang ?? 'pt-BR';
+  utterance.rate = 0.95;
+  utterance.pitch = 1;
   if (voice) utterance.voice = voice;
   utterance.onstart = () => setSpeaking(true);
   utterance.onend = () => setSpeaking(false);
