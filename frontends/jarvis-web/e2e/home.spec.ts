@@ -103,4 +103,35 @@ test.describe('MyJarvis E2E', () => {
     await page.getByRole('button', { name: 'Enviar' }).click();
     await expect(page.getByText(/senhor/i).first()).toBeVisible({ timeout: 15_000 });
   });
+
+  test('auto-execução de ação YouTube sem botão de confirmação', async ({ page }) => {
+    await page.route('**/api/chat/message', async (route) => {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            reply: 'À sua disposição, senhor. Abrindo YouTube.',
+            sessionId: 'e2e-session',
+            clientActions: [{
+              id: 'e2e-yt',
+              type: 'open_app',
+              label: 'Abrir YouTube',
+              description: 'Abrir YouTube',
+              url: 'https://www.youtube.com',
+              app: 'youtube',
+              requiresConfirmation: false,
+            }],
+          },
+        }),
+      });
+    });
+
+    await gotoAuthenticatedHome(page);
+    await page.getByPlaceholder(/Fale ou digite/i).fill('Abra o YouTube');
+    await page.getByRole('button', { name: 'Enviar' }).click();
+    await expect(page.getByText(/Abrindo YouTube/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: /Abrir YouTube/i })).toHaveCount(0);
+  });
 });
