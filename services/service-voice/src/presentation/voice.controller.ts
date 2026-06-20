@@ -21,7 +21,7 @@ export class VoiceController {
 
   @Post('synthesize')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Sintetizar texto em áudio (Piper TTS local — voz britânica JARVIS)' })
+  @ApiOperation({ summary: 'Sintetizar texto em áudio (Piper TTS local — pt-BR)' })
   async synthesizeSpeech(@Body() dto: SynthesizeDto) {
     const data = await this.synthesize.execute(dto);
     return { success: true, data, timestamp: new Date().toISOString() };

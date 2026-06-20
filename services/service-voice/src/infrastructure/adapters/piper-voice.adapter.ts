@@ -2,10 +2,11 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { DEFAULT_PIPER_VOICE } from '@myjarvis/shared';
 import { VoicePort, SynthesizeResult } from '../../domain/ports/voice.port';
 
 /**
- * TTS via Piper (local, MIT) — voz britânica masculina estilo JARVIS.
+ * TTS via Piper (local, MIT) — voz em português brasileiro.
  * STT permanece no navegador (Web Speech API).
  */
 @Injectable()
@@ -33,7 +34,7 @@ export class PiperVoiceAdapter implements VoicePort {
     }
 
     const piperUrl = this.config.get('PIPER_URL', 'http://piper:5000').replace(/\/$/, '');
-    const piperVoice = voice ?? this.config.get('PIPER_VOICE') ?? 'en_GB-alan-medium.onnx';
+    const piperVoice = voice ?? this.config.get('PIPER_VOICE') ?? DEFAULT_PIPER_VOICE;
     const lengthScale = Number(this.config.get('PIPER_LENGTH_SCALE', '1.08'));
 
     try {
@@ -58,7 +59,7 @@ export class PiperVoiceAdapter implements VoicePort {
         format: 'browser-tts',
         clientSide: true,
         text: trimmed,
-        voice: voice ?? 'en-GB',
+        voice: voice ?? 'pt-BR',
         message: 'Piper indisponível — use Web Speech API no navegador.',
       };
     }
