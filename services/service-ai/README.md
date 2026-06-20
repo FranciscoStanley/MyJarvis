@@ -10,9 +10,9 @@ Cérebro JARVIS — conversação via **Ollama** (IA local, gratuita, MIT) com *
 ## Requer
 
 - Ollama em execução (`docker compose up ollama`)
-- Modelos baixados:
-  - `ollama pull llama3.2` — chat
-  - `ollama pull nomic-embed-text` — embeddings RAG (opcional; fallback por keywords se indisponível)
+- Modelos (baixados automaticamente via `ollama-init` no Docker):
+  - `llama3.2` — chat
+  - `nomic-embed-text` — embeddings RAG (fallback por keywords se indisponível)
 
 ## Variáveis
 
@@ -25,17 +25,19 @@ Cérebro JARVIS — conversação via **Ollama** (IA local, gratuita, MIT) com *
 
 ## RAG — Retrieval-Augmented Generation
 
-O RAG injeta contexto relevante no system prompt antes de cada resposta, melhorando detecção de intenções (abrir navegador, YouTube, Google, música).
+O RAG injeta contexto relevante no system prompt antes de cada resposta, melhorando detecção de intenções (abrir navegador, YouTube, Google, música, identidade do criador).
 
 ```mermaid
 flowchart LR
     MSG[Mensagem do usuário] --> RAG[OllamaRagAdapter]
-    RAG --> KB[(action-knowledge.ts<br/>7 chunks)]
-    RAG -->|embeddings ou keywords| CTX[Contexto RAG]
+    RAG --> KB[(action-knowledge.ts<br/>8 chunks)]
+    RAG -->|embeddings ou keywords| CTX[Top-3 chunks]
     CTX --> OLLAMA[Ollama /api/chat + tools]
     OLLAMA --> SEARCH[service-search]
     OLLAMA --> REPLY[reply + clientActions]
 ```
+
+Categorias dos chunks: `browser`, `youtube`, `search`, `music`, `gmail`, `identity`, `response`, `execute`.
 
 Arquivos principais:
 
@@ -69,7 +71,7 @@ Confirmação: ações com `requiresConfirmation: true` exigem `sim`/`não`, bot
 {
   "status": "ok",
   "service": "service-ai",
-  "rag": { "ready": true, "embedModel": "nomic-embed-text", "chunks": 7 }
+  "rag": { "ready": true, "embedModel": "nomic-embed-text", "chunks": 8 }
 }
 ```
 

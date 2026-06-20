@@ -98,7 +98,7 @@ export class HealthResponseDto {
 
   @ApiPropertyOptional({
     description: 'Status do índice RAG (embeddings Ollama ou fallback por keywords)',
-    example: { ready: true, embedModel: 'nomic-embed-text', chunks: 7 },
+    example: { ready: true, embedModel: 'nomic-embed-text', chunks: 8 },
   })
   rag?: { ready: boolean; embedModel: string; chunks: number };
 }
