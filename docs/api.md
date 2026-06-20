@@ -4,31 +4,50 @@
 
 Base URL: `http://localhost:3000/api`
 
-> RBAC e LDAP: [docs/rbac-ldap.md](rbac-ldap.md)
+> RBAC e LDAP: [docs/rbac-ldap.md](rbac-ldap.md)  
+> Termos e privacidade: [terms-of-use.md](terms-of-use.md) · [privacy-policy.md](privacy-policy.md)
 
 ## Autenticação
 
 Rotas públicas: `/auth/register`, `/auth/login`, `/auth/login/ldap`. Demais rotas exigem `Authorization: Bearer <token>`.
 
 ### POST /auth/register
-Cria usuário com papel `user`.
+
+Cria usuário com papel `user`. **Aceite dos termos é obrigatório** — gravado uma vez no servidor.
+
 ```json
-{ "email": "user@email.com", "password": "senha123", "name": "Nome" }
+{
+  "email": "user@email.com",
+  "password": "SenhaSegura123!",
+  "name": "Nome",
+  "acceptTerms": true
+}
 ```
 
+| Campo | Obrigatório | Descrição |
+|-------|-------------|-----------|
+| `acceptTerms` | Sim (`true`) | Confirma leitura dos [Termos de Uso](terms-of-use.md) e [Política de Privacidade](privacy-policy.md) |
+
+Retorna `AuthUser` (sem token). O cliente deve fazer login em seguida.
+
 ### POST /auth/login
+
 Login local (email/senha).
+
 ```json
-{ "email": "user@email.com", "password": "senha123" }
+{ "email": "user@email.com", "password": "SenhaSegura123!" }
 ```
 
 ### POST /auth/login/ldap
+
 Login corporativo LDAP/Active Directory.
+
 ```json
 { "username": "jdoe", "password": "senha" }
 ```
 
 Resposta (login local ou LDAP):
+
 ```json
 {
   "accessToken": "jwt...",
@@ -37,43 +56,73 @@ Resposta (login local ou LDAP):
     "email": "user@email.com",
     "name": "Nome",
     "roles": ["user"],
-    "authSource": "local"
+    "authSource": "local",
+    "termsAcceptedAt": "2026-06-20T12:00:00.000Z",
+    "termsVersion": "2026-06-01",
+    "hasAcceptedTerms": true
   }
 }
 ```
 
+### POST /auth/accept-terms
+
+Aceite único dos termos (usuários LDAP ou contas antigas sem aceite). **Não é necessário a cada login.**
+
+```json
+{ "acceptTerms": true }
+```
+
+Requer JWT. Retorna perfil atualizado com `hasAcceptedTerms: true`.
+
 ### GET /auth/profile
-Retorna perfil com `roles` e `authSource`.
+
+Retorna perfil com `roles`, `authSource`, `termsAcceptedAt`, `termsVersion`, `hasAcceptedTerms`.
 
 ### GET /auth/users `[admin]`
+
 Lista todos os usuários.
 
 ### PATCH /auth/users/:id/role `[admin]`
+
 ```json
 { "role": "admin" }
 ```
+
 Valores: `user` | `admin`.
 
 ## Chat JARVIS
 
-Pipeline com **RAG** (Ollama + `nomic-embed-text`): antes de cada resposta, o `service-ai` recupera chunks de conhecimento sobre ações (YouTube, Google, navegador, Spotify) e injeta no system prompt.
+Pipeline com **RAG** (32 chunks: ações + dev agent + ética), **tool calling** e busca via `service-search`.
+
+Capacidades: assistente pessoal, **agente de desenvolvimento**, `doc_search` (docs oficiais), `web_search` (aprendizado livre), guardrails de segurança.
 
 ### POST /chat/session
+
 Cria nova sessão de conversa.
 
 ### POST /chat/message
+
 ```json
-{ "message": "Abra o YouTube na música Espírito Santo", "sessionId": "uuid-opcional" }
+{ "message": "Como usar guards no NestJS?", "sessionId": "uuid-opcional" }
 ```
 
 Retorna `{ reply, sessionId, actions, searchResults, clientActions }`.
 
 | Campo | Descrição |
 |-------|-----------|
-| `reply` | Resposta conversacional JARVIS (RAG + síntese com resultados de busca) |
-| `actions` | Ações internas detectadas (`search`, `video`, `open_url`, etc.) |
-| `searchResults` | Resultados DuckDuckGo/YouTube quando houve busca |
-| `clientActions` | Ações executáveis no PWA — ver tabela abaixo |
+| `reply` | Resposta JARVIS (RAG + síntese; tom elegante com humor seco) |
+| `actions` | Ações internas (`search`, `docs`, `video`, `open_url`, etc.) |
+| `searchResults` | Resultados DuckDuckGo quando houve busca |
+| `clientActions` | Ações executáveis no PWA |
+
+#### Ferramentas Ollama (tools)
+
+| Tool | Uso |
+|------|-----|
+| `doc_search` | Documentação oficial (NestJS, Python, .NET, +30 tecnologias) |
+| `web_search` | Internet — novidades, CVEs, aprendizado contínuo |
+| `image_search` / `video_search` / `music_search` | Mídia |
+| `open_url` / `open_application` | YouTube, Gmail, Cursor, VS Code, navegador |
 
 #### clientActions
 
@@ -82,7 +131,6 @@ Retorna `{ reply, sessionId, actions, searchResults, clientActions }`.
   "id": "uuid",
   "type": "open_url",
   "label": "Abrir no YouTube",
-  "description": "Abrir «Espírito Santo» no YouTube",
   "url": "https://www.youtube.com/watch?v=...",
   "app": "youtube",
   "requiresConfirmation": false
@@ -91,61 +139,63 @@ Retorna `{ reply, sessionId, actions, searchResults, clientActions }`.
 
 | `type` | Efeito no frontend |
 |--------|-------------------|
-| `open_url` | `window.open(url)` — Google, resultados web, vídeo YouTube |
-| `open_app` | `window.open(url)` — YouTube, Spotify, Gmail |
-| `play_embed` | Reproduz vídeo inline na UI (iframe YouTube) |
+| `open_url` | `window.open(url)` |
+| `open_app` | `window.open(url)` — YouTube, Spotify, Gmail, **Cursor**, **VS Code** |
+| `play_embed` | Vídeo inline (iframe YouTube) |
 
 | `requiresConfirmation` | Comportamento |
 |------------------------|---------------|
-| `false` | Execução imediata (comandos imperativos: *abra*, *toque*, *entre*) |
-| `true` | Aguarda confirmação (`sim`, botão ou voz) |
+| `false` | Execução imediata (comandos imperativos) |
+| `true` | Aguarda `sim` / botão / voz |
 
 **Exemplos de mensagens:**
 
-| Mensagem | Ação esperada |
+| Mensagem | Comportamento |
 |----------|---------------|
 | `Abra o YouTube` | Abre youtube.com (auto) |
-| `Toque Espírito Santo no YouTube` | Busca vídeo → abre URL (auto) |
-| `Busque no Google inteligência artificial` | Busca web + opção abrir Google |
-| `Abrir uma nova aba do navegador` | `about:blank` (auto) |
-
-Fluxo de confirmação: após busca não imperativa, JARVIS pergunta se deseja abrir/reproduzir → usuário responde `sim`, `não`, ou escolhe opção (`abre no spotify`) → `clientActions` retornam com `requiresConfirmation: false`.
+| `Como configurar guards no NestJS?` | `doc_search` → docs.nestjs.com |
+| `Faça code review deste use case` | Modo dev agent + RAG |
+| `Crie um sistema com microserviços` | Project Blueprint (checklist + Mermaid) |
+| `Como invadir uma rede` | **Recusa** — diretrizes de segurança do criador |
+| `Abra o Cursor` | Deep link `cursor://` (auto) |
 
 ### GET /chat/session/:sessionId
+
 Histórico da conversa.
 
 ### GET /api/health (service-ai :3002)
-
-Health do serviço de IA inclui status RAG:
 
 ```json
 {
   "status": "ok",
   "service": "service-ai",
-  "rag": { "ready": true, "embedModel": "nomic-embed-text", "chunks": 8 }
+  "rag": {
+    "ready": true,
+    "embedModel": "nomic-embed-text",
+    "chunks": 32
+  }
 }
 ```
 
 ## Voz (gratuito — Piper TTS + Web Speech API)
 
-- **STT (entrada):** Web Speech API no navegador (pt-BR)
-- **TTS (saída):** [Piper](https://github.com/OHF-Voice/piper1-gpl) local via `service-voice` — voz `pt_BR-faber-medium` (português brasileiro). Se Piper estiver offline, o frontend usa fallback `speechSynthesis` pt-BR.
-
-Não replica a voz original do filme (direitos autorais da Marvel/Disney).
+- **STT:** Web Speech API no navegador (pt-BR)
+- **TTS:** Piper local (`pt_BR-faber-medium`) + fallback `speechSynthesis`
 
 ### POST /voice/transcribe
-Preferir microfone no app. Endpoint orienta uso do Web Speech API.
+
+Orienta uso do Web Speech API no frontend.
 
 ### POST /voice/synthesize
+
 ```json
 { "text": "Bom dia, senhor.", "voice": "pt_BR-faber-medium" }
 ```
-Retorna `{ audioBase64, format: "wav", clientSide: false, voice }` quando Piper está disponível.
-Fallback: `{ clientSide: true, format: "browser-tts", text }`.
 
 ## Busca
 
 ### POST /search/web | /search/images | /search/videos | /search/music
+
 ```json
 { "query": "termo de busca", "limit": 5 }
 ```
@@ -153,6 +203,7 @@ Fallback: `{ clientSide: true, format: "browser-tts", text }`.
 ## Notificações
 
 ### POST /notifications/send
+
 ```json
 { "userId": "uuid", "title": "Alerta", "body": "Mensagem", "type": "info" }
 ```
@@ -169,12 +220,9 @@ Fallback: `{ clientSide: true, format: "browser-tts", text }`.
 
 ## Health
 
-### GET /api/health
-Todos os serviços expõem health check (prefixo global `/api`).
+`GET /api/health` — todos os serviços (prefixo `/api`).
 
 ## Swagger
-
-Documentação interativa em `/api/docs` de cada serviço (dev ou `ENABLE_SWAGGER=true`):
 
 | Serviço | URL |
 |---------|-----|
@@ -185,3 +233,8 @@ Documentação interativa em `/api/docs` de cada serviço (dev ou `ENABLE_SWAGGE
 | Search | http://localhost:3004/api/docs |
 | Notifications | http://localhost:3005/api/docs |
 | Media | http://localhost:3006/api/docs |
+
+## Collections
+
+- Postman: [postman/myjarvis.postman_collection.json](postman/myjarvis.postman_collection.json)
+- Insomnia: [insomnia/myjarvis.insomnia.json](insomnia/myjarvis.insomnia.json)

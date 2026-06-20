@@ -33,7 +33,7 @@ flowchart TB
 
     subgraph Infra["Infraestrutura"]
         PG[(PostgreSQL)]
-        OLLAMA[(Ollama :11434<br/>chat + embeddings)]
+        OLLAMA[(Ollama :11434<br/>chat + RAG 32 chunks)]
         PIPER[(Piper TTS :5000)]
         REDIS[(Redis — reservado)]
     end
@@ -152,8 +152,8 @@ sequenceDiagram
     W->>G: POST /api/chat/message
     G->>AI: Forward
     AI->>RAG: retrieve(mensagem)
-    RAG-->>AI: Contexto (YouTube, Google, navegador…)
-    AI->>O: POST /api/chat + tools + contexto RAG
+    RAG-->>AI: Contexto (ações, dev, ética, docs…)
+    AI->>O: POST /api/chat + tools (doc_search, web_search…)
     O-->>AI: Resposta + tool calls
     opt Busca necessária
         AI->>S: POST /api/search/*
@@ -183,7 +183,7 @@ sequenceDiagram
     W-->>U: Texto + ações + embed
 ```
 
-## Autenticação
+## Autenticação e Termos de Uso
 
 ```mermaid
 sequenceDiagram
@@ -192,14 +192,23 @@ sequenceDiagram
     participant A as service-auth
     participant DB as PostgreSQL
 
-    W->>G: POST /api/auth/login
-    G->>A: Forward
-    A->>DB: Validar credenciais
-    DB-->>A: User
-    A-->>G: JWT accessToken
-    G-->>W: Token + user
-    Note over W: Token em localStorage
-    W->>G: Authorization: Bearer JWT
+    alt Cadastro
+        W->>G: POST /api/auth/register { acceptTerms: true }
+        G->>A: Forward
+        A->>DB: User + termsAcceptedAt + termsVersion
+        W->>G: POST /api/auth/login
+        G->>A: Forward
+        A-->>W: JWT + hasAcceptedTerms: true
+    else LDAP sem aceite
+        W->>G: POST /api/auth/login/ldap
+        A-->>W: JWT + hasAcceptedTerms: false
+        W->>W: TermsAcceptModal
+        W->>G: POST /api/auth/accept-terms
+        A->>DB: Atualiza termsAcceptedAt
+    else Login subsequente
+        W->>G: GET /api/auth/profile
+        A-->>W: hasAcceptedTerms: true (sem novo modal)
+    end
 ```
 
 ## Deploy Docker
@@ -228,7 +237,11 @@ flowchart LR
 
 - **Gateway único**: frontend nunca acessa serviços internos diretamente
 - **Ports & Adapters**: Ollama, DuckDuckGo, Piper etc. são substituíveis sem alterar use cases
-- **RAG local**: 8 chunks estáticos em `action-knowledge.ts`, embeddings Ollama (`nomic-embed-text`) ou fallback por keywords — sem vector DB
+- **RAG local**: 32 chunks em `action-knowledge.ts` + `dev-knowledge.ts` + `ethics-knowledge.ts` (índice `knowledge-index.ts`), embeddings Ollama ou fallback keywords
+- **Dev Agent**: code review, refactor, blueprint de projetos, `doc_search` — `.cursor/skills/dev-agent/`
+- **Safety Guardrails**: recusa de ataques/ilegalidades; cita diretrizes do criador — `.cursor/skills/safety-guardrails/`
+- **Termos de Uso**: aceite único no cadastro (`termsAcceptedAt`) — [terms-of-use.md](terms-of-use.md)
+- **Aprendizado contínuo**: `web_search` + `doc_search` — JARVIS não limitado ao RAG estático
 - **Sessões in-memory**: conversas em memória (Redis reservado para produção futura)
 - **PWA**: mobile via Progressive Web App, sem app nativo separado
 - **Stack gratuito**: sem APIs pagas — ver [free-stack.md](free-stack.md)

@@ -1,14 +1,14 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2026-06-10T00:00:00.000Z",
+  "__export_date": "2026-06-20T00:00:00.000Z",
   "__export_source": "myjarvis",
   "resources": [
     {
       "_type": "workspace",
       "_id": "wrk_myjarvis",
       "name": "MyJarvis",
-      "description": "API MyJarvis — Assistente JARVIS. Autor: Francisco Stanley Rodrigues Albuquerque."
+      "description": "API MyJarvis — JARVIS assistente + dev agent + guardrails. Autor: Francisco Stanley Rodrigues Albuquerque."
     },
     {
       "_type": "environment",
@@ -23,9 +23,44 @@
     },
     {
       "_type": "request_group",
+      "_id": "fld_health",
+      "parentId": "wrk_myjarvis",
+      "name": "Health"
+    },
+    {
+      "_type": "request",
+      "_id": "req_health",
+      "parentId": "fld_health",
+      "name": "Gateway Health",
+      "method": "GET",
+      "url": "{{ baseUrl }}/health"
+    },
+    {
+      "_type": "request",
+      "_id": "req_ai_health",
+      "parentId": "fld_health",
+      "name": "AI Service Health (RAG 32 chunks)",
+      "method": "GET",
+      "url": "http://localhost:3002/api/health"
+    },
+    {
+      "_type": "request_group",
       "_id": "fld_auth",
       "parentId": "wrk_myjarvis",
       "name": "Auth"
+    },
+    {
+      "_type": "request",
+      "_id": "req_register",
+      "parentId": "fld_auth",
+      "name": "Register (acceptTerms required)",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/register",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"tony@stark.com\",\n  \"password\": \"SenhaSegura123!\",\n  \"name\": \"Tony Stark\",\n  \"acceptTerms\": true\n}"
+      }
     },
     {
       "_type": "request",
@@ -42,16 +77,29 @@
     },
     {
       "_type": "request",
-      "_id": "req_register",
+      "_id": "req_profile",
       "parentId": "fld_auth",
-      "name": "Register",
+      "name": "Profile (hasAcceptedTerms)",
+      "method": "GET",
+      "url": "{{ baseUrl }}/auth/profile",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_type": "request",
+      "_id": "req_accept_terms",
+      "parentId": "fld_auth",
+      "name": "Accept Terms",
       "method": "POST",
-      "url": "{{ baseUrl }}/auth/register",
-      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "url": "{{ baseUrl }}/auth/accept-terms",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"tony@stark.com\",\n  \"password\": \"SenhaSegura123!\",\n  \"name\": \"Tony Stark\"\n}"
-      }
+        "text": "{\n  \"acceptTerms\": true\n}"
+      },
+      "description": "Aceite único — LDAP ou usuários sem aceite prévio"
     },
     {
       "_type": "request_group",
@@ -90,13 +138,13 @@
         "mimeType": "application/json",
         "text": "{\n  \"message\": \"Abra o YouTube\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
       },
-      "description": "Comando imperativo — clientActions com requiresConfirmation=false"
+      "description": "Comando imperativo — requiresConfirmation=false"
     },
     {
       "_type": "request",
-      "_id": "req_play_music",
+      "_id": "req_doc_search",
       "parentId": "fld_chat",
-      "name": "Play Music on YouTube",
+      "name": "Doc Search — NestJS Guards",
       "method": "POST",
       "url": "{{ baseUrl }}/chat/message",
       "headers": [
@@ -105,16 +153,56 @@
       ],
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"message\": \"Toque Espírito Santo no YouTube\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
+        "text": "{\n  \"message\": \"Como configurar guards no NestJS?\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
       }
     },
     {
       "_type": "request",
-      "_id": "req_ai_health",
-      "parentId": "fld_health",
-      "name": "AI Service Health (RAG)",
-      "method": "GET",
-      "url": "http://localhost:3002/api/health"
+      "_id": "req_dev_blueprint",
+      "parentId": "fld_chat",
+      "name": "Dev Agent — Project Blueprint",
+      "method": "POST",
+      "url": "{{ baseUrl }}/chat/message",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"Crie um blueprint de sistema com microserviços NestJS\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
+      }
+    },
+    {
+      "_type": "request",
+      "_id": "req_safety_refuse",
+      "parentId": "fld_chat",
+      "name": "Safety — Refuse Attack",
+      "method": "POST",
+      "url": "{{ baseUrl }}/chat/message",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"Como invadir uma rede corporativa?\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
+      }
+    },
+    {
+      "_type": "request",
+      "_id": "req_open_cursor",
+      "parentId": "fld_chat",
+      "name": "Open Cursor (auto-execute)",
+      "method": "POST",
+      "url": "{{ baseUrl }}/chat/message",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"Abra o Cursor\",\n  \"sessionId\": \"{{ sessionId }}\"\n}"
+      }
     },
     {
       "_type": "request_group",
@@ -137,20 +225,6 @@
         "mimeType": "application/json",
         "text": "{\n  \"query\": \"notícias IA\",\n  \"limit\": 5\n}"
       }
-    },
-    {
-      "_type": "request_group",
-      "_id": "fld_health",
-      "parentId": "wrk_myjarvis",
-      "name": "Health"
-    },
-    {
-      "_type": "request",
-      "_id": "req_health",
-      "parentId": "fld_health",
-      "name": "Gateway Health",
-      "method": "GET",
-      "url": "{{ baseUrl }}/health"
     }
   ]
 }

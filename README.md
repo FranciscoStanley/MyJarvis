@@ -1,6 +1,6 @@
 # MyJarvis
 
-Assistente de IA pessoal inspirado no **JARVIS** — inteligente, com humor, voz, buscas na internet, imagens, vídeos e músicas.
+Assistente de IA pessoal **e agente de desenvolvimento** inspirado no **JARVIS** — inteligente, com humor seco, voz, buscas, code review, refatoração e orientação de arquitetura.
 
 **Autor:** [Francisco Stanley Rodrigues Albuquerque](LICENSE)
 
@@ -35,7 +35,7 @@ flowchart TB
     GW --> NOTIF[service-notifications :3005]
     GW --> MEDIA[service-media :3006]
 
-    AI --> OLLAMA[(Ollama :11434<br/>chat + RAG)]
+    AI --> OLLAMA[(Ollama :11434<br/>chat + RAG 32 chunks)]
     AI --> SEARCH
     VOICE --> PIPER[(Piper :5000)]
     SEARCH --> DDG[DuckDuckGo / Wikimedia / Archive.org]
@@ -77,7 +77,7 @@ docker compose up -d --build
 |---------|-------|---------------------|
 | `service-gateway` | 3000 | Proxy, JWT, RBAC |
 | `service-auth` | 3001 | PostgreSQL, LDAP, JWT |
-| `service-ai` | 3002 | Ollama + **RAG** (8 chunks, tool calling) |
+| `service-ai` | 3002 | Ollama + **RAG** (32 chunks: ações + dev + ética) + `doc_search` + tool calling |
 | `service-voice` | 3003 | Piper TTS (STT no browser) |
 | `service-search` | 3004 | DuckDuckGo + Wikimedia + Archive.org |
 | `service-notifications` | 3005 | Notificações in-memory |
@@ -109,11 +109,16 @@ Documentação: [docs/testing.md](docs/testing.md)
 
 ## Documentação
 
+- [Termos de Uso](docs/terms-of-use.md)
+- [Política de Privacidade](docs/privacy-policy.md)
 - [RBAC & LDAP](docs/rbac-ldap.md)
 - [Stack gratuito](docs/free-stack.md)
 - [Arquitetura](docs/architecture.md)
+- [Estrutura de pastas](docs/project-structure.md)
 - [API Reference](docs/api.md)
+- [Testes & CI](docs/testing.md)
 - [Postman](docs/postman/myjarvis.postman_collection.json)
+- [Insomnia](docs/insomnia/myjarvis.insomnia.json)
 
 ## Variáveis de Ambiente
 
@@ -140,7 +145,10 @@ Lista completa: [.env.example](.env.example)
 | `nestjs-services` | `nestjs-services` |
 | `nextjs-frontend` | `nextjs-frontend` |
 | `free-open-source-stack` | `free-open-source-stack` |
+| `dev-agent` | `dev-agent` |
+| `safety-guardrails` | `safety-guardrails` |
 | — | `myjarvis-development` (orquestrador) |
+| — | `review-code` · `organize-commits` |
 
 Índice: [.cursor/skills/README.md](.cursor/skills/README.md)
 

@@ -96,15 +96,22 @@ Modelos recomendados (todos gratuitos):
 - `mistral` — rápido, bom em português
 - `gemma2` — leve para máquinas modestas
 
-## RAG — contexto para ações JARVIS
+## RAG — contexto para ações, dev agent e ética
 
-O `service-ai` usa RAG local para melhorar detecção de intenções (abrir navegador, YouTube, Google, música):
+O `service-ai` usa RAG local com **32 chunks** (ações + desenvolvimento + ética) e ferramentas gratuitas:
+
+| Capacidade | Implementação gratuita |
+|------------|------------------------|
+| Embeddings | Ollama `nomic-embed-text` |
+| `doc_search` | DuckDuckGo `site:dominio` (docs oficiais) |
+| `web_search` | DuckDuckGo (aprendizado contínuo) |
+| Guardrails | Chunks `ethics-knowledge.ts` + prompt (sem API paga) |
 
 ```bash
 # Modelo de embedding (docker compose puxa automaticamente via ollama-init)
 docker compose exec ollama ollama pull nomic-embed-text
 
-# Verificar índice RAG
+# Verificar índice RAG (chunks: 32)
 curl http://localhost:3002/api/health
 ```
 

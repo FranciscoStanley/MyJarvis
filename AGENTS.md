@@ -20,9 +20,14 @@
 | `nestjs-services` | `nestjs-services` |
 | `nextjs-frontend` | `nextjs-frontend` |
 | `free-open-source-stack` | `free-open-source-stack` |
+| `dev-agent` | `dev-agent` |
+| `safety-guardrails` | `safety-guardrails` |
 | — | `myjarvis-development` |
+| — | `review-code` · `organize-commits` |
 
 Comece por `myjarvis-development` e carregue a skill do domínio. Índice: `.cursor/skills/README.md`
+
+Documentação legal: [docs/terms-of-use.md](docs/terms-of-use.md) · [docs/privacy-policy.md](docs/privacy-policy.md)
 
 ## When Modifying Code
 
@@ -45,7 +50,10 @@ npm run dev -w jarvis-web      # Frontend only
 - SOLID, Clean Architecture, Clean Code
 - Domain → Application → Infrastructure → Presentation
 - Gateway as single external entry point
-- **RAG** in `service-ai`: Ollama embeddings + 8 static chunks (no vector DB)
+- **RAG** in `service-ai`: Ollama embeddings + 32 knowledge chunks (ações + dev + ética; índice `knowledge-index.ts`, sem vector DB)
+- **Dev Agent**: JARVIS code review, refactoring, blueprint, `doc_search` — `.cursor/skills/dev-agent/`
+- **Safety Guardrails**: recusa de ataques e ilegalidades — `.cursor/skills/safety-guardrails/`
+- **Termos de Uso**: aceite único (`termsAcceptedAt`, versão `2026-06-01`) — [docs/terms-of-use.md](docs/terms-of-use.md)
 - **Diagramas de arquitetura em Mermaid** — ver [docs/architecture.md](docs/architecture.md)
 
 ```mermaid

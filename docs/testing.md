@@ -46,20 +46,29 @@ Os testes E2E mockam a API do gateway — não exigem Docker.
 ```
 tests/                          # Cross-service: live, perf, stress, k6
 services/*/test/
-├── *.spec.ts                   # Unitários (RAG, action-detector, client-actions)
+├── *.spec.ts                   # Unitários (RAG, action-detector, doc-search)
 ├── integration/*.integration.spec.ts
 └── performance/*.performance.spec.ts  (service-ai)
 frontends/jarvis-web/
 ├── src/**/*.spec.ts(x)         # Componentes, store, client-actions
 └── e2e/*.spec.ts               # Playwright E2E (auto-execução mockada)
+packages/shared/test/           # hasAcceptedCurrentTerms, TERMS_VERSION
 ```
 
-### Cobertura RAG e ações (service-ai)
+### Cobertura auth e termos (service-auth + shared)
 
 | Arquivo | O que testa |
 |---------|-------------|
-| `test/ollama-rag.adapter.spec.ts` | Retrieve por keywords / embeddings; base com 8 chunks |
-| `test/action-detector.spec.ts` | Detecção YouTube, Google, navegador |
+| `services/service-auth/test/auth.use-cases.spec.ts` | Registro com `acceptTerms`; rejeição sem aceite; `AcceptTermsUseCase` |
+| `packages/shared/src/constants.spec.ts` | `TERMS_VERSION`, `hasAcceptedCurrentTerms()` |
+
+### Cobertura RAG, dev agent e segurança (service-ai)
+
+| Arquivo | O que testa |
+|---------|-------------|
+| `test/ollama-rag.adapter.spec.ts` | Retrieve por keywords/embeddings; chunks ação + dev + **ética** |
+| `test/doc-search.spec.ts` | `buildDocSearchQuery`, `doc-registry`, tecnologias suportadas |
+| `test/action-detector.spec.ts` | YouTube, Google, docs, segurança; word boundaries (`\bsom\b`) |
 | `test/action-intent.spec.ts` | Execução imediata vs confirmação |
 | `test/client-action-builder.spec.ts` | `clientActions` + `requiresConfirmation` |
 | `test/chat.use-cases.spec.ts` | Fluxo completo + confirmação sim/não |
@@ -69,8 +78,11 @@ frontends/jarvis-web/
 | Arquivo | O que testa |
 |---------|-------------|
 | `src/lib/client-actions.spec.ts` | `window.open`, `executeClientActions`, TTS strip |
-| `src/stores/jarvis.store.spec.ts` | Auto-execução de `clientActions` |
+| `src/stores/jarvis.store.spec.ts` | Auto-execução de `clientActions`; erros amigáveis |
+| `src/components/jarvis/ChatPanel.spec.tsx` | Renderização do painel de chat |
 | `e2e/home.spec.ts` | Chat com resposta e ações mockadas |
+
+**Termos de uso no frontend:** gate em `page.tsx` (`needsTermsAcceptance`) e `TermsAcceptModal` — validados manualmente ou via E2E futuro com mock de perfil sem aceite.
 
 ### Cobertura voz (service-voice)
 
@@ -107,3 +119,12 @@ Branch protection em `master`: exigir os 3 status checks + pull request (ver `.c
 Local: Husky `pre-push` roda `npm run ci:pipeline`.
 
 Testes live/performance/stress são skipped automaticamente se serviços estiverem offline.
+
+## Contagens de referência (última suíte verde)
+
+| Pacote | Testes |
+|--------|--------|
+| `@myjarvis/shared` | 8 |
+| `service-auth` | 4+ |
+| `service-ai` | 54+ |
+| `jarvis-web` | 16+ |

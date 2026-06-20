@@ -15,14 +15,22 @@ Administradores herdam permissões de usuário (`hasRole` trata admin como super
 
 ### Local (email/senha)
 
-- `POST /api/auth/register` — cria usuário com papel `user`
-- `POST /api/auth/login` — JWT com `roles` no payload
+- `POST /api/auth/register` — cria usuário com papel `user`; **`acceptTerms: true` obrigatório**
+- `POST /api/auth/login` — JWT com `roles` e `hasAcceptedTerms` no objeto `user`
 
 ### LDAP
 
 - `POST /api/auth/login/ldap` — body: `{ username, password }`
 - Provisionamento JIT no PostgreSQL (`authSource: ldap`)
 - Grupo LDAP configurado em `LDAP_ADMIN_GROUP_DN` → papel `admin`
+- Usuários LDAP podem precisar de `POST /api/auth/accept-terms` na primeira sessão (aceite único)
+
+### Termos de Uso
+
+- Versão vigente: `TERMS_VERSION` em `@myjarvis/shared` (atual: `2026-06-01`)
+- Cadastro local grava `termsAcceptedAt` automaticamente
+- `GET /api/auth/profile` retorna `hasAcceptedTerms`
+- Documentação: [terms-of-use.md](terms-of-use.md) · [privacy-policy.md](privacy-policy.md)
 
 ### Endpoints protegidos (admin)
 
@@ -78,5 +86,8 @@ LDAP_MOCK_ADMIN=true   # simula admin LDAP
 ## Frontend
 
 - Abas **Email**, **LDAP** e **Registrar** no modal de login
+- Checkbox de aceite dos termos no cadastro (`AuthModal`)
+- `TermsAcceptModal` para LDAP/usuários sem `hasAcceptedTerms`
+- Páginas `/terms` e `/privacy`
 - Badge **admin** no header para administradores
-- Chat exige autenticação (sem modo convidado)
+- Chat exige autenticação **e** aceite de termos vigente (sem modo convidado)

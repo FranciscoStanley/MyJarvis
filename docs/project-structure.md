@@ -64,9 +64,9 @@ Aplicação **Next.js PWA** — orb JARVIS, chat, autenticação e voz no navega
 
 | Subpasta / arquivo | Responsabilidade |
 |--------------------|------------------|
-| `src/app/` | Rotas App Router (`layout.tsx`, `page.tsx`, estilos globais) |
-| `src/components/jarvis/` | UI: orb animado, painel de chat, barra de entrada, modal de login |
-| `src/stores/` | Estado global (Zustand): sessão, token JWT, roles, mensagens |
+| `src/app/` | Rotas App Router (`layout.tsx`, `page.tsx`, `/terms`, `/privacy`) |
+| `src/components/jarvis/` | UI: orb, chat, entrada, `AuthModal`, `TermsAcceptModal` |
+| `src/stores/` | Estado global (Zustand): sessão, JWT, roles, `needsTermsAcceptance`, mensagens |
 | `src/hooks/` | Lógica reutilizável (ex.: `useVoice` — Web Speech API) |
 | `src/lib/api.ts` | Cliente HTTP centralizado — fala **somente** com o gateway |
 | `src/test/` | Setup Vitest e mocks (ex.: Framer Motion) |
@@ -129,8 +129,9 @@ flowchart LR
 | Responsabilidade | Detalhe |
 |------------------|---------|
 | Autenticação | Email/senha, LDAP/AD, emissão de JWT |
+| Termos de Uso | `acceptTerms` no cadastro; `POST /auth/accept-terms` (aceite único por versão) |
 | Autorização | RBAC (`user`, `admin`), gestão de papéis |
-| Persistência | Usuários em PostgreSQL (TypeORM) |
+| Persistência | Usuários em PostgreSQL (`termsAcceptedAt`, `termsVersion`) |
 | Proteção | Rate limit, lockout por tentativas, política de senha |
 
 **Não faz:** proxy para o frontend — o browser usa o gateway.
@@ -141,10 +142,10 @@ flowchart LR
 |------------------|---------|
 | Conversação | Sessões, histórico, envio de mensagens ao JARVIS |
 | IA | Integração Ollama (modelo local, ex.: Llama 3.2) |
-| **RAG** | Embeddings Ollama (`nomic-embed-text`) + base `action-knowledge.ts` |
-| Personalidade | System prompt em `domain/constants/jarvis-prompt.ts` |
-| Ferramentas | Tool calling + busca via `service-search` |
-| Ações cliente | `clientActions` (YouTube, Google, navegador, Spotify, embed) |
+| **RAG** | 32 chunks: `action-knowledge.ts` + `dev-knowledge.ts` + `ethics-knowledge.ts` |
+| Personalidade | System prompt + guardrails em `domain/constants/jarvis-prompt.ts` |
+| Ferramentas | `doc_search`, `web_search`, tool calling + `service-search` |
+| Ações cliente | `clientActions` (YouTube, Google, Cursor, VS Code, embed) |
 
 **Não faz:** renderizar UI nem hospedar o modelo (Ollama é processo separado).
 
@@ -152,7 +153,12 @@ Estrutura RAG em `services/service-ai/src/`:
 
 | Pasta / arquivo | Função |
 |-----------------|--------|
-| `domain/knowledge/action-knowledge.ts` | Chunks de conhecimento (8 categorias) |
+| `domain/knowledge/action-knowledge.ts` | Chunks de ações (browser, YouTube, Cursor, VS Code) |
+| `domain/knowledge/dev-knowledge.ts` | Agente de desenvolvimento (review, refactor, blueprint) |
+| `domain/knowledge/ethics-knowledge.ts` | Guardrails de segurança e ética |
+| `domain/knowledge/knowledge-index.ts` | Índice unificado RAG (32 chunks) |
+| `domain/constants/doc-registry.ts` | Mapa de documentações oficiais (30+ tecnologias) |
+| `domain/services/doc-search.ts` | Queries `site:dominio` para `doc_search` |
 | `domain/ports/rag.port.ts` | Interface `RagPort` |
 | `infrastructure/adapters/ollama-rag.adapter.ts` | Retrieve + embeddings |
 | `domain/services/action-intent.ts` | Detecção de execução imediata |
@@ -295,8 +301,10 @@ Cada serviço mantém **seus próprios** testes em `services/<nome>/test/`. A pa
 
 | Arquivo / pasta | Conteúdo |
 |-----------------|----------|
-| `architecture.md` | Diagramas Mermaid, fluxos, decisões de arquitetura |
+| `architecture.md` | Diagramas Mermaid, fluxos (chat, termos, RAG), decisões |
 | `api.md` | Referência de endpoints via gateway |
+| `terms-of-use.md` | Termos de Uso (versão `2026-06-01`) |
+| `privacy-policy.md` | Política de Privacidade |
 | `security.md` | JWT, rate limit, proxy, checklist de produção |
 | `rbac-ldap.md` | Papéis, login LDAP, seed admin |
 | `testing.md` | Tipos de teste, CI em 3 etapas, comandos |
@@ -372,9 +380,9 @@ sequenceDiagram
         A-->>G: JWT + user
     else Chat
         G->>I: Proxy /chat/* + headers de identidade
-        I->>R: retrieve(mensagem, topK=3)
-        R-->>I: Contexto (YouTube, Google, navegador…)
-        I->>O: Prompt + RAG + tools
+        I->>R: retrieve(mensagem, topK=4)
+        R-->>I: Contexto (ações, dev, ética, docs…)
+        I->>O: Prompt + RAG + tools (doc_search, web_search…)
         O-->>I: Resposta + clientActions
         I-->>G: Mensagem JARVIS
     end
