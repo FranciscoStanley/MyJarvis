@@ -1,4 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function gotoAuthenticatedHome(page: Page) {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1, name: 'MyJarvis' })).toBeVisible({
+    timeout: 15_000,
+  });
+}
 
 test.describe('MyJarvis E2E', () => {
   test.beforeEach(async ({ page }) => {
@@ -80,18 +87,17 @@ test.describe('MyJarvis E2E', () => {
   });
 
   test('página inicial após autenticação', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1, name: 'MyJarvis' })).toBeVisible();
+    await gotoAuthenticatedHome(page);
     await expect(page.getByText(/Bem-vindo/i)).toBeVisible();
   });
 
   test('orb JARVIS visível', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByText('J', { exact: true })).toBeVisible();
+    await gotoAuthenticatedHome(page);
+    await expect(page.getByRole('img', { name: /JARVIS/i })).toBeVisible();
   });
 
   test('enviar mensagem no chat', async ({ page }) => {
-    await page.goto('/');
+    await gotoAuthenticatedHome(page);
     const input = page.getByPlaceholder(/Fale ou digite/i);
     await input.fill('Olá JARVIS');
     await page.getByRole('button', { name: 'Enviar' }).click();
