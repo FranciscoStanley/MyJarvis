@@ -18,6 +18,10 @@ describe('SendMessageUseCase', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAi.synthesizeWithResults.mockResolvedValue('');
+    mockStore.getMessages.mockReset();
+    mockStore.getMessages.mockReturnValue([]);
+    mockStore.addMessage.mockReset();
+    mockStore.createSession.mockReturnValue('session-1');
     useCase = new SendMessageUseCase(mockAi as never, mockStore as never, mockSearch as never);
   });
 
@@ -89,5 +93,17 @@ describe('SendMessageUseCase', () => {
     const result = await useCase.execute({ message: 'não' });
     expect(result.clientActions).toEqual([]);
     expect(result.reply).toMatch(/como desejar/i);
+  });
+
+  it('should auto-execute explicit open without confirmation prompt', async () => {
+    mockAi.generateResponse.mockResolvedValue({
+      reply: 'À sua disposição, senhor. Abrindo conforme solicitado.',
+      actions: [],
+    });
+
+    const result = await useCase.execute({ message: 'Abra o YouTube' });
+    expect(result.clientActions?.length).toBeGreaterThan(0);
+    expect(result.clientActions?.some((a) => a.app === 'youtube' && a.requiresConfirmation === false)).toBe(true);
+    expect(result.reply).not.toMatch(/Deseja que eu/i);
   });
 });

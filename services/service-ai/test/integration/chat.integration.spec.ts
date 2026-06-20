@@ -37,6 +37,8 @@ describe('AI Chat Integration', () => {
     const res = await request(app.getHttpServer()).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body.service).toBe('service-ai');
+    expect(res.body.rag).toBeDefined();
+    expect(res.body.rag.chunks).toBeGreaterThan(0);
   });
 
   it('POST /api/chat/session', async () => {
@@ -52,6 +54,7 @@ describe('AI Chat Integration', () => {
       .send({ message: 'Olá JARVIS', sessionId: session.body.data.sessionId });
     expect([200, 201]).toContain(res.status);
     expect(res.body.data.reply).toContain('senhor');
+    expect(res.body.data).toHaveProperty('sessionId');
   });
 
   it('POST /api/chat/message rejeita mensagem vazia', async () => {

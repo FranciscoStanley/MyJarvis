@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildClientActions } from '../src/domain/services/client-action-builder';
+import { buildClientActions, clientActionsFromJarvisActions } from '../src/domain/services/client-action-builder';
 import { SearchResult } from '@myjarvis/shared';
 
 describe('buildClientActions', () => {
@@ -10,11 +10,11 @@ describe('buildClientActions', () => {
     type: 'video',
   };
 
-  it('should offer play, youtube and spotify for video search', () => {
+  it('should offer play, youtube and spotify for video search when not explicit', () => {
     const actions = buildClientActions({
       searchResults: [youtubeResult],
       actionTypes: ['video'],
-      userMessage: 'toque Espírito Santo no youtube',
+      userMessage: 'qual vídeo do Espírito Santo no youtube',
     });
 
     expect(actions.length).toBeGreaterThanOrEqual(3);
@@ -31,5 +31,41 @@ describe('buildClientActions', () => {
     });
 
     expect(actions.some((a) => a.app === 'browser')).toBe(true);
+  });
+
+  it('should offer new browser tab for tab commands', () => {
+    const actions = buildClientActions({
+      searchResults: [],
+      actionTypes: [],
+      userMessage: 'abrir uma nova aba do navegador',
+    });
+
+    expect(actions.some((a) => a.url === 'about:blank' && a.app === 'browser')).toBe(true);
+  });
+
+  it('should auto-execute explicit open commands without confirmation', () => {
+    const actions = buildClientActions({
+      searchResults: [],
+      actionTypes: [],
+      userMessage: 'Abra o YouTube',
+    });
+
+    expect(actions.some((a) => a.app === 'youtube' && !a.requiresConfirmation)).toBe(true);
+  });
+
+  it('should map JarvisAction open_app with auto-confirm when explicit', () => {
+    const actions = clientActionsFromJarvisActions(
+      [{
+        type: 'open_app',
+        data: {
+          url: 'https://www.youtube.com',
+          app: 'youtube',
+          label: 'Abrir YouTube',
+          description: 'Abrir YouTube',
+        },
+      }],
+      'Abra o YouTube',
+    );
+    expect(actions[0].requiresConfirmation).toBe(false);
   });
 });

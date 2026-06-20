@@ -30,4 +30,34 @@ describe('detectActionsFromText', () => {
     const actions = detectActionsFromText('busque notícias de IA');
     expect(actions.some((a) => a.type === 'search')).toBe(true);
   });
+
+  it('should detect open browser tab command', () => {
+    const actions = detectActionsFromText('abrir uma nova aba do navegador para mim');
+    expect(actions).toEqual([{
+      type: 'open_url',
+      data: {
+        url: 'about:blank',
+        app: 'browser',
+        label: 'Abrir nova aba',
+        description: 'Abrir uma nova aba no navegador',
+      },
+    }]);
+  });
+
+  it('should detect YouTube music from open command with song name', () => {
+    const actions = detectActionsFromText(
+      'Abra o YouTube na música chamada Colossenses o nome da banda é rap hop music',
+    );
+    expect(actions).toEqual([{ type: 'video', query: expect.stringContaining('Colossenses') }]);
+  });
+
+  it('should detect enter YouTube command', () => {
+    const actions = detectActionsFromText('Entre no YouTube');
+    expect(actions.some((a) => a.type === 'open_app' && a.data?.app === 'youtube')).toBe(true);
+  });
+
+  it('should detect google search', () => {
+    const actions = detectActionsFromText('busque no google inteligência artificial');
+    expect(actions.some((a) => a.type === 'search')).toBe(true);
+  });
 });

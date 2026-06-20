@@ -29,7 +29,7 @@ describe('OllamaAdapter', () => {
     mockHttp.post.mockReturnValue(throwError(() => new Error('ECONNREFUSED')));
 
     const result = await adapter.generateResponse([], 'busque notícias de IA');
-    expect(result.reply).toContain('busca solicitada');
+    expect(result.reply).toContain('pesquisando');
     expect(result.actions.some((a) => a.type === 'search')).toBe(true);
   });
 
@@ -45,5 +45,25 @@ describe('OllamaAdapter', () => {
 
     const result = await adapter.generateResponse([], 'busca no YouTube a música Espírito Santo');
     expect(result.actions).toEqual([{ type: 'video', query: 'Espírito Santo' }]);
+  });
+
+  it('should build acknowledgement when Ollama returns tool_calls without content', async () => {
+    mockHttp.post.mockReturnValue(
+      of({
+        data: {
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [{
+              function: { name: 'video_search', arguments: { query: 'Colossenses' } },
+            }],
+          },
+        },
+      }),
+    );
+
+    const result = await adapter.generateResponse([], 'toque Colossenses no youtube');
+    expect(result.reply).toContain('Colossenses');
+    expect(result.actions.some((a) => a.type === 'video')).toBe(true);
   });
 });
