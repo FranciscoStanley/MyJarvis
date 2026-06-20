@@ -13,7 +13,7 @@ export class VoiceController {
 
   @Post('transcribe')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Transcrever áudio para texto (Whisper)' })
+  @ApiOperation({ summary: 'Transcrever áudio para texto (Web Speech API no browser)' })
   async transcribeAudio(@Body() dto: TranscribeDto) {
     const data = await this.transcribe.execute(dto);
     return { success: true, data, timestamp: new Date().toISOString() };
