@@ -125,7 +125,7 @@ services:
     environment:
       PORT: 3003
       PIPER_URL: http://piper:5000
-      PIPER_VOICE: ${PIPER_VOICE:-en_GB-alan-medium.onnx}
+      PIPER_VOICE: ${PIPER_VOICE:-pt_BR-faber-medium.onnx}
       PIPER_LENGTH_SCALE: ${PIPER_LENGTH_SCALE:-1.08}
     depends_on:
       piper:
