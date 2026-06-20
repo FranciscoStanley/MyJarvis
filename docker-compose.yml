@@ -107,6 +107,8 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
       OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+      OLLAMA_TIMEOUT_MS: ${OLLAMA_TIMEOUT_MS:-180000}
+      OLLAMA_SYNTHESIS_TIMEOUT_MS: ${OLLAMA_SYNTHESIS_TIMEOUT_MS:-120000}
       SEARCH_SERVICE_URL: http://service-search:3004
     depends_on:
       ollama:
@@ -174,6 +176,7 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       AUTH_SERVICE_URL: http://service-auth:3001
       AI_SERVICE_URL: http://service-ai:3002
+      AI_PROXY_TIMEOUT_MS: ${AI_PROXY_TIMEOUT_MS:-360000}
       VOICE_SERVICE_URL: http://service-voice:3003
       SEARCH_SERVICE_URL: http://service-search:3004
       NOTIFICATIONS_SERVICE_URL: http://service-notifications:3005
@@ -196,6 +199,7 @@ services:
       - "3100:3100"
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_CHAT_TIMEOUT_MS: ${NEXT_PUBLIC_CHAT_TIMEOUT_MS:-390000}
     depends_on:
       - service-gateway
 
