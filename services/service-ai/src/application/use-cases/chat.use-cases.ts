@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import {
   ClientAction,
   detectConfirmationIntent,
@@ -22,6 +22,7 @@ import {
   buildDeclinedReply,
   synthesizeFallbackReply,
 } from '../../domain/services/response-synthesizer';
+import { buildActionAcknowledgement, isExplicitExecuteCommand } from '../../domain/services/action-intent';
 
 export interface SendMessageInput {
   message: string;
@@ -56,7 +57,7 @@ export class SendMessageUseCase {
     }
 
     this.store.addMessage(sessionId, {
-      id: uuidv4(),
+      id: randomUUID(),
       role: 'user',
       content: input.message,
       timestamp: new Date(),
@@ -86,10 +87,14 @@ export class SendMessageUseCase {
 
     let clientActions = [
       ...buildClientActions({ searchResults, actionTypes, userMessage: input.message }),
-      ...clientActionsFromJarvisActions(actions),
+      ...clientActionsFromJarvisActions(actions, input.message),
     ];
 
     clientActions = this.deduplicateClientActions(clientActions);
+
+    if (isExplicitExecuteCommand(input.message)) {
+      clientActions = clientActions.map((a) => ({ ...a, requiresConfirmation: false }));
+    }
 
     let finalReply = reply;
 
@@ -100,19 +105,21 @@ export class SendMessageUseCase {
         actionTypes,
       );
       finalReply = synthesized || synthesizeFallbackReply(input.message, searchResults, actionTypes);
-    } else if (!finalReply.trim()) {
-      finalReply = synthesizeFallbackReply(input.message, searchResults, actionTypes)
+    } else if (!finalReply.trim() || /^desculpe,?\s+n[aã]o consegui/i.test(finalReply.trim())) {
+      finalReply = buildActionAcknowledgement(actions, input.message)
+        || synthesizeFallbackReply(input.message, searchResults, actionTypes)
         || 'Senhor, não consegui formular uma resposta no momento.';
     }
 
-    if (clientActions.length) {
-      finalReply += buildConfirmationPrompt(clientActions);
+    const pendingOnly = clientActions.filter((a) => a.requiresConfirmation);
+    if (pendingOnly.length) {
+      finalReply += buildConfirmationPrompt(pendingOnly);
     }
 
-    const pendingClientActions = clientActions.filter((a) => a.requiresConfirmation);
+    const pendingClientActions = pendingOnly;
 
     this.store.addMessage(sessionId, {
-      id: uuidv4(),
+      id: randomUUID(),
       role: 'assistant',
       content: finalReply,
       timestamp: new Date(),
@@ -139,7 +146,7 @@ export class SendMessageUseCase {
     pending: ClientAction[],
   ): SendMessageOutput {
     this.store.addMessage(sessionId, {
-      id: uuidv4(),
+      id: randomUUID(),
       role: 'user',
       content: message,
       timestamp: new Date(),
@@ -148,7 +155,7 @@ export class SendMessageUseCase {
     if (confirmation === 'no') {
       const reply = buildDeclinedReply();
       this.store.addMessage(sessionId, {
-        id: uuidv4(),
+        id: randomUUID(),
         role: 'assistant',
         content: reply,
         timestamp: new Date(),
@@ -165,7 +172,7 @@ export class SendMessageUseCase {
       : `${buildConfirmedReply(toExecute[0])} Executando ${toExecute.length} ação(ões).`;
 
     this.store.addMessage(sessionId, {
-      id: uuidv4(),
+      id: randomUUID(),
       role: 'assistant',
       content: reply,
       timestamp: new Date(),
@@ -194,7 +201,7 @@ export class SendMessageUseCase {
   private deduplicateClientActions(actions: ClientAction[]): ClientAction[] {
     const seen = new Set<string>();
     return actions.filter((a) => {
-      const key = `${a.type}:${a.url}:${a.label}`;
+      const key = `${a.type}:${a.app ?? ''}:${a.url}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;

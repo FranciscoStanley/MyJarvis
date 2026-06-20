@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { ChatMessage, JarvisAction, SearchResult } from '@myjarvis/shared';
 import { AiPort } from '../../domain/ports/ai.port';
+import { RAG_PORT, RagPort } from '../../domain/ports/rag.port';
 import { JARVIS_SYSTEM_PROMPT, JARVIS_TOOLS, JARVIS_SYNTHESIS_PROMPT } from '../../domain/constants/jarvis-prompt';
+import { buildActionAcknowledgement } from '../../domain/services/action-intent';
 import { detectActionsFromText } from './action-detector';
 
 interface OllamaMessage {
@@ -21,6 +23,7 @@ export class OllamaAdapter implements AiPort {
   constructor(
     private readonly http: HttpService,
     config: ConfigService,
+    @Optional() @Inject(RAG_PORT) private readonly rag?: RagPort,
   ) {
     this.baseUrl = config.get('OLLAMA_BASE_URL', 'http://localhost:11434');
     this.model = config.get('OLLAMA_MODEL', 'llama3.2');
@@ -36,13 +39,15 @@ export class OllamaAdapter implements AiPort {
         content: m.content,
       }));
 
+      const systemPrompt = await this.buildSystemPrompt(userMessage);
+
       const { data } = await firstValueFrom(
         this.http.post(
           `${this.baseUrl}/api/chat`,
           {
             model: this.model,
             messages: [
-              { role: 'system', content: JARVIS_SYSTEM_PROMPT },
+              { role: 'system', content: systemPrompt },
               ...history,
               { role: 'user', content: userMessage },
             ],
@@ -56,9 +61,10 @@ export class OllamaAdapter implements AiPort {
 
       const msg = data.message as OllamaMessage;
       const actions = this.extractActions(msg);
-      const reply = msg.content?.trim() || 'Desculpe, não consegui formular uma resposta.';
+      const detected = actions.length ? actions : detectActionsFromText(userMessage);
+      const reply = this.resolveReply(msg, detected, userMessage);
 
-      return { reply, actions: actions.length ? actions : detectActionsFromText(userMessage) };
+      return { reply, actions: detected };
     } catch {
       return this.offlineResponse(userMessage);
     }
@@ -105,6 +111,39 @@ Formule uma resposta natural como JARVIS. Mencione o resultado mais relevante. N
     }
   }
 
+  private async buildSystemPrompt(userMessage: string): Promise<string> {
+    if (!this.rag) return JARVIS_SYSTEM_PROMPT;
+    try {
+      const context = await this.rag.retrieve(userMessage);
+      if (context) {
+        return `${JARVIS_SYSTEM_PROMPT}\n\n--- CONTEXTO RAG (capacidades e exemplos) ---\n${context}`;
+      }
+    } catch {
+      /* fallback to base prompt */
+    }
+    return JARVIS_SYSTEM_PROMPT;
+  }
+
+  private resolveReply(msg: OllamaMessage, actions: JarvisAction[], userMessage: string): string {
+    const content = msg.content?.trim();
+    if (content && !/^desculpe,?\s+n[aã]o consegui/i.test(content)) return content;
+    if (actions.length) return buildActionAcknowledgement(actions, userMessage);
+    return content || 'Desculpe, não consegui formular uma resposta.';
+  }
+
+  /** Ollama às vezes devolve URL como JSON serializado em string. */
+  private normalizeActionUrl(url: unknown): string {
+    if (typeof url !== 'string' || !url.trim()) return '';
+    const trimmed = url.trim();
+    if (!trimmed.startsWith('{')) return trimmed;
+    try {
+      const parsed = JSON.parse(trimmed) as { url?: string };
+      return typeof parsed.url === 'string' ? parsed.url : '';
+    } catch {
+      return '';
+    }
+  }
+
   private extractActions(msg: OllamaMessage): JarvisAction[] {
     if (!msg.tool_calls?.length) return [];
 
@@ -122,10 +161,11 @@ Formule uma resposta natural como JARVIS. Mencione o resultado mais relevante. N
       const args = typeof raw === 'string' ? JSON.parse(raw) : raw;
       const type = typeMap[call.function.name] ?? 'search';
       if (type === 'open_url' || type === 'open_app') {
+        const url = this.normalizeActionUrl(args?.url);
         return {
           type,
           data: {
-            url: args?.url,
+            url: url || undefined,
             app: args?.app,
             label: args?.label,
             description: args?.description,
@@ -145,7 +185,7 @@ Formule uma resposta natural como JARVIS. Mencione o resultado mais relevante. N
 
     return {
       reply: hasActions
-        ? 'Senhor, o modelo de IA demorou para responder. Prossigo com a busca solicitada — peço um instante.'
+        ? buildActionAcknowledgement(actions, userMessage)
         : `Senhor, o serviço Ollama não respondeu. Verifique se está em execução: docker compose up ollama && docker exec myjarvis-ollama-1 ollama pull ${this.model}.`,
       actions,
     };
