@@ -17,7 +17,7 @@ export interface ClientAction {
 export type ConfirmationIntent = 'yes' | 'no' | 'none';
 
 const YES_PATTERNS =
-  /^(sim|s|yes|y|claro|pode|pode ser|com certeza|por favor|ok|okay|confirmo|abre|abra|abrir|toque|reproduz|reproduza|coloque|play|vai|manda ver|isso|exato|correto|affirmative|positivo)(?:[,.!?\s]|$)/i;
+  /^(sim|s|yes|y|claro|pode|pode ser|com certeza|por favor|ok|okay|confirmo|vai|manda ver|isso|exato|correto|affirmative|positivo)(?:[,.!?\s]|$)/i;
 
 const NO_PATTERNS =
   /^(n[aã]o|nao|n|no|negativo|cancela|cancelar|deixa|esquece|nunca mind|não precisa|nao precisa|dispensa|pare)(?:[,.!?\s]|$)/i;
@@ -49,6 +49,16 @@ export function getPendingClientActions(
 /** Monta URL de busca no Spotify (sem API paga). */
 export function buildSpotifySearchUrl(query: string): string {
   return `https://open.spotify.com/search/${encodeURIComponent(query)}`;
+}
+
+/** Monta URL de busca no Google (sem API paga). */
+export function buildGoogleSearchUrl(query: string): string {
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+/** Monta URL de busca no YouTube (sem API paga). */
+export function buildYoutubeSearchUrl(query: string): string {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 }
 
 /** Monta URL do Gmail. */

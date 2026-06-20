@@ -16,6 +16,7 @@ describe('detectConfirmationIntent', () => {
 
   it('should return none for unrelated text', () => {
     expect(detectConfirmationIntent('busque música no youtube')).toBe('none');
+    expect(detectConfirmationIntent('Abra o YouTube')).toBe('none');
   });
 });
 
