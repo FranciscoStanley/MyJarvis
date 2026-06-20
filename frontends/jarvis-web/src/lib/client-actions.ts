@@ -42,8 +42,8 @@ export function executeClientActions(actions: ClientAction[]): {
 export function stripTextForSpeech(text: string): string {
   return text
     .replace(/https?:\/\/\S+/gi, '')
-    .replace(/\n\nDeseja que eu .+$/s, '')
-    .replace(/\n\nPosso .+senhor\?$/s, '')
+    .replace(/\n\nDeseja que eu [\s\S]+$/, '')
+    .replace(/\n\nPosso [\s\S]+senhor\?$/, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
