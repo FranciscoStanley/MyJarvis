@@ -30,14 +30,18 @@ export function InputBar() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t border-white/5">
-      <div className="flex items-center gap-2 max-w-4xl mx-auto">
+    <form
+      onSubmit={handleSubmit}
+      className="shrink-0 p-3 sm:p-4 border-t border-white/5 bg-jarvis-bg/50 backdrop-blur-sm"
+    >
+      <div className="flex items-center gap-2 w-full">
         {supported && (
           <button
             type="button"
             onClick={toggleMic}
             aria-label={listening ? 'Parar gravação' : 'Falar'}
-            className={`p-3 rounded-full transition-all ${
+            aria-pressed={listening}
+            className={`shrink-0 p-2.5 sm:p-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-jarvis-cyan/50 ${
               listening
                 ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse'
                 : 'glass hover:bg-white/10 text-jarvis-cyan'
@@ -52,13 +56,14 @@ export function InputBar() {
           onChange={(e) => setText(e.target.value)}
           placeholder="Fale ou digite sua mensagem..."
           disabled={isLoading}
-          className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50 placeholder:text-gray-500"
+          aria-label="Mensagem para o JARVIS"
+          className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50 focus:ring-1 focus:ring-jarvis-cyan/20 placeholder:text-gray-500 disabled:opacity-50 transition-colors"
         />
         <button
           type="button"
           onClick={speakLast}
           aria-label="Ouvir última resposta"
-          className="p-3 rounded-full glass hover:bg-white/10 text-jarvis-gold hidden sm:block"
+          className="shrink-0 p-2.5 sm:p-3 rounded-full glass hover:bg-white/10 text-jarvis-gold hidden sm:flex focus:outline-none focus-visible:ring-2 focus-visible:ring-jarvis-gold/50"
         >
           <Volume2 size={20} />
         </button>
@@ -66,7 +71,7 @@ export function InputBar() {
           type="submit"
           disabled={!text.trim() || isLoading}
           aria-label="Enviar"
-          className="p-3 rounded-full bg-jarvis-cyan/20 text-jarvis-cyan border border-jarvis-cyan/30 hover:bg-jarvis-cyan/30 disabled:opacity-40 transition-all"
+          className="shrink-0 p-2.5 sm:p-3 rounded-full bg-jarvis-cyan/20 text-jarvis-cyan border border-jarvis-cyan/30 hover:bg-jarvis-cyan/30 disabled:opacity-40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-jarvis-cyan/50"
         >
           <Send size={20} />
         </button>

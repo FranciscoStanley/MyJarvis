@@ -1,4 +1,4 @@
-import { UserRole, AuthSource } from '@myjarvis/shared';
+import { ClientAction, SearchResult, UserRole, AuthSource } from '@myjarvis/shared';
 
 export interface ApiUser {
   id: string;
@@ -69,7 +69,13 @@ class ApiClient {
   }
 
   sendMessage(message: string, sessionId?: string) {
-    return this.request<{ reply: string; sessionId: string; actions?: unknown[]; searchResults?: unknown[] }>(
+    return this.request<{
+      reply: string;
+      sessionId: string;
+      actions?: unknown[];
+      searchResults?: SearchResult[];
+      clientActions?: ClientAction[];
+    }>(
       '/chat/message', { method: 'POST', body: JSON.stringify({ message, sessionId }) },
     );
   }

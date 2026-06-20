@@ -21,16 +21,33 @@ const config: Config = {
       animation: {
         'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
         orbit: 'orbit 8s linear infinite',
+        scanline: 'scanline 8s linear infinite',
       },
       keyframes: {
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(34, 211, 238, 0.3)' },
-          '50%': { boxShadow: '0 0 60px rgba(34, 211, 238, 0.6), 0 0 100px rgba(6, 182, 212, 0.2)' },
+          '0%, 100%': {
+            boxShadow:
+              '0 0 20px rgba(34, 211, 238, 0.3), inset 0 0 20px rgba(34, 211, 238, 0.05)',
+          },
+          '50%': {
+            boxShadow:
+              '0 0 60px rgba(34, 211, 238, 0.6), 0 0 100px rgba(6, 182, 212, 0.2), inset 0 0 30px rgba(34, 211, 238, 0.1)',
+          },
         },
         orbit: {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(360deg)' },
         },
+        scanline: {
+          '0%': { transform: 'translateY(0)' },
+          '100%': { transform: 'translateY(100vh)' },
+        },
+      },
+      minHeight: {
+        dvh: '100dvh',
+      },
+      height: {
+        dvh: '100dvh',
       },
     },
   },

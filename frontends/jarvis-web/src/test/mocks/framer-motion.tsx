@@ -10,6 +10,10 @@ vi.mock('framer-motion', () => ({
       const { animate: _a, transition: _t, initial: _i, ...rest } = props as Record<string, unknown>;
       return <p {...rest}>{children}</p>;
     },
+    circle: (props: React.SVGAttributes<SVGCircleElement>) => {
+      const { animate: _a, transition: _t, initial: _i, ...rest } = props as Record<string, unknown>;
+      return <circle {...rest} />;
+    },
   },
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));

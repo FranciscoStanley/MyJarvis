@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LogOut, Shield, Sparkles } from 'lucide-react';
-import { UserRole } from '@myjarvis/shared';
 import { useJarvisStore } from '@/stores/jarvis.store';
+import { HudBackground } from '@/components/jarvis/HudBackground';
+import { JarvisHeader } from '@/components/jarvis/JarvisHeader';
 import { JarvisOrb } from '@/components/jarvis/JarvisOrb';
+import { StatusPanel } from '@/components/jarvis/StatusPanel';
 import { ChatPanel } from '@/components/jarvis/ChatPanel';
 import { InputBar } from '@/components/jarvis/InputBar';
 import { AuthModal } from '@/components/jarvis/AuthModal';
+import { HudFrame } from '@/components/jarvis/HudFrame';
 
 export default function HomePage() {
-  const { isAuthenticated, userName, restoreSession, logout, hasRole } = useJarvisStore();
+  const { isAuthenticated, restoreSession, logout } = useJarvisStore();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -19,55 +21,50 @@ export default function HomePage() {
 
   if (checking) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-gray-400">
-        Validando sessão...
+      <main className="min-h-dvh flex items-center justify-center relative">
+        <HudBackground />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-2 border-jarvis-cyan/30 border-t-jarvis-cyan animate-spin" />
+          <p className="text-gray-400 font-mono text-sm tracking-widest uppercase">
+            Validando sessão...
+          </p>
+        </div>
       </main>
     );
   }
 
   if (!isAuthenticated) {
-    return <AuthModal />;
+    return (
+      <>
+        <HudBackground />
+        <AuthModal />
+      </>
+    );
   }
 
   return (
-    <main className="min-h-screen flex flex-col relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-jarvis-cyan/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-jarvis-glow/5 rounded-full blur-3xl" />
-      </div>
+    <main className="min-h-dvh flex flex-col relative">
+      <HudBackground />
+      <JarvisHeader onLogout={logout} />
 
-      <header className="relative z-10 flex items-center justify-between p-4 md:p-6 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <Sparkles className="text-jarvis-cyan" size={24} />
-          <div>
-            <h1 className="text-lg font-bold text-white tracking-wide">MyJarvis</h1>
-            <p className="text-xs text-gray-500 font-mono flex items-center gap-2">
-              Bem-vindo, {userName}
-              {hasRole(UserRole.ADMIN) && (
-                <span className="inline-flex items-center gap-1 text-jarvis-gold">
-                  <Shield size={12} /> admin
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={logout}
-          className="p-2 rounded-lg glass hover:bg-white/10 text-gray-400 hover:text-white transition-all"
-          aria-label="Sair"
+      <div className="relative z-10 flex-1 flex flex-col min-h-0 lg:grid lg:grid-cols-[minmax(280px,360px)_1fr] lg:gap-4 lg:p-4 max-w-[1600px] mx-auto w-full">
+        {/* Painel lateral — orb + status */}
+        <aside className="shrink-0 flex flex-col items-center gap-3 px-4 pt-3 pb-2 lg:py-0 lg:px-0 lg:sticky lg:top-4 lg:self-start">
+          <HudFrame title="Núcleo JARVIS" variant="compact" className="w-full flex flex-col items-center py-4 sm:py-6 lg:py-8">
+            <JarvisOrb />
+          </HudFrame>
+          <StatusPanel />
+        </aside>
+
+        {/* Painel de chat */}
+        <HudFrame
+          title="Interface de Comunicação"
+          className="flex flex-col flex-1 min-h-0 mx-4 mb-4 lg:mx-0 lg:mb-0 rounded-t-2xl lg:rounded-2xl"
         >
-          <LogOut size={18} />
-        </button>
-      </header>
-
-      <section className="relative z-10 flex flex-col items-center py-6 md:py-10">
-        <JarvisOrb />
-      </section>
-
-      <section className="relative z-10 flex-1 flex flex-col max-w-4xl w-full mx-auto glass rounded-t-3xl md:rounded-3xl md:mb-6 md:mx-6 overflow-hidden min-h-[40vh]">
-        <ChatPanel />
-        <InputBar />
-      </section>
+          <ChatPanel />
+          <InputBar />
+        </HudFrame>
+      </div>
     </main>
   );
 }
