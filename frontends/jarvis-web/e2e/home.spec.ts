@@ -1,5 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 
+const e2eUser = {
+  id: 'u1',
+  email: 'e2e@test.com',
+  name: 'E2E',
+  roles: ['user'],
+  hasAcceptedTerms: true,
+};
+
 async function gotoAuthenticatedHome(page: Page) {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: 'MyJarvis' })).toBeVisible({
@@ -25,6 +33,7 @@ test.describe('MyJarvis E2E', () => {
                 name: 'E2E User',
                 roles: ['user'],
                 authSource: 'ldap',
+                hasAcceptedTerms: true,
               },
             },
           }),
@@ -38,18 +47,18 @@ test.describe('MyJarvis E2E', () => {
             success: true,
             data: {
               accessToken: 'e2e-token',
-              user: { id: 'u1', email: 'e2e@test.com', name: 'E2E', roles: ['user'] },
+              user: e2eUser,
             },
           }),
         });
       }
-      if (url.includes('/auth/profile')) {
+      if (url.includes('/auth/profile') || url.includes('/auth/accept-terms')) {
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
             success: true,
-            data: { id: 'u1', email: 'e2e@test.com', name: 'E2E', roles: ['user'] },
+            data: e2eUser,
           }),
         });
       }
