@@ -13,6 +13,7 @@ import {
   JARVIS_DOC_SYNTHESIS_PROMPT,
 } from '../../domain/constants/jarvis-prompt';
 import { needsExtendedPrompt, shouldAttachTools, shouldEnrichContext, buildOllamaChatOptions } from '../../domain/services/prompt-strategy';
+import { buildConversationTopicSummary, trimHistoryForModel } from '../../domain/services/conversation-context';
 import { buildActionAcknowledgement } from '../../domain/services/action-intent';
 import { detectActionsFromText } from './action-detector';
 
@@ -46,12 +47,13 @@ export class OllamaAdapter implements AiPort {
     userMessage: string,
   ): Promise<{ reply: string; actions: JarvisAction[] }> {
     try {
-      const history = messages.map((m) => ({
+      const trimmedHistory = trimHistoryForModel(messages);
+      const history = trimmedHistory.map((m) => ({
         role: m.role,
         content: m.content,
       }));
 
-      const systemPrompt = await this.buildSystemPrompt(userMessage);
+      const systemPrompt = await this.buildSystemPrompt(userMessage, trimmedHistory);
       const payload: Record<string, unknown> = {
         model: this.model,
         messages: [
@@ -61,9 +63,9 @@ export class OllamaAdapter implements AiPort {
         ],
         stream: false,
         keep_alive: '15m',
-        options: buildOllamaChatOptions(userMessage),
+        options: buildOllamaChatOptions(userMessage, trimmedHistory),
       };
-      if (shouldAttachTools(userMessage)) {
+      if (shouldAttachTools(userMessage, trimmedHistory)) {
         payload.tools = JARVIS_TOOLS;
       }
 
@@ -87,33 +89,37 @@ export class OllamaAdapter implements AiPort {
     userMessage: string,
     searchResults: SearchResult[],
     actionTypes: string[],
+    history: ChatMessage[] = [],
   ): Promise<string> {
     const resultsContext = searchResults
       .slice(0, 5)
       .map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`)
       .join('\n\n');
 
+    const topicSummary = history.length >= 2 ? buildConversationTopicSummary(history) : '';
+    const contextBlock = topicSummary ? `\n\nContexto da conversa:\n${topicSummary}\n` : '';
+
     const prompt = actionTypes.includes('docs')
       ? `${JARVIS_DOC_SYNTHESIS_PROMPT}
-
+${contextBlock}
 Pedido do usuário: "${userMessage}"
 
 Resultados da documentação:
 ${resultsContext}
 
-Formule uma resposta técnica clara como JARVIS em português brasileiro (pt-BR).`
+Formule uma resposta técnica clara como JARVIS em português brasileiro (pt-BR). Mantenha continuidade com o assunto em andamento.`
       : `${JARVIS_SYNTHESIS_PROMPT}
-
+${contextBlock}
 Pedido do usuário: "${userMessage}"
 Tipo de busca: ${actionTypes.join(', ') || 'geral'}
 
 Resultados encontrados:
 ${resultsContext}
 
-Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Mencione o resultado mais relevante. Não liste URLs cruas.`;
+Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Mencione o resultado mais relevante. Não liste URLs cruas. Mantenha continuidade com o assunto em andamento.`;
 
     try {
-      const synthesisMaxTokens = actionTypes.includes('docs') ? 280 : 160;
+      const synthesisMaxTokens = actionTypes.includes('docs') ? 512 : 320;
       const { data } = await firstValueFrom(
         this.http.post(
           `${this.baseUrl}/api/chat`,
@@ -135,12 +141,15 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
     }
   }
 
-  private async buildSystemPrompt(userMessage: string): Promise<string> {
+  private async buildSystemPrompt(userMessage: string, history: ChatMessage[] = []): Promise<string> {
     const sections = [JARVIS_SYSTEM_PROMPT];
-    if (needsExtendedPrompt(userMessage)) {
+    if (needsExtendedPrompt(userMessage, history)) {
       sections.push(JARVIS_EXTENDED_PROMPT);
     }
-    if (this.contextEnrichment && shouldEnrichContext(userMessage)) {
+    if (history.length >= 2) {
+      sections.push(buildConversationTopicSummary(history));
+    }
+    if (this.contextEnrichment && shouldEnrichContext(userMessage, history)) {
       try {
         const context = await this.contextEnrichment.buildEnrichedContext(userMessage);
         if (context) sections.push(context);

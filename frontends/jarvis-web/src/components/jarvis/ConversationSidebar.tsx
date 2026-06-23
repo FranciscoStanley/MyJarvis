@@ -31,6 +31,7 @@ export function ConversationSidebar({ mobileOpen = false, onMobileClose }: Conve
     selectConversation,
     createNewChat,
     deleteConversation,
+    isSessionLoading,
   } = useJarvisStore();
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -90,6 +91,7 @@ export function ConversationSidebar({ mobileOpen = false, onMobileClose }: Conve
           <ul className="space-y-1 px-2" role="listbox" aria-label="Lista de conversas">
             {conversations.map((conv) => {
               const active = conv.id === sessionId;
+              const processing = isSessionLoading(conv.id);
               return (
                 <li key={conv.id}>
                   <button
@@ -108,10 +110,16 @@ export function ConversationSidebar({ mobileOpen = false, onMobileClose }: Conve
                       <div className="min-w-0 flex-1">
                         <p
                           className={clsx(
-                            'text-sm truncate',
+                            'text-sm truncate flex items-center gap-2',
                             active ? 'text-white font-medium' : 'text-gray-300',
                           )}
                         >
+                          {processing && (
+                            <span
+                              className="inline-block w-1.5 h-1.5 rounded-full bg-jarvis-cyan animate-pulse shrink-0"
+                              aria-label="Processando"
+                            />
+                          )}
                           {conv.title}
                         </p>
                         {conv.preview && (

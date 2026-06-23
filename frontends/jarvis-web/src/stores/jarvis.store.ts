@@ -18,10 +18,17 @@ export interface Message {
   embedUrl?: string | null;
 }
 
+interface SessionState {
+  messages: Message[];
+  pendingClientActions: ClientAction[];
+  isLoading: boolean;
+}
+
 interface JarvisState {
   messages: Message[];
   sessionId: string | null;
   userId: string | null;
+  sessions: Record<string, SessionState>;
   conversations: ConversationSummary[];
   isLoadingConversations: boolean;
   pendingClientActions: ClientAction[];
@@ -32,7 +39,7 @@ interface JarvisState {
   needsTermsAcceptance: boolean;
   userName: string | null;
   userRoles: UserRole[];
-  addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
+  addMessage: (msg: Omit<Message, 'id' | 'timestamp'>, sessionId?: string) => void;
   sendMessage: (text: string) => Promise<void>;
   confirmAction: (textOrAction: string | ClientAction) => Promise<void>;
   setListening: (v: boolean) => void;
@@ -47,6 +54,43 @@ interface JarvisState {
   acceptTerms: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
   logout: () => void;
+  isSessionLoading: (sessionId: string) => boolean;
+}
+
+const EMPTY_SESSION: SessionState = {
+  messages: [],
+  pendingClientActions: [],
+  isLoading: false,
+};
+
+function getSessionState(sessions: Record<string, SessionState>, sessionId: string): SessionState {
+  return sessions[sessionId] ?? EMPTY_SESSION;
+}
+
+function syncActiveView(
+  sessionId: string | null,
+  sessions: Record<string, SessionState>,
+): Pick<JarvisState, 'messages' | 'isLoading' | 'pendingClientActions'> {
+  if (!sessionId) {
+    return { messages: [], isLoading: false, pendingClientActions: [] };
+  }
+  const active = getSessionState(sessions, sessionId);
+  return {
+    messages: active.messages,
+    isLoading: active.isLoading,
+    pendingClientActions: active.pendingClientActions,
+  };
+}
+
+function patchSession(
+  sessions: Record<string, SessionState>,
+  sessionId: string,
+  patch: Partial<SessionState>,
+): Record<string, SessionState> {
+  return {
+    ...sessions,
+    [sessionId]: { ...getSessionState(sessions, sessionId), ...patch },
+  };
 }
 
 function formatUserError(error: unknown): string {
@@ -83,29 +127,31 @@ function restorePendingFromMessages(messages: Message[]): ClientAction[] {
 async function ensureChatSession(
   sessionId: string | null,
   userId: string | null,
-  set: (partial: Partial<JarvisState>) => void,
+  set: (partial: Partial<JarvisState> | ((s: JarvisState) => Partial<JarvisState>)) => void,
+  get: () => JarvisState,
 ): Promise<string> {
   if (sessionId) return sessionId;
   const { sessionId: newId } = await api.createSession();
   if (userId) writeStoredSessionId(userId, newId);
-  set({ sessionId: newId });
+  set((s) => {
+    const sessions = patchSession(s.sessions, newId, EMPTY_SESSION);
+    return { sessionId: newId, sessions, ...syncActiveView(newId, sessions) };
+  });
   return newId;
 }
 
-function applyExecutedActions(
-  addMessage: JarvisState['addMessage'],
+function buildAssistantMessage(
   reply: string,
   clientActions?: ClientAction[],
-) {
+): Omit<Message, 'id' | 'timestamp'> {
   if (!clientActions?.length) {
-    addMessage({ role: 'assistant', content: reply, clientActions });
-    return;
+    return { role: 'assistant', content: reply, clientActions };
   }
 
   const toExecute = clientActions.filter((a) => !a.requiresConfirmation);
   const { embedUrl } = executeClientActions(toExecute);
 
-  addMessage({
+  return {
     role: 'assistant',
     content: reply,
     clientActions: clientActions.filter((a) => a.requiresConfirmation),
@@ -113,7 +159,7 @@ function applyExecutedActions(
     searchResults: embedUrl
       ? [{ title: 'Reprodução', url: embedUrl, snippet: '', type: 'video' }]
       : undefined,
-  });
+  };
 }
 
 function applyAuthUser(
@@ -131,7 +177,7 @@ function applyAuthUser(
 
 async function bootstrapChatState(
   userId: string,
-  set: (partial: Partial<JarvisState>) => void,
+  set: (partial: Partial<JarvisState> | ((s: JarvisState) => Partial<JarvisState>)) => void,
   get: () => JarvisState,
 ) {
   set({ isLoadingConversations: true });
@@ -152,22 +198,26 @@ async function bootstrapChatState(
 
     const { sessionId } = await api.createSession();
     writeStoredSessionId(userId, sessionId);
-    set({
-      sessionId,
-      messages: [],
-      pendingClientActions: [],
-      conversations: [{
-        id: sessionId,
-        userId,
-        title: 'Nova conversa',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        messageCount: 0,
-      }],
+    const now = new Date().toISOString();
+    set((s) => {
+      const sessions = patchSession(s.sessions, sessionId, EMPTY_SESSION);
+      return {
+        sessionId,
+        sessions,
+        conversations: [{
+          id: sessionId,
+          userId,
+          title: 'Nova conversa',
+          createdAt: now,
+          updatedAt: now,
+          messageCount: 0,
+        }],
+        ...syncActiveView(sessionId, sessions),
+      };
     });
   } catch (error) {
     console.error('[JARVIS] Falha ao restaurar conversas:', error);
-    set({ sessionId: null, messages: [], conversations: [] });
+    set({ sessionId: null, messages: [], conversations: [], sessions: {} });
   } finally {
     set({ isLoadingConversations: false });
   }
@@ -177,6 +227,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
   messages: [],
   sessionId: null,
   userId: null,
+  sessions: {},
   conversations: [],
   isLoadingConversations: false,
   pendingClientActions: [],
@@ -188,10 +239,24 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
   userName: null,
   userRoles: [],
 
-  addMessage: (msg) =>
-    set((s) => ({
-      messages: [...s.messages, { ...msg, id: crypto.randomUUID(), timestamp: new Date() }],
-    })),
+  isSessionLoading: (sessionId) => get().sessions[sessionId]?.isLoading ?? false,
+
+  addMessage: (msg, targetSessionId) =>
+    set((s) => {
+      const sid = targetSessionId ?? s.sessionId;
+      if (!sid) return s;
+
+      const current = getSessionState(s.sessions, sid);
+      const newMessage: Message = { ...msg, id: crypto.randomUUID(), timestamp: new Date() };
+      const sessions = patchSession(s.sessions, sid, {
+        messages: [...current.messages, newMessage],
+      });
+
+      if (sid === s.sessionId) {
+        return { sessions, messages: sessions[sid].messages };
+      }
+      return { sessions };
+    }),
 
   loadConversations: async () => {
     const { userId } = get();
@@ -208,27 +273,64 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
   },
 
   selectConversation: async (sessionId) => {
-    const { userId } = get();
+    const { userId, sessions } = get();
     if (!userId) return;
 
-    set({ isLoading: true, sessionId, pendingClientActions: [] });
+    writeStoredSessionId(userId, sessionId);
+
+    const cached = sessions[sessionId];
+    if (cached) {
+      set({
+        sessionId,
+        ...syncActiveView(sessionId, sessions),
+      });
+      if (cached.isLoading) return;
+    } else {
+      set({
+        sessionId,
+        messages: [],
+        isLoading: true,
+        pendingClientActions: [],
+      });
+    }
+
     try {
       const { messages: raw } = await api.getSessionHistory(sessionId);
       const messages = raw
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .map(mapApiMessage);
 
-      writeStoredSessionId(userId, sessionId);
-      set({
-        messages,
-        sessionId,
-        pendingClientActions: restorePendingFromMessages(messages),
+      set((s) => {
+        const existing = getSessionState(s.sessions, sessionId);
+        if (existing.isLoading) {
+          return { sessionId, ...syncActiveView(sessionId, s.sessions) };
+        }
+
+        const sessions = patchSession(s.sessions, sessionId, {
+          messages,
+          pendingClientActions: restorePendingFromMessages(messages),
+          isLoading: false,
+        });
+
+        return {
+          sessionId,
+          sessions,
+          ...syncActiveView(sessionId, sessions),
+        };
       });
     } catch (error) {
       console.error('[JARVIS] Falha ao carregar conversa:', error);
-      set({ messages: [], pendingClientActions: [] });
-    } finally {
-      set({ isLoading: false });
+      set((s) => {
+        if (s.sessions[sessionId]?.isLoading) {
+          return { sessionId, ...syncActiveView(sessionId, s.sessions) };
+        }
+        const sessions = patchSession(s.sessions, sessionId, {
+          messages: [],
+          pendingClientActions: [],
+          isLoading: false,
+        });
+        return { sessionId, sessions, ...syncActiveView(sessionId, sessions) };
+      });
     }
   },
 
@@ -240,22 +342,25 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
       const { sessionId } = await api.createSession();
       writeStoredSessionId(userId, sessionId);
       const now = new Date().toISOString();
-      set((s) => ({
-        sessionId,
-        messages: [],
-        pendingClientActions: [],
-        conversations: [
-          {
-            id: sessionId,
-            userId,
-            title: 'Nova conversa',
-            createdAt: now,
-            updatedAt: now,
-            messageCount: 0,
-          },
-          ...s.conversations,
-        ],
-      }));
+      set((s) => {
+        const sessions = patchSession(s.sessions, sessionId, EMPTY_SESSION);
+        return {
+          sessionId,
+          sessions,
+          conversations: [
+            {
+              id: sessionId,
+              userId,
+              title: 'Nova conversa',
+              createdAt: now,
+              updatedAt: now,
+              messageCount: 0,
+            },
+            ...s.conversations,
+          ],
+          ...syncActiveView(sessionId, sessions),
+        };
+      });
     } catch (error) {
       console.error('[JARVIS] Falha ao criar conversa:', error);
     }
@@ -268,7 +373,10 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
     try {
       await api.deleteSession(sessionId);
       const remaining = get().conversations.filter((c) => c.id !== sessionId);
-      set({ conversations: remaining });
+      set((s) => {
+        const { [sessionId]: _, ...restSessions } = s.sessions;
+        return { conversations: remaining, sessions: restSessions };
+      });
 
       if (activeId === sessionId) {
         if (remaining[0]) {
@@ -284,61 +392,154 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
   },
 
   sendMessage: async (text) => {
-    const { addMessage, userId } = get();
-    addMessage({ role: 'user', content: text });
-    set({ isLoading: true });
+    const { userId, sessionId: currentSessionId } = get();
+
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: text,
+      timestamp: new Date(),
+    };
+
+    if (currentSessionId) {
+      set((s) => {
+        const current = getSessionState(s.sessions, currentSessionId);
+        const sessions = patchSession(s.sessions, currentSessionId, {
+          messages: [...current.messages, userMsg],
+          isLoading: true,
+        });
+        const view = s.sessionId === currentSessionId
+          ? { messages: sessions[currentSessionId].messages, isLoading: true }
+          : {};
+        return { sessions, ...view };
+      });
+    }
+
+    const sessionId = await ensureChatSession(currentSessionId, userId, set, get);
+
+    if (!currentSessionId) {
+      set((s) => {
+        const current = getSessionState(s.sessions, sessionId);
+        const sessions = patchSession(s.sessions, sessionId, {
+          messages: [...current.messages, userMsg],
+          isLoading: true,
+        });
+        const view = s.sessionId === sessionId
+          ? { messages: sessions[sessionId].messages, isLoading: true }
+          : {};
+        return { sessions, ...view };
+      });
+    }
 
     try {
-      const sessionId = await ensureChatSession(get().sessionId, userId, set);
       const result = await api.sendMessage(text, sessionId);
       if (userId) writeStoredSessionId(userId, result.sessionId);
-      set({ sessionId: result.sessionId });
 
       const pending = (result.clientActions ?? []).filter((a) => a.requiresConfirmation);
-      set({ pendingClientActions: pending });
+      const assistantMsg = buildAssistantMessage(result.reply, result.clientActions);
+      const resolvedSessionId = result.sessionId;
 
-      applyExecutedActions(addMessage, result.reply, result.clientActions);
+      set((s) => {
+        const current = getSessionState(s.sessions, resolvedSessionId);
+        const sessions = patchSession(s.sessions, resolvedSessionId, {
+          messages: [
+            ...current.messages,
+            { ...assistantMsg, id: crypto.randomUUID(), timestamp: new Date() },
+          ],
+          pendingClientActions: pending,
+          isLoading: false,
+        });
 
-      if (!pending.length) {
-        set({ pendingClientActions: [] });
-      }
+        const partial: Partial<JarvisState> = { sessions, sessionId: resolvedSessionId };
+        if (s.sessionId === resolvedSessionId) {
+          Object.assign(partial, syncActiveView(resolvedSessionId, sessions));
+        }
+        return partial;
+      });
 
       void get().loadConversations();
     } catch (error) {
       console.error('[JARVIS] Falha ao enviar mensagem:', error);
-      addMessage({
+      const errorMsg: Message = {
+        id: crypto.randomUUID(),
         role: 'assistant',
         content: formatUserError(error),
+        timestamp: new Date(),
+      };
+
+      set((s) => {
+        const current = getSessionState(s.sessions, sessionId);
+        const sessions = patchSession(s.sessions, sessionId, {
+          messages: [...current.messages, errorMsg],
+          pendingClientActions: [],
+          isLoading: false,
+        });
+        const partial: Partial<JarvisState> = { sessions };
+        if (s.sessionId === sessionId) {
+          Object.assign(partial, syncActiveView(sessionId, sessions));
+        }
+        return partial;
       });
-      set({ pendingClientActions: [] });
-    } finally {
-      set({ isLoading: false });
     }
   },
 
   confirmAction: async (textOrAction) => {
-    const { sessionId, addMessage, pendingClientActions, isLoading, userId } = get();
-    if (isLoading) return;
+    const { sessionId, pendingClientActions, isLoading, userId } = get();
+    if (!sessionId || isLoading) return;
 
-    if (typeof textOrAction !== 'string') {
-      const action = textOrAction;
-      const label = action.label.toLowerCase();
-      const message = `sim, ${label}`;
-      set({ isLoading: true });
+    const runConfirm = async (message: string) => {
+      set((s) => {
+        const sessions = patchSession(s.sessions, sessionId, { isLoading: true });
+        return s.sessionId === sessionId
+          ? { sessions, isLoading: true }
+          : { sessions };
+      });
+
       try {
-        const result = await api.sendMessage(message, sessionId ?? undefined);
+        const result = await api.sendMessage(message, sessionId);
         if (userId) writeStoredSessionId(userId, result.sessionId);
-        set({ sessionId: result.sessionId, pendingClientActions: [] });
-        applyExecutedActions(addMessage, result.reply, result.clientActions);
+        const assistantMsg = buildAssistantMessage(result.reply, result.clientActions);
+
+        set((s) => {
+          const current = getSessionState(s.sessions, sessionId);
+          const userMsg: Message = {
+            id: crypto.randomUUID(),
+            role: 'user',
+            content: message,
+            timestamp: new Date(),
+          };
+          const sessions = patchSession(s.sessions, sessionId, {
+            messages: [
+              ...current.messages,
+              userMsg,
+              { ...assistantMsg, id: crypto.randomUUID(), timestamp: new Date() },
+            ],
+            pendingClientActions: [],
+            isLoading: false,
+          });
+          const partial: Partial<JarvisState> = { sessions, sessionId: result.sessionId };
+          if (s.sessionId === sessionId) {
+            Object.assign(partial, syncActiveView(sessionId, sessions));
+          }
+          return partial;
+        });
         void get().loadConversations();
       } catch {
-        addMessage({
-          role: 'assistant',
-          content: 'Senhor, não consegui executar a ação. Tente novamente.',
+        get().addMessage(
+          { role: 'assistant', content: 'Senhor, não consegui executar a ação. Tente novamente.' },
+          sessionId,
+        );
+        set((s) => {
+          const sessions = patchSession(s.sessions, sessionId, { isLoading: false });
+          return s.sessionId === sessionId
+            ? { sessions, isLoading: false, pendingClientActions: [] }
+            : { sessions };
         });
-      } finally {
-        set({ isLoading: false });
       }
+    };
+
+    if (typeof textOrAction !== 'string') {
+      await runConfirm(`sim, ${textOrAction.label.toLowerCase()}`);
       return;
     }
 
@@ -347,24 +548,8 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
       return;
     }
 
-    addMessage({ role: 'user', content: textOrAction });
-    set({ isLoading: true });
-
-    try {
-      const result = await api.sendMessage(textOrAction, sessionId ?? undefined);
-      if (userId) writeStoredSessionId(userId, result.sessionId);
-      set({ sessionId: result.sessionId, pendingClientActions: [] });
-      applyExecutedActions(addMessage, result.reply, result.clientActions);
-      void get().loadConversations();
-    } catch {
-      addMessage({
-        role: 'assistant',
-        content: 'Senhor, não consegui executar a ação. Tente novamente.',
-      });
-      set({ pendingClientActions: [] });
-    } finally {
-      set({ isLoading: false });
-    }
+    get().addMessage({ role: 'user', content: textOrAction }, sessionId);
+    await runConfirm(textOrAction);
   },
 
   setListening: (v) => set({ isListening: v }),
@@ -406,6 +591,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
         userRoles: [],
         userId: null,
         conversations: [],
+        sessions: {},
       });
       return false;
     }
@@ -430,6 +616,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
       messages: [],
       sessionId: null,
       conversations: [],
+      sessions: {},
       pendingClientActions: [],
     });
   },

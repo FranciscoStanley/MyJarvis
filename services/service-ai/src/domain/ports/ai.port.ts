@@ -10,6 +10,7 @@ export interface AiPort {
     userMessage: string,
     searchResults: SearchResult[],
     actionTypes: string[],
+    history?: ChatMessage[],
   ): Promise<string>;
 }
 

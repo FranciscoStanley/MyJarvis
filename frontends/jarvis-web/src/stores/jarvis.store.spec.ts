@@ -25,6 +25,9 @@ describe('Jarvis Store — clientActions', () => {
       messages: [],
       sessionId: 'test-session',
       userId: 'user-1',
+      sessions: {
+        'test-session': { messages: [], pendingClientActions: [], isLoading: false },
+      },
       conversations: [],
       pendingClientActions: [],
       isLoading: false,
@@ -127,5 +130,45 @@ describe('Jarvis Store — clientActions', () => {
     expect(useJarvisStore.getState().pendingClientActions).toEqual([]);
 
     openSpy.mockRestore();
+  });
+
+  it('should keep processing in background when switching conversations', async () => {
+    let resolveSend: (value: Awaited<ReturnType<typeof api.sendMessage>>) => void;
+    const sendPromise = new Promise<Awaited<ReturnType<typeof api.sendMessage>>>((resolve) => {
+      resolveSend = resolve;
+    });
+
+    vi.mocked(api.sendMessage).mockReturnValue(sendPromise);
+    vi.mocked(api.getSessionHistory).mockResolvedValue({
+      sessionId: 'other-session',
+      messages: [],
+    });
+
+    useJarvisStore.setState({
+      sessionId: 'test-session',
+      sessions: {
+        'test-session': { messages: [], pendingClientActions: [], isLoading: false },
+        'other-session': { messages: [], pendingClientActions: [], isLoading: false },
+      },
+    });
+
+    const sendTask = useJarvisStore.getState().sendMessage('mensagem longa');
+
+    expect(useJarvisStore.getState().isSessionLoading('test-session')).toBe(true);
+
+    await useJarvisStore.getState().selectConversation('other-session');
+    expect(useJarvisStore.getState().sessionId).toBe('other-session');
+    expect(useJarvisStore.getState().isSessionLoading('test-session')).toBe(true);
+
+    resolveSend!({
+      reply: 'Resposta concluída em background.',
+      sessionId: 'test-session',
+    });
+
+    await sendTask;
+
+    expect(useJarvisStore.getState().sessions['test-session']?.messages).toHaveLength(2);
+    expect(useJarvisStore.getState().sessions['test-session']?.isLoading).toBe(false);
+    expect(useJarvisStore.getState().messages).toEqual([]);
   });
 });

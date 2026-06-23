@@ -6,6 +6,7 @@ import { Bot, Sparkles } from 'lucide-react';
 import { useJarvisStore } from '@/stores/jarvis.store';
 import { getYoutubeEmbedUrl } from '@/lib/youtube';
 import { ActionPrompt } from '@/components/jarvis/ActionPrompt';
+import { MessageContent } from '@/components/jarvis/MessageContent';
 
 export function ChatPanel() {
   const { messages, confirmAction, isLoading } = useJarvisStore();
@@ -86,7 +87,7 @@ export function ChatPanel() {
                       JARVIS
                     </span>
                   )}
-                  <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                  <MessageContent content={msg.content} />
 
                   {msg.embedUrl && (() => {
                     const embedUrl = getYoutubeEmbedUrl(msg.embedUrl);
@@ -158,6 +159,16 @@ export function ChatPanel() {
               </motion.div>
             ))}
           </AnimatePresence>
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="rounded-xl px-4 py-3 bg-white/[0.04] border border-white/10">
+                <span className="text-[10px] text-jarvis-cyan font-mono uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-jarvis-cyan animate-pulse" />
+                  JARVIS processando…
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

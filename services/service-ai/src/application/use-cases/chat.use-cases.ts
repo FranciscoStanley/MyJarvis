@@ -31,6 +31,7 @@ import {
   formatPeerInsight,
   mergeSearchWithPeer,
 } from './learning.use-cases';
+import { shouldPreserveContextualReply } from '../../domain/services/conversation-context';
 
 export interface SendMessageInput {
   message: string;
@@ -139,14 +140,23 @@ export class SendMessageUseCase {
     let finalReply = reply;
 
     const enrichedResults = mergeSearchWithPeer(searchResults, peerInsight, peerIdUsed);
+    const preserveContext = shouldPreserveContextualReply(
+      userMessage,
+      history,
+      reply,
+      actionTypes,
+    );
 
-    if (enrichedResults.length) {
+    if (enrichedResults.length && !preserveContext) {
       const synthesized = await this.ai.synthesizeWithResults(
         userMessage,
         enrichedResults,
         actionTypes,
+        history,
       );
       finalReply = synthesized || synthesizeFallbackReply(userMessage, enrichedResults, actionTypes);
+    } else if (preserveContext && peerInsight) {
+      finalReply = `${reply.trim()}\n\n---\n**Complemento (${peerIdUsed}):** ${peerInsight.replace(/^Insight .+?:\s*/i, '')}`;
     } else if (!finalReply.trim() || /^desculpe,?\s+n[aã]o consegui/i.test(finalReply.trim())) {
       finalReply = buildActionAcknowledgement(actions, userMessage)
         || synthesizeFallbackReply(userMessage, searchResults, actionTypes)

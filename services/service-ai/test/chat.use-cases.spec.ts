@@ -134,4 +134,29 @@ describe('SendMessageUseCase', () => {
     expect(result.clientActions?.some((a) => a.app === 'youtube' && a.requiresConfirmation === false)).toBe(true);
     expect(result.reply).not.toMatch(/Deseja que eu/i);
   });
+
+  it('should preserve contextual reply on follow-up instead of replacing with synthesis', async () => {
+    const history = [
+      { id: '1', role: 'user', content: 'Quais modelos você conversou?', timestamp: new Date() },
+      { id: '2', role: 'assistant', content: 'Gemma2 e Mistral.', timestamp: new Date() },
+    ];
+    mockStore.getMessages.mockResolvedValue(history);
+    mockStore.sessionExists.mockResolvedValue(true);
+
+    mockAi.generateResponse.mockResolvedValue({
+      reply: 'Senhor, detalho as conversas com Gemma2 sobre contextualização…',
+      actions: [{ type: 'peer_ai', query: 'detalhes', data: { peerId: 'mistral' } }],
+    });
+    mockAi.synthesizeWithResults.mockResolvedValue('Resposta genérica sem contexto.');
+
+    const result = await useCase.execute({
+      message: 'Conte mais sobre as conversas de forma detalhada.',
+      sessionId: 'session-1',
+      userId: TEST_USER,
+    });
+
+    expect(result.reply).toContain('Gemma2');
+    expect(result.reply).not.toBe('Resposta genérica sem contexto.');
+    expect(mockAi.synthesizeWithResults).not.toHaveBeenCalled();
+  });
 });

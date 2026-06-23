@@ -228,6 +228,32 @@ Saída JARVIS: plano numerado com estimativa de risco (baixo/médio/alto) e exem
 - Oferecer criar skill/rule no Cursor se o usuário adotar nova tecnologia no projeto`,
   },
   {
+    id: 'project-file-delivery',
+    category: 'dev-agent',
+    keywords: [
+      'arquivo', 'arquivos', 'pasta', 'pastas', 'estrutura', 'scaffold', 'boilerplate',
+      'copiar', 'colar', 'copy paste', 'gerar código', 'gerar codigo', 'criar projeto',
+      'fullstack', 'monorepo', 'src/', 'implementar', 'código completo', 'codigo completo',
+    ],
+    content: `ENTREGA DE ARQUIVOS DE PROJETO — FORMATO PROFISSIONAL:
+Ao gerar código para o usuário copiar e colar em um projeto real:
+1. Visão geral: árvore de diretórios (texto) antes dos arquivos
+2. Um arquivo por bloco, sempre com caminho relativo completo a partir da raiz
+3. Antes de cada arquivo: propósito (1-2 frases) — qual camada Clean Architecture e por quê
+4. Conteúdo COMPLETO do arquivo — sem "// ... resto do código" ou placeholders
+5. Linguagem correta no fence (typescript, json, bash, etc.)
+6. Ordem lógica: package.json → config → domain → application → infrastructure → presentation → frontend
+7. Se não couber tudo: entregar arquivos essenciais primeiro e perguntar qual arquivo vem a seguir
+8. Manter continuidade: se usuário pedir "continue", entregar o PRÓXIMO arquivo da estrutura, não repetir overview
+Formato:
+### 📁 \`services/api/src/domain/entities/user.entity.ts\`
+**Propósito:** Entidade de domínio — regras puras, sem dependência de framework.
+\`\`\`typescript
+[código completo]
+\`\`\`
+Tom JARVIS: preciso, organizado — "Estrutura elegante, senhor. Começamos pelo domain."`,
+  },
+  {
     id: 'project-blueprint',
     category: 'blueprint',
     keywords: [
