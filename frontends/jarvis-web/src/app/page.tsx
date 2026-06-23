@@ -53,11 +53,11 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-dvh flex flex-col relative">
+    <main className="h-dvh flex flex-col relative overflow-hidden">
       <HudBackground />
       <JarvisHeader onLogout={logout} />
 
-      <div className="relative z-10 flex-1 flex flex-col min-h-0 lg:grid lg:grid-cols-[minmax(280px,360px)_1fr] lg:gap-4 lg:p-4 max-w-[1600px] mx-auto w-full">
+      <div className="relative z-10 flex-1 flex flex-col min-h-0 overflow-hidden lg:grid lg:grid-cols-[minmax(280px,360px)_1fr] lg:grid-rows-1 lg:gap-4 lg:p-4 max-w-[1600px] mx-auto w-full">
         {/* Painel lateral — orb + status */}
         <aside className="shrink-0 flex flex-col items-center gap-3 px-4 pt-3 pb-2 lg:py-0 lg:px-0 lg:sticky lg:top-4 lg:self-start">
           <HudFrame title="Núcleo JARVIS" variant="compact" className="w-full flex flex-col items-center py-4 sm:py-6 lg:py-8">
@@ -69,7 +69,7 @@ export default function HomePage() {
         {/* Painel de chat */}
         <HudFrame
           title="Interface de Comunicação"
-          className="flex flex-col flex-1 min-h-0 mx-4 mb-4 lg:mx-0 lg:mb-0 rounded-t-2xl lg:rounded-2xl"
+          className="flex flex-col flex-1 min-h-0 overflow-hidden mx-4 mb-4 lg:mx-0 lg:mb-0 lg:h-full rounded-t-2xl lg:rounded-2xl"
         >
           <ChatPanel />
           <InputBar />

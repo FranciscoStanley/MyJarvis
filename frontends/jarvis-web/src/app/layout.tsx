@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-dvh overflow-x-hidden font-display">{children}</body>
+      <body className="h-dvh overflow-hidden font-display">{children}</body>
     </html>
   );
 }
