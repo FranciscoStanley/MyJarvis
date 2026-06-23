@@ -128,7 +128,6 @@ async function ensureChatSession(
   sessionId: string | null,
   userId: string | null,
   set: (partial: Partial<JarvisState> | ((s: JarvisState) => Partial<JarvisState>)) => void,
-  get: () => JarvisState,
 ): Promise<string> {
   if (sessionId) return sessionId;
   const { sessionId: newId } = await api.createSession();
@@ -374,7 +373,8 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
       await api.deleteSession(sessionId);
       const remaining = get().conversations.filter((c) => c.id !== sessionId);
       set((s) => {
-        const { [sessionId]: _, ...restSessions } = s.sessions;
+        const restSessions = { ...s.sessions };
+        delete restSessions[sessionId];
         return { conversations: remaining, sessions: restSessions };
       });
 
@@ -415,7 +415,7 @@ export const useJarvisStore = create<JarvisState>((set, get) => ({
       });
     }
 
-    const sessionId = await ensureChatSession(currentSessionId, userId, set, get);
+    const sessionId = await ensureChatSession(currentSessionId, userId, set);
 
     if (!currentSessionId) {
       set((s) => {
