@@ -62,7 +62,7 @@ test.describe('Usability — Jarvis Web', () => {
     const input = page.getByRole('textbox', { name: 'Mensagem para o JARVIS' });
     await expect(input).toBeVisible();
     await expect(page.getByRole('button', { name: 'Enviar' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Falar' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Iniciar gravação por voz' })).toBeVisible();
     await expect(page.getByRole('img', { name: /JARVIS/i })).toBeVisible();
 
     await input.fill('Olá JARVIS');
