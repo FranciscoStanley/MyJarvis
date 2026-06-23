@@ -4,7 +4,10 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../../src/app.module';
 import { AI_PORT, CONVERSATION_STORE, SEARCH_CLIENT } from '../../src/domain/ports/ai.port';
+import { RAG_PORT } from '../../src/domain/ports/rag.port';
+import { LEARNING_STORE } from '../../src/domain/ports/learning-store.port';
 import { InMemoryConversationStore } from '../../src/infrastructure/adapters/memory-store.adapter';
+import { OllamaWarmupService } from '../../src/infrastructure/adapters/ollama-warmup.service';
 import { closeTestApp } from '../helpers/test-app';
 
 const TEST_USER = { id: 'test-user-1', email: 'test@jarvis.local', roles: ['user'] };
@@ -26,17 +29,30 @@ describe('AI Chat Integration', () => {
       .useValue({ search: vi.fn().mockResolvedValue([]) })
       .overrideProvider(CONVERSATION_STORE)
       .useClass(InMemoryConversationStore)
+      .overrideProvider(RAG_PORT)
+      .useValue({
+        isReady: () => true,
+        retrieve: vi.fn().mockResolvedValue(''),
+      })
+      .overrideProvider(LEARNING_STORE)
+      .useValue({
+        save: vi.fn().mockResolvedValue(null),
+        search: vi.fn().mockResolvedValue([]),
+        getStats: vi.fn().mockResolvedValue({ total: 0, maxEntries: 500, byCategory: {} }),
+      })
+      .overrideProvider(OllamaWarmupService)
+      .useValue({ onModuleInit: vi.fn() })
       .compile();
 
     app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     app.setGlobalPrefix('api');
     await app.init();
-  });
+  }, 60_000);
 
   afterAll(async () => {
     await closeTestApp(app);
-  });
+  }, 30_000);
 
   const withUser = (req: request.Test) =>
     req

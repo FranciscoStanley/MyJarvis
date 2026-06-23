@@ -10,7 +10,7 @@
     "start:prod": "node dist/main",
     "test": "vitest run",
     "test:unit": "vitest run --exclude 'test/integration/**' --exclude 'test/performance/**'",
-    "test:integration": "vitest run test/integration",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:performance": "vitest run test/performance",
     "test:watch": "vitest"
   },
