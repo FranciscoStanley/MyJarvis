@@ -113,6 +113,9 @@ services:
       OLLAMA_PEER_MODELS: ${OLLAMA_PEER_MODELS:-mistral,gemma2}
       LEARNING_DATA_PATH: /app/data/jarvis-learned-knowledge.json
       LEARNING_MAX_ENTRIES: ${LEARNING_MAX_ENTRIES:-500}
+      CONVERSATIONS_DATA_DIR: /app/data/conversations
+      CONVERSATIONS_MAX_SESSIONS: ${CONVERSATIONS_MAX_SESSIONS:-50}
+      CONVERSATIONS_MAX_MESSAGES: ${CONVERSATIONS_MAX_MESSAGES:-200}
       SEARCH_SERVICE_URL: http://service-search:3004
     volumes:
       - jarvis_learning_data:/app/data

@@ -1,4 +1,4 @@
-import { Injectable, Inject, Optional } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import {
   ClientAction,
@@ -35,6 +35,7 @@ import {
 export interface SendMessageInput {
   message: string;
   sessionId?: string;
+  userId: string;
 }
 
 export interface SendMessageOutput {
@@ -56,18 +57,18 @@ export class SendMessageUseCase {
   ) {}
 
   async execute(input: SendMessageInput): Promise<SendMessageOutput> {
-    const sessionId = input.sessionId ?? this.store.createSession();
-    const history = this.store.getMessages(sessionId);
+    const sessionId = await this.resolveSessionId(input.sessionId, input.userId);
+    const history = await this.store.getMessages(sessionId, input.userId);
     const userMessage = normalizePortugueseTranscript(input.message);
 
     const confirmation = detectConfirmationIntent(userMessage);
     const pending = getPendingClientActions(history);
 
     if (pending.length && confirmation !== 'none') {
-      return this.handleConfirmation(sessionId, userMessage, confirmation, pending);
+      return this.handleConfirmation(sessionId, input.userId, userMessage, confirmation, pending);
     }
 
-    this.store.addMessage(sessionId, {
+    await this.store.addMessage(sessionId, input.userId, {
       id: randomUUID(),
       role: 'user',
       content: userMessage,
@@ -167,7 +168,7 @@ export class SendMessageUseCase {
       peerInsight: peerInsight || undefined,
     });
 
-    this.store.addMessage(sessionId, {
+    await this.store.addMessage(sessionId, input.userId, {
       id: randomUUID(),
       role: 'assistant',
       content: finalReply,
@@ -188,13 +189,21 @@ export class SendMessageUseCase {
     };
   }
 
-  private handleConfirmation(
+  private async resolveSessionId(sessionId: string | undefined, userId: string): Promise<string> {
+    if (sessionId && await this.store.sessionExists(sessionId, userId)) {
+      return sessionId;
+    }
+    return this.store.createSession(userId);
+  }
+
+  private async handleConfirmation(
     sessionId: string,
+    userId: string,
     message: string,
     confirmation: 'yes' | 'no',
     pending: ClientAction[],
-  ): SendMessageOutput {
-    this.store.addMessage(sessionId, {
+  ): Promise<SendMessageOutput> {
+    await this.store.addMessage(sessionId, userId, {
       id: randomUUID(),
       role: 'user',
       content: message,
@@ -203,7 +212,7 @@ export class SendMessageUseCase {
 
     if (confirmation === 'no') {
       const reply = buildDeclinedReply();
-      this.store.addMessage(sessionId, {
+      await this.store.addMessage(sessionId, userId, {
         id: randomUUID(),
         role: 'assistant',
         content: reply,
@@ -220,7 +229,7 @@ export class SendMessageUseCase {
       ? buildConfirmedReply(selected)
       : `${buildConfirmedReply(toExecute[0])} Executando ${toExecute.length} ação(ões).`;
 
-    this.store.addMessage(sessionId, {
+    await this.store.addMessage(sessionId, userId, {
       id: randomUUID(),
       role: 'assistant',
       content: reply,
@@ -264,8 +273,37 @@ export class GetConversationUseCase {
     @Inject(CONVERSATION_STORE) private readonly store: ConversationStorePort,
   ) {}
 
-  execute(sessionId: string) {
-    return this.store.getMessages(sessionId);
+  async execute(sessionId: string, userId: string) {
+    if (!await this.store.sessionExists(sessionId, userId)) {
+      throw new NotFoundException('Conversa não encontrada');
+    }
+    return this.store.getMessages(sessionId, userId);
+  }
+}
+
+@Injectable()
+export class ListSessionsUseCase {
+  constructor(
+    @Inject(CONVERSATION_STORE) private readonly store: ConversationStorePort,
+  ) {}
+
+  execute(userId: string) {
+    return this.store.listSessions(userId);
+  }
+}
+
+@Injectable()
+export class DeleteSessionUseCase {
+  constructor(
+    @Inject(CONVERSATION_STORE) private readonly store: ConversationStorePort,
+  ) {}
+
+  async execute(sessionId: string, userId: string) {
+    const deleted = await this.store.deleteSession(sessionId, userId);
+    if (!deleted) {
+      throw new NotFoundException('Conversa não encontrada');
+    }
+    return { deleted: true };
   }
 }
 
@@ -275,7 +313,7 @@ export class CreateSessionUseCase {
     @Inject(CONVERSATION_STORE) private readonly store: ConversationStorePort,
   ) {}
 
-  execute() {
-    return { sessionId: this.store.createSession() };
+  async execute(userId: string) {
+    return { sessionId: await this.store.createSession(userId) };
   }
 }

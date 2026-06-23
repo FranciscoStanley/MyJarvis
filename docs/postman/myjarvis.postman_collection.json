@@ -236,11 +236,11 @@
           }
         },
         {
-          "name": "AI Service Health (RAG status)",
+          "name": "List Sessions",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3002/api/health",
-            "description": "Health direto do service-ai — rag.ready, embedModel, chunks=45, learning"
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/chat/sessions"
           }
         },
         {
@@ -249,6 +249,22 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/chat/session/{{sessionId}}"
+          }
+        },
+        {
+          "name": "Delete Session",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/chat/session/{{sessionId}}"
+          }
+        },
+        {
+          "name": "AI Service Health (RAG status)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3002/api/health",
+            "description": "Health direto do service-ai — rag.ready, embedModel, chunks=45, learning"
           }
         }
       ]

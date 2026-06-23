@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, Inject, Optional } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, Param, Inject, Optional } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { SendMessageRequestDto } from './dto/chat.dto';
@@ -6,15 +6,20 @@ import {
   SendMessageResponseDto,
   SessionResponseDto,
   HealthResponseDto,
+  ConversationSessionSummaryDto,
+  ConversationHistoryResponseDto,
 } from './dto/chat-response.dto';
 import {
   SendMessageUseCase,
   GetConversationUseCase,
   CreateSessionUseCase,
+  ListSessionsUseCase,
+  DeleteSessionUseCase,
 } from '../application/use-cases/chat.use-cases';
 import { RAG_PORT, RagPort } from '../domain/ports/rag.port';
 import { LEARNING_STORE, LearningStorePort } from '../domain/ports/learning-store.port';
 import { KNOWLEDGE_STATS } from '../domain/knowledge/knowledge-index';
+import { CurrentUser, GatewayUser } from './decorators/current-user.decorator';
 
 @ApiTags('Chat')
 @Controller('chat')
@@ -23,14 +28,25 @@ export class ChatController {
     private readonly sendMessage: SendMessageUseCase,
     private readonly getConversation: GetConversationUseCase,
     private readonly createSession: CreateSessionUseCase,
+    private readonly listSessions: ListSessionsUseCase,
+    private readonly deleteSession: DeleteSessionUseCase,
   ) {}
+
+  @Get('sessions')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar conversas do usuário autenticado' })
+  @ApiResponse({ status: 200, type: [ConversationSessionSummaryDto] })
+  async sessions(@CurrentUser() user: GatewayUser) {
+    const data = await this.listSessions.execute(user.id);
+    return { success: true, data, timestamp: new Date().toISOString() };
+  }
 
   @Post('session')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar nova sessão de conversa' })
   @ApiResponse({ status: 201, description: 'Sessão criada', type: SessionResponseDto })
-  create() {
-    const result = this.createSession.execute();
+  async create(@CurrentUser() user: GatewayUser) {
+    const result = await this.createSession.execute(user.id);
     return { success: true, data: result, timestamp: new Date().toISOString() };
   }
 
@@ -43,17 +59,26 @@ export class ChatController {
       'buscas via service-search → aprendizado persistente filtrado por ética → clientActions para o PWA.',
   })
   @ApiResponse({ status: 200, description: 'Resposta do JARVIS com ações opcionais', type: SendMessageResponseDto })
-  async message(@Body() dto: SendMessageRequestDto) {
-    const result = await this.sendMessage.execute(dto);
+  async message(@Body() dto: SendMessageRequestDto, @CurrentUser() user: GatewayUser) {
+    const result = await this.sendMessage.execute({ ...dto, userId: user.id });
     return { success: true, data: result, timestamp: new Date().toISOString() };
   }
 
   @Get('session/:sessionId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Obter histórico da conversa' })
-  history(@Param('sessionId') sessionId: string) {
-    const messages = this.getConversation.execute(sessionId);
+  @ApiResponse({ status: 200, type: ConversationHistoryResponseDto })
+  async history(@Param('sessionId') sessionId: string, @CurrentUser() user: GatewayUser) {
+    const messages = await this.getConversation.execute(sessionId, user.id);
     return { success: true, data: { sessionId, messages }, timestamp: new Date().toISOString() };
+  }
+
+  @Delete('session/:sessionId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Excluir conversa' })
+  async remove(@Param('sessionId') sessionId: string, @CurrentUser() user: GatewayUser) {
+    const data = await this.deleteSession.execute(sessionId, user.id);
+    return { success: true, data, timestamp: new Date().toISOString() };
   }
 }
 

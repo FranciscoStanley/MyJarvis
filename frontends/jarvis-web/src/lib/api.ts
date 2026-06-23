@@ -1,4 +1,4 @@
-import { ClientAction, SearchResult, UserRole, AuthSource } from '@myjarvis/shared';
+import { ClientAction, SearchResult, UserRole, AuthSource, ChatMessage } from '@myjarvis/shared';
 
 export interface ApiUser {
   id: string;
@@ -9,6 +9,16 @@ export interface ApiUser {
   termsAcceptedAt?: string | null;
   termsVersion?: string | null;
   hasAcceptedTerms?: boolean;
+}
+
+export interface ConversationSummary {
+  id: string;
+  userId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  preview?: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -24,7 +34,9 @@ class ApiClient {
 
   clearToken() {
     this.token = null;
-    if (typeof window !== 'undefined') localStorage.removeItem('jarvis_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('jarvis_token');
+    }
   }
 
   getToken() {
@@ -99,10 +111,27 @@ class ApiClient {
     });
   }
 
+  listSessions() {
+    return this.request<ConversationSummary[]>('/chat/sessions');
+  }
+
   createSession() {
     return this.request<{ sessionId: string }>(
       '/chat/session',
       { method: 'POST', body: '{}' },
+    );
+  }
+
+  getSessionHistory(sessionId: string) {
+    return this.request<{ sessionId: string; messages: ChatMessage[] }>(
+      `/chat/session/${sessionId}`,
+    );
+  }
+
+  deleteSession(sessionId: string) {
+    return this.request<{ deleted: boolean }>(
+      `/chat/session/${sessionId}`,
+      { method: 'DELETE' },
     );
   }
 
@@ -146,3 +175,19 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
+
+export function activeSessionStorageKey(userId: string): string {
+  return `jarvis_active_session_${userId}`;
+}
+
+export function readStoredSessionId(userId: string): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(activeSessionStorageKey(userId));
+}
+
+export function writeStoredSessionId(userId: string, sessionId: string | null) {
+  if (typeof window === 'undefined') return;
+  const key = activeSessionStorageKey(userId);
+  if (sessionId) localStorage.setItem(key, sessionId);
+  else localStorage.removeItem(key);
+}

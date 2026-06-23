@@ -83,6 +83,54 @@ export class SessionResponseDto {
   sessionId!: string;
 }
 
+export class ConversationSessionSummaryDto {
+  @ApiProperty({ example: 'session-uuid' })
+  id!: string;
+
+  @ApiProperty({ example: 'user-uuid' })
+  userId!: string;
+
+  @ApiProperty({ example: 'Como configurar o Docker?' })
+  title!: string;
+
+  @ApiProperty({ example: '2026-06-22T12:00:00.000Z' })
+  createdAt!: string;
+
+  @ApiProperty({ example: '2026-06-22T12:05:00.000Z' })
+  updatedAt!: string;
+
+  @ApiProperty({ example: 4 })
+  messageCount!: number;
+
+  @ApiPropertyOptional({ example: 'Certamente, senhor. O Docker Compose...' })
+  preview?: string;
+}
+
+export class ChatMessageDto {
+  @ApiProperty({ example: 'msg-uuid' })
+  id!: string;
+
+  @ApiProperty({ enum: ['user', 'assistant', 'system'] })
+  role!: string;
+
+  @ApiProperty({ example: 'Olá JARVIS' })
+  content!: string;
+
+  @ApiProperty({ example: '2026-06-22T12:00:00.000Z' })
+  timestamp!: string;
+
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
+  metadata?: Record<string, unknown>;
+}
+
+export class ConversationHistoryResponseDto {
+  @ApiProperty({ example: 'session-uuid' })
+  sessionId!: string;
+
+  @ApiProperty({ type: [ChatMessageDto] })
+  messages!: ChatMessageDto[];
+}
+
 export class HealthResponseDto {
   @ApiProperty({ example: 'ok' })
   status!: string;

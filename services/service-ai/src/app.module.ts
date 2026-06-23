@@ -10,12 +10,15 @@ import { OllamaRagAdapter } from './infrastructure/adapters/ollama-rag.adapter';
 import { OllamaWarmupService } from './infrastructure/adapters/ollama-warmup.service';
 import { FileLearningStoreAdapter } from './infrastructure/adapters/file-learning-store.adapter';
 import { OllamaPeerAdapter } from './infrastructure/adapters/ollama-peer.adapter';
-import { InMemoryConversationStore, HttpSearchClient } from './infrastructure/adapters/memory-store.adapter';
+import { FileConversationStoreAdapter } from './infrastructure/adapters/file-conversation-store.adapter';
+import { HttpSearchClient } from './infrastructure/adapters/memory-store.adapter';
 import { ContextEnrichmentService } from './application/services/context-enrichment.service';
 import {
   SendMessageUseCase,
   GetConversationUseCase,
   CreateSessionUseCase,
+  ListSessionsUseCase,
+  DeleteSessionUseCase,
 } from './application/use-cases/chat.use-cases';
 import {
   PersistLearningUseCase,
@@ -41,6 +44,8 @@ import { LearningController } from './presentation/learning.controller';
     SendMessageUseCase,
     GetConversationUseCase,
     CreateSessionUseCase,
+    ListSessionsUseCase,
+    DeleteSessionUseCase,
     PersistLearningUseCase,
     GetLearningStatsUseCase,
     RecallLearningUseCase,
@@ -49,7 +54,7 @@ import { LearningController } from './presentation/learning.controller';
     { provide: RAG_PORT, useClass: OllamaRagAdapter },
     { provide: LEARNING_STORE, useClass: FileLearningStoreAdapter },
     { provide: PEER_AI, useClass: OllamaPeerAdapter },
-    { provide: CONVERSATION_STORE, useClass: InMemoryConversationStore },
+    { provide: CONVERSATION_STORE, useClass: FileConversationStoreAdapter },
     { provide: SEARCH_CLIENT, useClass: HttpSearchClient },
     OllamaWarmupService,
   ],

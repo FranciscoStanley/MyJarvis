@@ -1,20 +1,24 @@
 'use client';
 
+import { useState } from 'react';
 import { LogOut, Shield, Sparkles } from 'lucide-react';
 import { UserRole } from '@myjarvis/shared';
 import { useJarvisStore } from '@/stores/jarvis.store';
+import { ConversationSidebarToggle } from '@/components/jarvis/ConversationSidebar';
 
 interface JarvisHeaderProps {
   onLogout: () => void;
+  onOpenConversations?: () => void;
 }
 
-export function JarvisHeader({ onLogout }: JarvisHeaderProps) {
+export function JarvisHeader({ onLogout, onOpenConversations }: JarvisHeaderProps) {
   const { userName, hasRole, isLoading, sessionId } = useJarvisStore();
 
   return (
     <header className="relative z-20 shrink-0 border-b border-white/5 bg-jarvis-bg/80 backdrop-blur-md">
       <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4 max-w-[1600px] mx-auto w-full">
         <div className="flex items-center gap-3 min-w-0">
+          {onOpenConversations && <ConversationSidebarToggle onClick={onOpenConversations} />}
           <div className="relative shrink-0">
             <Sparkles className="text-jarvis-cyan relative z-10" size={22} />
             <div className="absolute inset-0 blur-md bg-jarvis-cyan/40 rounded-full" />

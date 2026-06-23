@@ -11,10 +11,12 @@ import { InputBar } from '@/components/jarvis/InputBar';
 import { AuthModal } from '@/components/jarvis/AuthModal';
 import { TermsAcceptModal } from '@/components/jarvis/TermsAcceptModal';
 import { HudFrame } from '@/components/jarvis/HudFrame';
+import { ConversationSidebar } from '@/components/jarvis/ConversationSidebar';
 
 export default function HomePage() {
   const { isAuthenticated, needsTermsAcceptance, restoreSession, logout } = useJarvisStore();
   const [checking, setChecking] = useState(true);
+  const [mobileConversationsOpen, setMobileConversationsOpen] = useState(false);
 
   useEffect(() => {
     restoreSession().finally(() => setChecking(false));
@@ -55,7 +57,10 @@ export default function HomePage() {
   return (
     <main className="h-dvh flex flex-col relative overflow-hidden">
       <HudBackground />
-      <JarvisHeader onLogout={logout} />
+      <JarvisHeader
+        onLogout={logout}
+        onOpenConversations={() => setMobileConversationsOpen(true)}
+      />
 
       <div className="relative z-10 flex-1 flex flex-col min-h-0 overflow-hidden lg:grid lg:grid-cols-[minmax(280px,360px)_1fr] lg:grid-rows-1 lg:gap-4 lg:p-4 max-w-[1600px] mx-auto w-full">
         {/* Painel lateral — orb + status */}
@@ -66,13 +71,21 @@ export default function HomePage() {
           <StatusPanel />
         </aside>
 
-        {/* Painel de chat */}
+        {/* Painel de chat + histórico */}
         <HudFrame
           title="Interface de Comunicação"
           className="flex flex-col flex-1 min-h-0 overflow-hidden mx-4 mb-4 lg:mx-0 lg:mb-0 lg:h-full rounded-t-2xl lg:rounded-2xl"
         >
-          <ChatPanel />
-          <InputBar />
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            <ConversationSidebar
+              mobileOpen={mobileConversationsOpen}
+              onMobileClose={() => setMobileConversationsOpen(false)}
+            />
+            <div className="flex flex-col flex-1 min-h-0 min-w-0">
+              <ChatPanel />
+              <InputBar />
+            </div>
+          </div>
         </HudFrame>
       </div>
     </main>

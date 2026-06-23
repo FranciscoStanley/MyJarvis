@@ -1,15 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SendMessageUseCase } from '../src/application/use-cases/chat.use-cases';
 
+const TEST_USER = 'user-test';
+
 describe('SendMessageUseCase', () => {
   const mockAi = {
     generateResponse: vi.fn(),
     synthesizeWithResults: vi.fn(),
   };
   const mockStore = {
-    getMessages: vi.fn().mockReturnValue([]),
-    addMessage: vi.fn(),
-    createSession: vi.fn().mockReturnValue('session-1'),
+    getMessages: vi.fn().mockResolvedValue([]),
+    addMessage: vi.fn().mockResolvedValue(undefined),
+    createSession: vi.fn().mockResolvedValue('session-1'),
+    sessionExists: vi.fn().mockResolvedValue(false),
   };
   const mockSearch = { search: vi.fn().mockResolvedValue([]) };
 
@@ -21,9 +24,11 @@ describe('SendMessageUseCase', () => {
     vi.clearAllMocks();
     mockAi.synthesizeWithResults.mockResolvedValue('');
     mockStore.getMessages.mockReset();
-    mockStore.getMessages.mockReturnValue([]);
+    mockStore.getMessages.mockResolvedValue([]);
     mockStore.addMessage.mockReset();
-    mockStore.createSession.mockReturnValue('session-1');
+    mockStore.addMessage.mockResolvedValue(undefined);
+    mockStore.createSession.mockResolvedValue('session-1');
+    mockStore.sessionExists.mockResolvedValue(false);
     useCase = new SendMessageUseCase(
       mockAi as never,
       mockStore as never,
@@ -39,7 +44,7 @@ describe('SendMessageUseCase', () => {
       actions: [],
     });
 
-    const result = await useCase.execute({ message: 'Olá JARVIS' });
+    const result = await useCase.execute({ message: 'Olá JARVIS', userId: TEST_USER });
     expect(result.reply).toBe('Bom dia, senhor.');
     expect(result.sessionId).toBe('session-1');
     expect(mockStore.addMessage).toHaveBeenCalledTimes(2);
@@ -55,7 +60,7 @@ describe('SendMessageUseCase', () => {
     ]);
     mockAi.synthesizeWithResults.mockResolvedValue('Senhor, o tempo está ensolarado hoje.');
 
-    const result = await useCase.execute({ message: 'Busque o tempo' });
+    const result = await useCase.execute({ message: 'Busque o tempo', userId: TEST_USER });
     expect(mockSearch.search).toHaveBeenCalledWith('web', 'tempo hoje');
     expect(result.searchResults).toHaveLength(1);
     expect(result.reply).toContain('ensolarado');
@@ -72,7 +77,7 @@ describe('SendMessageUseCase', () => {
     ]);
     mockAi.synthesizeWithResults.mockResolvedValue('Senhor, guards no NestJS protegem rotas com CanActivate.');
 
-    const result = await useCase.execute({ message: 'como usar guards no NestJS' });
+    const result = await useCase.execute({ message: 'como usar guards no NestJS', userId: TEST_USER });
     expect(mockSearch.search).toHaveBeenCalledWith('web', 'site:docs.nestjs.com guards');
     expect(result.reply).toContain('guards');
   });
@@ -87,17 +92,17 @@ describe('SendMessageUseCase', () => {
       app: 'youtube' as const,
       requiresConfirmation: true,
     }];
-    mockStore.getMessages.mockReturnValue([
+    mockStore.getMessages.mockResolvedValue([
       { role: 'assistant', metadata: { pendingClientActions: pending } },
     ]);
 
-    const result = await useCase.execute({ message: 'sim' });
+    const result = await useCase.execute({ message: 'sim', userId: TEST_USER });
     expect(result.clientActions?.[0].requiresConfirmation).toBe(false);
     expect(result.reply).toMatch(/senhor/i);
   });
 
   it('should handle confirmation no', async () => {
-    mockStore.getMessages.mockReturnValue([
+    mockStore.getMessages.mockResolvedValue([
       {
         role: 'assistant',
         metadata: {
@@ -113,7 +118,7 @@ describe('SendMessageUseCase', () => {
       },
     ]);
 
-    const result = await useCase.execute({ message: 'não' });
+    const result = await useCase.execute({ message: 'não', userId: TEST_USER });
     expect(result.clientActions).toEqual([]);
     expect(result.reply).toMatch(/como desejar/i);
   });
@@ -124,7 +129,7 @@ describe('SendMessageUseCase', () => {
       actions: [],
     });
 
-    const result = await useCase.execute({ message: 'Abra o YouTube' });
+    const result = await useCase.execute({ message: 'Abra o YouTube', userId: TEST_USER });
     expect(result.clientActions?.length).toBeGreaterThan(0);
     expect(result.clientActions?.some((a) => a.app === 'youtube' && a.requiresConfirmation === false)).toBe(true);
     expect(result.reply).not.toMatch(/Deseja que eu/i);

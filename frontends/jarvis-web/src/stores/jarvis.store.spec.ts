@@ -5,10 +5,15 @@ vi.mock('@/lib/api', () => ({
   api: {
     createSession: vi.fn().mockResolvedValue({ sessionId: 'test-session' }),
     sendMessage: vi.fn(),
+    listSessions: vi.fn().mockResolvedValue([]),
+    getSessionHistory: vi.fn().mockResolvedValue({ sessionId: 'test-session', messages: [] }),
+    deleteSession: vi.fn().mockResolvedValue({ deleted: true }),
     getToken: vi.fn().mockReturnValue('token'),
     setToken: vi.fn(),
     clearToken: vi.fn(),
   },
+  readStoredSessionId: vi.fn().mockReturnValue(null),
+  writeStoredSessionId: vi.fn(),
 }));
 
 import { api } from '@/lib/api';
@@ -19,6 +24,8 @@ describe('Jarvis Store — clientActions', () => {
     useJarvisStore.setState({
       messages: [],
       sessionId: 'test-session',
+      userId: 'user-1',
+      conversations: [],
       pendingClientActions: [],
       isLoading: false,
     });

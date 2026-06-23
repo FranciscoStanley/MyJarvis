@@ -98,7 +98,11 @@ Capacidades: assistente pessoal, **agente de desenvolvimento**, **gestão de pro
 
 ### POST /chat/session
 
-Cria nova sessão de conversa.
+Cria nova sessão de conversa (persistida por usuário autenticado).
+
+### GET /chat/sessions
+
+Lista conversas do usuário (título, preview, data de atualização).
 
 ### POST /chat/message
 
@@ -188,7 +192,11 @@ Estatísticas da memória de aprendizado (via gateway).
 
 ### GET /chat/session/:sessionId
 
-Histórico da conversa.
+Histórico da conversa (mensagens persistidas).
+
+### DELETE /chat/session/:sessionId
+
+Exclui uma conversa do usuário autenticado.
 
 ### GET /api/health (service-ai :3002)
 
