@@ -149,8 +149,8 @@ sequenceDiagram
         W->>B: STT gratuito
         B-->>W: Texto transcrito
     end
-    W->>G: POST /api/chat/message
-    G->>AI: Forward
+    W->>G: POST /api/chat/message (+ sessionId)
+    G->>AI: Forward + X-User-Id
     AI->>RAG: retrieve + memória aprendida
     RAG-->>AI: Contexto (ações, dev, ética, fé, PM, aprendido…)
     AI->>O: POST /api/chat + tools (doc_search, web_search, consult_peer_ai…)
@@ -163,7 +163,8 @@ sequenceDiagram
         AI->>O: Sintetizar resposta com contexto
         O-->>AI: Resposta conversacional
     end
-    AI-->>G: reply + clientActions
+    AI->>AI: Persistir mensagens (JSON por usuário)
+    AI-->>G: reply + clientActions + sessionId
     G-->>W: JSON
     alt requiresConfirmation = false
         W->>W: window.open / embed YouTube (imediato)
@@ -213,6 +214,47 @@ sequenceDiagram
     end
     AI-->>U: Resposta + conhecimento aplicado
 ```
+
+## Persistência de Conversas
+
+Cada usuário autenticado possui conversas **persistidas em disco** no `service-ai` (volume Docker `/app/data/conversations/`). O frontend restaura a última conversa ativa após recarregar a página.
+
+```mermaid
+sequenceDiagram
+    participant W as jarvis-web
+    participant LS as localStorage
+    participant G as service-gateway
+    participant AI as service-ai
+    participant FS as FileConversationStore
+
+    Note over W: Login ou reload
+    W->>G: GET /api/chat/sessions
+    G->>AI: Forward + X-User-Id
+    AI->>FS: listSessions(userId)
+    FS-->>AI: título, preview, updatedAt
+    AI-->>W: Lista de conversas
+
+    W->>LS: jarvis_active_session_{userId}
+    alt sessionId salvo existe
+        W->>G: GET /api/chat/session/:id
+        G->>AI: Forward
+        AI->>FS: getMessages(sessionId, userId)
+        FS-->>W: Histórico completo
+    else Sem sessão salva
+        W->>W: Seleciona conversa mais recente ou cria nova
+    end
+
+    Note over W: Nova mensagem
+    W->>G: POST /api/chat/message
+    AI->>FS: addMessage + título automático
+```
+
+| Camada | Responsabilidade |
+|--------|------------------|
+| `FileConversationStoreAdapter` | JSON por usuário em `CONVERSATIONS_DATA_DIR` |
+| Gateway | Repassa `x-user-id` do JWT |
+| `jarvis-web` | Sidebar de conversas + `localStorage` da sessão ativa |
+| Limites | `CONVERSATIONS_MAX_SESSIONS` (50), `CONVERSATIONS_MAX_MESSAGES` (200) |
 
 ## Autenticação e Termos de Uso
 
@@ -274,7 +316,7 @@ flowchart LR
 - **Gestão de projetos**: Scrum, problemas complexos, entrega segura — chunks `pm-knowledge.ts`
 - **Termos de Uso**: aceite único no cadastro (`termsAcceptedAt`) — [terms-of-use.md](terms-of-use.md)
 - **Aprendizado contínuo**: `web_search` + `doc_search` — JARVIS não limitado ao RAG estático
-- **Sessões in-memory**: conversas em memória (Redis reservado para produção futura)
+- **Conversas persistentes**: histórico por usuário em JSON (`CONVERSATIONS_DATA_DIR`, volume Docker); Redis reservado para cache/escala futura
 - **PWA**: mobile via Progressive Web App, sem app nativo separado
 - **Stack gratuito**: sem APIs pagas — ver [free-stack.md](free-stack.md)
 
@@ -292,7 +334,7 @@ flowchart TB
     subgraph Futuro["Evolução planejada"]
         GW2[Gateway + rate limit]
         MS2[Microserviços replicados]
-        REDIS2[(Redis — sessões)]
+        REDIS2[(Redis — cache / filas)]
         MQ[RabbitMQ — async]
         K8S[Kubernetes]
     end

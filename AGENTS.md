@@ -38,7 +38,7 @@ Documentação legal: [docs/terms-of-use.md](docs/terms-of-use.md) · [docs/priv
 3. Update Vitest tests
 4. Update `docs/postman/` and `docs/insomnia/` collections
 5. Update relevant README files and Mermaid diagrams in `docs/`
-6. Keep `docs/getting-started.md`, `docs/deployment.md`, `docs/contributing.md` in sync with wiki when setup or workflow changes
+6. Keep `docs/getting-started.md`, `docs/deployment.md`, `docs/contributing.md`, `docs/wiki-sync.md` in sync with wiki when setup or workflow changes; run `npm run wiki:sync`
 
 ## Key Commands
 

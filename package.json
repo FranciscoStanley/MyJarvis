@@ -33,6 +33,7 @@
     "docker:up": "node scripts/docker/compose.mjs up -d --build",
     "docker:down": "docker compose down",
     "docker:build": "node scripts/docker/compose.mjs build",
+    "wiki:sync": "node scripts/wiki/sync-from-docs.mjs",
     "prepare": "node -e \"if(process.env.HUSKY==='0'||process.env.CI==='true')process.exit(0)\" && husky"
   },
   "devDependencies": {

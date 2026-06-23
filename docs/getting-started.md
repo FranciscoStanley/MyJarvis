@@ -96,6 +96,15 @@ curl http://localhost:3002/api/health
 
 O `service-ai` retorna status RAG (`chunks: 45`) e aprendizado (`learning.enabled`).
 
+### Conversas persistentes
+
+Após login, o histórico de chat **sobrevive ao recarregar a página**:
+
+1. Sidebar **Conversas** no painel de chat (desktop) ou ícone no header (mobile)
+2. Botão **+** cria nova conversa
+3. Cada conversa recebe título automático a partir da primeira mensagem
+4. A última conversa ativa é lembrada por usuário no navegador
+
 ---
 
 ## Próximos passos

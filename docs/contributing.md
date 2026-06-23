@@ -95,6 +95,22 @@ O hook `pre-push` (Husky) executa o pipeline automaticamente.
 2. Atualizar testes correspondentes
 3. Atualizar `docs/postman/` e `docs/insomnia/`
 4. Atualizar [API Reference](api.md)
+5. Se alterar setup, fluxo ou variáveis: atualizar [getting-started.md](getting-started.md), [deployment.md](deployment.md), [environment-variables.md](environment-variables.md)
+6. Sincronizar a **wiki GitHub** — ver [Wiki Sync](wiki-sync.md)
+
+---
+
+## Wiki GitHub
+
+A pasta `docs/` é a **fonte canônica**. A [wiki](https://github.com/FranciscoStanley/MyJarvis/wiki) deve espelhar os arquivos principais.
+
+Após alterar documentação:
+
+```bash
+npm run wiki:sync
+```
+
+Isso copia `docs/*.md` mapeados para `wiki/` (pronto para push no repositório `.wiki.git`). Detalhes: [wiki-sync.md](wiki-sync.md).
 
 ---
 

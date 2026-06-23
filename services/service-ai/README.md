@@ -1,6 +1,6 @@
 # service-ai
 
-Cérebro JARVIS — conversação via **Ollama** com **RAG**, **aprendizado persistente**, **peer AIs**, **fé cristã evangélica batista**, **gestão de projetos** e **guardrails de segurança**.
+Cérebro JARVIS — conversação via **Ollama** com **RAG**, **aprendizado persistente**, **histórico de conversas**, **peer AIs**, **fé cristã evangélica batista**, **gestão de projetos** e **guardrails de segurança**.
 
 **Autor:** Francisco Stanley Rodrigues Albuquerque
 
@@ -28,6 +28,9 @@ Skills: `dev-agent` · `safety-guardrails` · `christian-faith` · `continuous-l
 | `OLLAMA_PEER_MODELS` | `mistral,gemma2` | Peers para `consult_peer_ai` |
 | `LEARNING_DATA_PATH` | `./data/jarvis-learned-knowledge.json` | Memória persistente |
 | `LEARNING_MAX_ENTRIES` | `500` | Limite de entradas |
+| `CONVERSATIONS_DATA_DIR` | `./data/conversations` | Histórico de chat por usuário |
+| `CONVERSATIONS_MAX_SESSIONS` | `50` | Máximo de conversas por usuário |
+| `CONVERSATIONS_MAX_MESSAGES` | `200` | Máximo de mensagens por conversa |
 | `SEARCH_SERVICE_URL` | `http://service-search:3004` | DuckDuckGo |
 
 ## RAG + Memória dinâmica
@@ -43,6 +46,8 @@ flowchart TB
     OLLAMA --> SEARCH[web_search / doc_search]
     SEARCH --> VAL[learning-validator]
     VAL -->|ok| MEM
+    MSG --> CONV[FileConversationStore]
+    CONV --> FS[(JSON por userId)]
 ```
 
 | Categoria RAG | Chunks | Arquivo |
@@ -72,10 +77,21 @@ Total dinâmico: `KNOWLEDGE_STATS.total` em `knowledge-index.ts`.
 4. `FileLearningStoreAdapter` salva em JSON (volume Docker `/app/data`)
 5. Próximas conversas recuperam via `ContextEnrichmentService`
 
+## Conversas persistentes
+
+1. Gateway envia `X-User-Id` em cada requisição autenticada
+2. `FileConversationStoreAdapter` grava `{userId}.json` em `CONVERSATIONS_DATA_DIR`
+3. Título gerado automaticamente na primeira mensagem do usuário
+4. Frontend lista, restaura e exclui conversas via API
+
 ## API
 
 | Endpoint | Descrição |
 |----------|-----------|
+| `GET /chat/sessions` | Lista conversas do usuário |
+| `POST /chat/session` | Nova conversa |
+| `GET /chat/session/:id` | Histórico |
+| `DELETE /chat/session/:id` | Excluir conversa |
 | `POST /chat/message` | Chat completo |
 | `GET /learning/stats` | Estatísticas da memória |
 | `GET /health` | RAG + learning status |

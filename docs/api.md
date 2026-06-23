@@ -96,13 +96,44 @@ Pipeline com **RAG** (45 chunks: ações + dev + ética + fé + gestão), **mem�
 
 Capacidades: assistente pessoal, **agente de desenvolvimento**, **gestão de projetos**, **resolução de problemas complexos**, **fé cristã evangélica batista** (worldview), `doc_search`, `web_search`, `consult_peer_ai`, guardrails de segurança.
 
+Todas as rotas de chat exigem **JWT** no gateway. O gateway repassa `X-User-Id` ao `service-ai` para isolar conversas por usuário.
+
 ### POST /chat/session
 
 Cria nova sessão de conversa (persistida por usuário autenticado).
 
+**Resposta:**
+
+```json
+{
+  "success": true,
+  "data": { "sessionId": "uuid" },
+  "timestamp": "2026-06-22T12:00:00.000Z"
+}
+```
+
 ### GET /chat/sessions
 
-Lista conversas do usuário (título, preview, data de atualização).
+Lista conversas do usuário autenticado, ordenadas pela última atualização.
+
+**Resposta:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "session-uuid",
+      "userId": "user-uuid",
+      "title": "Como configurar guards no NestJS?",
+      "createdAt": "2026-06-22T11:00:00.000Z",
+      "updatedAt": "2026-06-22T11:05:00.000Z",
+      "messageCount": 4,
+      "preview": "Certamente, senhor. Guards no NestJS..."
+    }
+  ]
+}
+```
 
 ### POST /chat/message
 
@@ -192,11 +223,35 @@ Estatísticas da memória de aprendizado (via gateway).
 
 ### GET /chat/session/:sessionId
 
-Histórico da conversa (mensagens persistidas).
+Histórico completo da conversa (mensagens persistidas).
+
+```json
+{
+  "success": true,
+  "data": {
+    "sessionId": "session-uuid",
+    "messages": [
+      {
+        "id": "msg-uuid",
+        "role": "user",
+        "content": "Olá JARVIS",
+        "timestamp": "2026-06-22T11:00:00.000Z"
+      },
+      {
+        "id": "msg-uuid-2",
+        "role": "assistant",
+        "content": "Bom dia, senhor.",
+        "timestamp": "2026-06-22T11:00:05.000Z",
+        "metadata": { "pendingClientActions": [] }
+      }
+    ]
+  }
+}
+```
 
 ### DELETE /chat/session/:sessionId
 
-Exclui uma conversa do usuário autenticado.
+Exclui uma conversa do usuário autenticado. Retorna `{ "deleted": true }`.
 
 ### GET /api/health (service-ai :3002)
 

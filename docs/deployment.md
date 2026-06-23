@@ -82,7 +82,7 @@ docker compose build --no-cache
 | `ADMIN_SEED_*` | Remover ou alterar credenciais padrão |
 | HTTPS | Colocar reverse proxy (Nginx/Caddy) na frente |
 | Ollama | Garantir RAM/GPU suficiente |
-| Backups | Agendar backup do volume PostgreSQL |
+| Backups | Agendar backup do volume PostgreSQL **e** do volume `jarvis_learning_data` (conversas + aprendizado) |
 | Logs | Configurar rotação de logs Docker |
 
 ---
@@ -116,6 +116,17 @@ server {
 | Produção + GPU | 4+ cores | 16 GB | 30 GB |
 
 Ollama com Llama 3.2 consome ~2–4 GB de RAM durante inferência.
+
+### Volume de dados (`jarvis_learning_data`)
+
+Montado em `/app/data` no `service-ai`:
+
+| Caminho no container | Conteúdo |
+|----------------------|----------|
+| `/app/data/jarvis-learned-knowledge.json` | Memória de aprendizado JARVIS |
+| `/app/data/conversations/{userId}.json` | Histórico de conversas por usuário |
+
+Faça backup deste volume em produção junto com o PostgreSQL.
 
 ---
 

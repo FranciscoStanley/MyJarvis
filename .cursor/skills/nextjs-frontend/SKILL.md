@@ -23,7 +23,7 @@ Skill correspondente à regra `.cursor/rules/nextjs-frontend.mdc`.
 ```mermaid
 flowchart TB
     SRC[src/] --> APP[app/<br/>layout · page · globals.css]
-    SRC --> COMP[components/jarvis/<br/>Orb · Chat · Auth · TermsAccept]
+    SRC --> COMP[components/jarvis/<br/>Orb · Chat · ConversationSidebar · Auth · TermsAccept]
     SRC --> PAGES[app/terms · app/privacy]
     SRC --> HOOKS[hooks/<br/>useVoice.ts]
     SRC --> LIB[lib/<br/>api.ts → Gateway]
@@ -52,8 +52,19 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 Endpoints usados:
 - `POST /api/auth/login`, `/register` (com `acceptTerms`), `/accept-terms`
 - `GET /api/auth/profile` — `hasAcceptedTerms`
-- `POST /api/chat/session`, `/message`
+- `GET /api/chat/sessions` — lista conversas do usuário
+- `POST /api/chat/session` — nova conversa
+- `GET /api/chat/session/:id` — histórico persistido
+- `DELETE /api/chat/session/:id` — excluir conversa
+- `POST /api/chat/message`
 - Nunca chamar serviços internos (3001–3006) diretamente
+
+## Persistência de conversas
+
+- `ConversationSidebar.tsx` — lista, nova conversa, excluir
+- `jarvis.store.ts`: `loadConversations`, `selectConversation`, `createNewChat`, `deleteConversation`
+- `localStorage`: `jarvis_active_session_{userId}` — conversa ativa por usuário
+- Ao `restoreSession`: carrega lista + histórico da última conversa
 
 ## Termos de Uso (gate de acesso)
 

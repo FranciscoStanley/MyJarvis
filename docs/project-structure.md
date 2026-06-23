@@ -65,8 +65,8 @@ Aplicação **Next.js PWA** — orb JARVIS, chat, autenticação e voz no navega
 | Subpasta / arquivo | Responsabilidade |
 |--------------------|------------------|
 | `src/app/` | Rotas App Router (`layout.tsx`, `page.tsx`, `/terms`, `/privacy`) |
-| `src/components/jarvis/` | UI: orb, chat, entrada, `AuthModal`, `TermsAcceptModal` |
-| `src/stores/` | Estado global (Zustand): sessão, JWT, roles, `needsTermsAcceptance`, mensagens |
+| `src/components/jarvis/` | UI: orb, chat, `ConversationSidebar`, entrada, `AuthModal`, `TermsAcceptModal` |
+| `src/stores/` | Estado global (Zustand): sessão, JWT, roles, conversas, mensagens, `needsTermsAcceptance` |
 | `src/hooks/` | Lógica reutilizável (ex.: `useVoice` — Web Speech API) |
 | `src/lib/api.ts` | Cliente HTTP centralizado — fala **somente** com o gateway |
 | `src/test/` | Setup Vitest e mocks (ex.: Framer Motion) |
@@ -140,7 +140,8 @@ flowchart LR
 
 | Responsabilidade | Detalhe |
 |------------------|---------|
-| Conversação | Sessões, histórico, envio de mensagens ao JARVIS |
+| Conversação | Sessões por usuário, histórico persistido, envio de mensagens ao JARVIS |
+| Persistência | `FileConversationStoreAdapter` — JSON em `CONVERSATIONS_DATA_DIR/{userId}.json` |
 | IA | Integração Ollama (modelo local, ex.: Llama 3.2) |
 | **RAG** | 45 chunks: ações + dev + ética + fé + PM (`knowledge-index.ts`) |
 | **Aprendizado** | Memória persistente JSON + `learning-validator` + recall no prompt |
@@ -150,6 +151,16 @@ flowchart LR
 | Ações cliente | `clientActions` (YouTube, Google, Cursor, VS Code, embed) |
 
 **Não faz:** renderizar UI nem hospedar o modelo (Ollama é processo separado).
+
+Endpoints de conversa (via gateway):
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/chat/sessions` | Lista conversas do usuário |
+| `POST` | `/chat/session` | Nova conversa |
+| `GET` | `/chat/session/:id` | Histórico |
+| `DELETE` | `/chat/session/:id` | Excluir conversa |
+| `POST` | `/chat/message` | Enviar mensagem |
 
 Estrutura RAG em `services/service-ai/src/`:
 
@@ -163,6 +174,7 @@ Estrutura RAG em `services/service-ai/src/`:
 | `domain/knowledge/knowledge-index.ts` | Índice unificado RAG (45 chunks) |
 | `domain/services/learning-validator.ts` | Filtro ético antes de persistir aprendizado |
 | `infrastructure/adapters/file-learning-store.adapter.ts` | Memória persistente JSON |
+| `infrastructure/adapters/file-conversation-store.adapter.ts` | Histórico de conversas por usuário |
 | `infrastructure/adapters/ollama-peer.adapter.ts` | Consulta a outros modelos Ollama |
 | `application/services/context-enrichment.service.ts` | RAG + memória aprendida no prompt |
 | `domain/constants/doc-registry.ts` | Mapa de documentações oficiais (30+ tecnologias) |
@@ -388,6 +400,10 @@ sequenceDiagram
         A-->>G: JWT + user
     else Chat
         G->>I: Proxy /chat/* + headers de identidade
+        opt Restaurar histórico
+            W->>G: GET /chat/sessions
+            W->>G: GET /chat/session/:id
+        end
         I->>R: retrieve(mensagem, topK=4)
         R-->>I: Contexto (ações, dev, ética, docs…)
         I->>O: Prompt + RAG + tools (doc_search, web_search…)

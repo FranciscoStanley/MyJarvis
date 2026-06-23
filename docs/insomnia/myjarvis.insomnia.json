@@ -109,6 +109,49 @@
     },
     {
       "_type": "request",
+      "_id": "req_create_session",
+      "parentId": "fld_chat",
+      "name": "Create Session",
+      "method": "POST",
+      "url": "{{ baseUrl }}/chat/session",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      }
+    },
+    {
+      "_type": "request",
+      "_id": "req_list_sessions",
+      "parentId": "fld_chat",
+      "name": "List Sessions",
+      "method": "GET",
+      "url": "{{ baseUrl }}/chat/sessions",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_type": "request",
+      "_id": "req_get_history",
+      "parentId": "fld_chat",
+      "name": "Get History",
+      "method": "GET",
+      "url": "{{ baseUrl }}/chat/session/{{ sessionId }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_type": "request",
+      "_id": "req_delete_session",
+      "parentId": "fld_chat",
+      "name": "Delete Session",
+      "method": "DELETE",
+      "url": "{{ baseUrl }}/chat/session/{{ sessionId }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_type": "request",
       "_id": "req_message",
       "parentId": "fld_chat",
       "name": "Send Message",

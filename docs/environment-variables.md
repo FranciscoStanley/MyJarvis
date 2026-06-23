@@ -73,6 +73,9 @@ Copie [`.env.example`](../.env.example) para `.env` e ajuste conforme seu ambien
 | `OLLAMA_PEER_URLS` | — | Peers remotos: `id\|url\|model` |
 | `LEARNING_DATA_PATH` | `./data/jarvis-learned-knowledge.json` | Memória aprendida |
 | `LEARNING_MAX_ENTRIES` | `500` | Limite de entradas |
+| `CONVERSATIONS_DATA_DIR` | `./data/conversations` | Histórico de chat por usuário (JSON) |
+| `CONVERSATIONS_MAX_SESSIONS` | `50` | Máximo de conversas por usuário |
+| `CONVERSATIONS_MAX_MESSAGES` | `200` | Máximo de mensagens por conversa |
 
 ---
 
@@ -94,6 +97,13 @@ Copie [`.env.example`](../.env.example) para `.env` e ajuste conforme seu ambien
 | `NEXT_PUBLIC_APP_NAME` | `MyJarvis` | Nome exibido |
 | `NEXT_PUBLIC_CHAT_TIMEOUT_MS` | `390000` | Timeout do chat no cliente |
 | `PORT` | `3100` | Porta do frontend |
+
+**Persistência no browser (sem env):**
+
+| Chave `localStorage` | Descrição |
+|----------------------|-----------|
+| `jarvis_token` | JWT de autenticação |
+| `jarvis_active_session_{userId}` | ID da conversa ativa por usuário |
 
 ---
 
@@ -129,6 +139,7 @@ OLLAMA_MODEL=llama3.2
 OLLAMA_EMBED_MODEL=nomic-embed-text
 OLLAMA_PEER_MODELS=mistral,gemma2
 LEARNING_DATA_PATH=./data/jarvis-learned-knowledge.json
+CONVERSATIONS_DATA_DIR=./data/conversations
 PIPER_URL=http://piper:5000
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```

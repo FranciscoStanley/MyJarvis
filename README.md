@@ -77,7 +77,7 @@ docker compose up -d --build
 |---------|-------|---------------------|
 | `service-gateway` | 3000 | Proxy, JWT, RBAC |
 | `service-auth` | 3001 | PostgreSQL, LDAP, JWT |
-| `service-ai` | 3002 | Ollama + **RAG** (45 chunks) + memória aprendida + `doc_search` + `consult_peer_ai` |
+| `service-ai` | 3002 | Ollama + **RAG** (45 chunks) + memória aprendida + **conversas persistentes** + `doc_search` + `consult_peer_ai` |
 | `service-voice` | 3003 | Piper TTS (STT no browser) |
 | `service-search` | 3004 | DuckDuckGo + Wikimedia + Archive.org |
 | `service-notifications` | 3005 | Notificações in-memory |
@@ -121,6 +121,7 @@ Documentação: [docs/testing.md](docs/testing.md)
 - [Estrutura de pastas](docs/project-structure.md)
 - [API Reference](docs/api.md)
 - [Testes & CI](docs/testing.md)
+- [Sincronizar Wiki](docs/wiki-sync.md)
 - [Postman](docs/postman/myjarvis.postman_collection.json)
 - [Insomnia](docs/insomnia/myjarvis.insomnia.json)
 
@@ -135,6 +136,8 @@ Documentação: [docs/testing.md](docs/testing.md)
 | `OLLAMA_EMBED_MODEL` | Modelo RAG (padrão: nomic-embed-text) |
 | `PIPER_URL` / `PIPER_VOICE` | TTS Piper local (pt_BR-faber-medium) |
 | `SEARCH_SERVICE_URL` | URL interna do service-search |
+| `LEARNING_DATA_PATH` | Memória de aprendizado JARVIS |
+| `CONVERSATIONS_DATA_DIR` | Histórico de conversas por usuário |
 | `JWT_SECRET` | Secret JWT (produção) |
 | `DATABASE_URL` | PostgreSQL |
 | `ENABLE_SWAGGER` | Swagger em produção (`true` para habilitar) |

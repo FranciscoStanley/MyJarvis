@@ -12,3 +12,6 @@ coverage/
 # Playwright (E2E) — artefatos gerados localmente
 playwright-report/
 test-results/
+
+# Wiki staging (gerado por npm run wiki:sync — publicar em MyJarvis.wiki.git)
+wiki/

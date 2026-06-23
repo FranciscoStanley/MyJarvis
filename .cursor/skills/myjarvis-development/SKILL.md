@@ -92,7 +92,8 @@ Ao mudar funcionalidades, sempre:
 3. `docs/postman/myjarvis.postman_collection.json`
 4. `docs/insomnia/myjarvis.insomnia.json`
 5. `docs/api.md` + README do serviço
-6. `docs/getting-started.md`, `docs/deployment.md`, `docs/contributing.md` se mudar setup ou fluxo
+6. `docs/getting-started.md`, `docs/deployment.md`, `docs/contributing.md`, `docs/wiki-sync.md` se mudar setup ou fluxo
+7. Rodar `npm run wiki:sync` e publicar em `MyJarvis.wiki.git` quando a documentação canônica mudar
 7. `docs/terms-of-use.md` / `docs/privacy-policy.md` se mudar versão legal (`TERMS_VERSION` em `@myjarvis/shared`)
 
 ## Rules Correspondentes

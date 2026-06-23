@@ -13,7 +13,8 @@
 | Papel (user/admin) | Controle de acesso (RBAC) | PostgreSQL |
 | `termsAcceptedAt`, `termsVersion` | Registro de aceite dos termos | PostgreSQL |
 | Token JWT | Sessão autenticada | `localStorage` no navegador (`jarvis_token`) |
-| Mensagens de chat | Funcionamento do assistente | Memória do `service-ai` (sessão) |
+| ID da conversa ativa | Restaurar chat após reload | `localStorage` (`jarvis_active_session_{userId}`) |
+| Mensagens de chat | Funcionamento e histórico do assistente | JSON por usuário em `service-ai` (`CONVERSATIONS_DATA_DIR`, volume Docker) |
 | IP (login) | Proteção contra brute-force | Memória temporária |
 
 ## 2. O que não coletamos como produto
@@ -46,7 +47,7 @@ Você pode solicitar ao desenvolvedor:
 ## 6. Retenção
 
 - Conta de usuário: enquanto ativa
-- Sessões de chat: em memória — não persistidas em banco após reinício do serviço
+- Conversas de chat: em arquivos JSON por usuário no volume Docker (`/app/data/conversations/`) — excluíveis via `DELETE /api/chat/session/:id` ou remoção da conta
 - Aceite de termos: mantido com data e versão para auditoria
 
 ## 7. Menores
