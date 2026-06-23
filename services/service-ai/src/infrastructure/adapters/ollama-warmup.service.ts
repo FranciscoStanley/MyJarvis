@@ -19,26 +19,38 @@ export class OllamaWarmupService implements OnModuleInit {
   private async warmup() {
     const baseUrl = this.config.get('OLLAMA_BASE_URL', 'http://localhost:11434');
     const model = this.config.get('OLLAMA_MODEL', 'llama3.2');
+    const embedModel = this.config.get('OLLAMA_EMBED_MODEL', 'nomic-embed-text');
+    const warmupTimeoutMs = Number(this.config.get('OLLAMA_WARMUP_TIMEOUT_MS', 240_000));
 
-    this.logger.log(`Pré-carregando modelo ${model} no Ollama...`);
+    this.logger.log(`Pré-carregando modelos ${model} e ${embedModel} no Ollama...`);
 
     try {
-      await firstValueFrom(
-        this.http.post(
-          `${baseUrl}/api/chat`,
-          {
-            model,
-            messages: [{ role: 'user', content: 'ok' }],
-            stream: false,
-            options: { num_predict: 1 },
-          },
-          { timeout: 180_000 },
+      await Promise.all([
+        firstValueFrom(
+          this.http.post(
+            `${baseUrl}/api/chat`,
+            {
+              model,
+              messages: [{ role: 'user', content: 'ok' }],
+              stream: false,
+              keep_alive: '15m',
+              options: { num_predict: 1, num_ctx: 512 },
+            },
+            { timeout: warmupTimeoutMs },
+          ),
         ),
-      );
-      this.logger.log(`Modelo ${model} pronto.`);
+        firstValueFrom(
+          this.http.post(
+            `${baseUrl}/api/embeddings`,
+            { model: embedModel, prompt: 'warmup' },
+            { timeout: warmupTimeoutMs },
+          ),
+        ),
+      ]);
+      this.logger.log(`Modelos ${model} e ${embedModel} prontos.`);
     } catch (err) {
       this.logger.warn(
-        `Warmup do Ollama falhou (o modelo será carregado na primeira mensagem): ${(err as Error).message}`,
+        `Warmup do Ollama falhou (modelos serão carregados na primeira mensagem): ${(err as Error).message}`,
       );
     }
   }

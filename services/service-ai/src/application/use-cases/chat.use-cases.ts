@@ -5,6 +5,7 @@ import {
   detectConfirmationIntent,
   getPendingClientActions,
   JarvisAction,
+  normalizePortugueseTranscript,
   SearchResult,
 } from '@myjarvis/shared';
 import {
@@ -57,22 +58,23 @@ export class SendMessageUseCase {
   async execute(input: SendMessageInput): Promise<SendMessageOutput> {
     const sessionId = input.sessionId ?? this.store.createSession();
     const history = this.store.getMessages(sessionId);
+    const userMessage = normalizePortugueseTranscript(input.message);
 
-    const confirmation = detectConfirmationIntent(input.message);
+    const confirmation = detectConfirmationIntent(userMessage);
     const pending = getPendingClientActions(history);
 
     if (pending.length && confirmation !== 'none') {
-      return this.handleConfirmation(sessionId, input.message, confirmation, pending);
+      return this.handleConfirmation(sessionId, userMessage, confirmation, pending);
     }
 
     this.store.addMessage(sessionId, {
       id: randomUUID(),
       role: 'user',
-      content: input.message,
+      content: userMessage,
       timestamp: new Date(),
     });
 
-    const { reply, actions } = await this.ai.generateResponse(history, input.message);
+    const { reply, actions } = await this.ai.generateResponse(history, userMessage);
 
     const searchResults: SearchResult[] = [];
     const actionTypes: string[] = [];
@@ -86,7 +88,7 @@ export class SendMessageUseCase {
         peerIdUsed = String(action.data?.peerId ?? 'mistral');
         const result = await this.peerAi.consult({
           peerId: peerIdUsed,
-          question: action.query ?? input.message,
+          question: action.query ?? userMessage,
           context: action.data?.context ? String(action.data.context) : undefined,
         });
         if (result.available) {
@@ -110,7 +112,7 @@ export class SendMessageUseCase {
         if (action.type === 'docs') {
           query = buildDocSearchQuery({
             technology: String(action.data?.technology ?? ''),
-            topic: String(action.query ?? action.data?.topic ?? input.message),
+            topic: String(action.query ?? action.data?.topic ?? userMessage),
           });
         }
 
@@ -123,13 +125,13 @@ export class SendMessageUseCase {
     }
 
     let clientActions = [
-      ...buildClientActions({ searchResults, actionTypes, userMessage: input.message }),
-      ...clientActionsFromJarvisActions(actions, input.message),
+      ...buildClientActions({ searchResults, actionTypes, userMessage }),
+      ...clientActionsFromJarvisActions(actions, userMessage),
     ];
 
     clientActions = this.deduplicateClientActions(clientActions);
 
-    if (isExplicitExecuteCommand(input.message)) {
+    if (isExplicitExecuteCommand(userMessage)) {
       clientActions = clientActions.map((a) => ({ ...a, requiresConfirmation: false }));
     }
 
@@ -139,14 +141,14 @@ export class SendMessageUseCase {
 
     if (enrichedResults.length) {
       const synthesized = await this.ai.synthesizeWithResults(
-        input.message,
+        userMessage,
         enrichedResults,
         actionTypes,
       );
-      finalReply = synthesized || synthesizeFallbackReply(input.message, enrichedResults, actionTypes);
+      finalReply = synthesized || synthesizeFallbackReply(userMessage, enrichedResults, actionTypes);
     } else if (!finalReply.trim() || /^desculpe,?\s+n[aã]o consegui/i.test(finalReply.trim())) {
-      finalReply = buildActionAcknowledgement(actions, input.message)
-        || synthesizeFallbackReply(input.message, searchResults, actionTypes)
+      finalReply = buildActionAcknowledgement(actions, userMessage)
+        || synthesizeFallbackReply(userMessage, searchResults, actionTypes)
         || 'Senhor, não consegui formular uma resposta no momento.';
     }
 
@@ -158,7 +160,7 @@ export class SendMessageUseCase {
     const pendingClientActions = pendingOnly;
 
     void this.persistLearning?.execute({
-      userMessage: input.message,
+      userMessage,
       synthesizedReply: finalReply,
       searchResults: enrichedResults.length ? enrichedResults : undefined,
       actionTypes,

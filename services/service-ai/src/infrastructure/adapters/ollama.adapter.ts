@@ -12,7 +12,7 @@ import {
   JARVIS_SYNTHESIS_PROMPT,
   JARVIS_DOC_SYNTHESIS_PROMPT,
 } from '../../domain/constants/jarvis-prompt';
-import { needsExtendedPrompt, shouldAttachTools } from '../../domain/services/prompt-strategy';
+import { needsExtendedPrompt, shouldAttachTools, shouldEnrichContext, buildOllamaChatOptions } from '../../domain/services/prompt-strategy';
 import { buildActionAcknowledgement } from '../../domain/services/action-intent';
 import { detectActionsFromText } from './action-detector';
 
@@ -37,8 +37,8 @@ export class OllamaAdapter implements AiPort {
   ) {
     this.baseUrl = config.get('OLLAMA_BASE_URL', 'http://localhost:11434');
     this.model = config.get('OLLAMA_MODEL', 'llama3.2');
-    this.chatTimeoutMs = Number(config.get('OLLAMA_TIMEOUT_MS', 360_000));
-    this.synthesisTimeoutMs = Number(config.get('OLLAMA_SYNTHESIS_TIMEOUT_MS', 120_000));
+    this.chatTimeoutMs = Number(config.get('OLLAMA_TIMEOUT_MS', 300_000));
+    this.synthesisTimeoutMs = Number(config.get('OLLAMA_SYNTHESIS_TIMEOUT_MS', 90_000));
   }
 
   async generateResponse(
@@ -52,7 +52,6 @@ export class OllamaAdapter implements AiPort {
       }));
 
       const systemPrompt = await this.buildSystemPrompt(userMessage);
-      const extendedPrompt = needsExtendedPrompt(userMessage);
       const payload: Record<string, unknown> = {
         model: this.model,
         messages: [
@@ -61,7 +60,8 @@ export class OllamaAdapter implements AiPort {
           { role: 'user', content: userMessage },
         ],
         stream: false,
-        options: { temperature: 0.85, num_predict: extendedPrompt ? 512 : 192 },
+        keep_alive: '15m',
+        options: buildOllamaChatOptions(userMessage),
       };
       if (shouldAttachTools(userMessage)) {
         payload.tools = JARVIS_TOOLS;
@@ -113,7 +113,7 @@ ${resultsContext}
 Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Mencione o resultado mais relevante. Não liste URLs cruas.`;
 
     try {
-      const synthesisMaxTokens = actionTypes.includes('docs') ? 420 : 220;
+      const synthesisMaxTokens = actionTypes.includes('docs') ? 280 : 160;
       const { data } = await firstValueFrom(
         this.http.post(
           `${this.baseUrl}/api/chat`,
@@ -121,7 +121,8 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
             model: this.model,
             messages: [{ role: 'user', content: prompt }],
             stream: false,
-            options: { temperature: 0.75, num_predict: synthesisMaxTokens },
+            keep_alive: '15m',
+            options: { temperature: 0.75, num_predict: synthesisMaxTokens, num_ctx: 2048 },
           },
           { timeout: this.synthesisTimeoutMs },
         ),
@@ -139,7 +140,7 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
     if (needsExtendedPrompt(userMessage)) {
       sections.push(JARVIS_EXTENDED_PROMPT);
     }
-    if (this.contextEnrichment) {
+    if (this.contextEnrichment && shouldEnrichContext(userMessage)) {
       try {
         const context = await this.contextEnrichment.buildEnrichedContext(userMessage);
         if (context) sections.push(context);
@@ -231,7 +232,7 @@ Formule uma resposta natural como JARVIS em português brasileiro (pt-BR). Menci
     const timedOut = message.includes('timeout') || message.includes('timed out');
 
     const fallback = timedOut
-      ? `Senhor, o Ollama demorou além do limite (${Math.round(this.chatTimeoutMs / 1000)}s) — comum em CPU sem GPU na primeira inferência. Aguarde e tente novamente; se persistir: docker compose restart ollama service-ai.`
+      ? `Senhor, o Ollama demorou além do limite (${Math.round(this.chatTimeoutMs / 1000)}s). Na primeira mensagem após reinício isso é comum em CPU — aguarde o warmup concluir e tente um pedido curto. Se persistir: \`docker compose restart ollama service-ai\`.`
       : `Senhor, o serviço Ollama não respondeu. Verifique se está em execução: docker compose up ollama && docker exec myjarvis-ollama-1 ollama pull ${this.model}.`;
 
     return {

@@ -37,9 +37,10 @@ export class OllamaRagAdapter implements RagPort, OnModuleInit {
   async retrieve(query: string, topK = 4): Promise<string> {
     if (!this.indexed.length) await this.buildIndex();
 
-    const ranked = this.embeddingsAvailable
-      ? await this.retrieveByEmbedding(query, topK)
-      : this.retrieveByKeywords(query, topK);
+    const useKeywordsOnly = query.trim().length < 48;
+    const ranked = useKeywordsOnly || !this.embeddingsAvailable
+      ? this.retrieveByKeywords(query, topK)
+      : await this.retrieveByEmbedding(query, topK);
 
     if (!ranked.length) return '';
 
@@ -105,7 +106,7 @@ export class OllamaRagAdapter implements RagPort, OnModuleInit {
         this.http.post(
           `${this.baseUrl}/api/embeddings`,
           { model: this.embedModel, prompt: text },
-          { timeout: 30_000 },
+          { timeout: 12_000 },
         ),
       );
       const vec = data.embedding as number[] | undefined;

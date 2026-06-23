@@ -12,31 +12,43 @@ export class ContextEnrichmentService {
   async buildEnrichedContext(userMessage: string): Promise<string> {
     const sections: string[] = [];
 
-    if (this.rag) {
-      try {
-        const ragContext = await this.rag.retrieve(userMessage, 4);
-        if (ragContext) {
-          sections.push(`--- CONTEXTO RAG (capacidades e exemplos) ---\n${ragContext}`);
-        }
-      } catch {
-        /* fallback */
-      }
-    }
+    const [ragContext, learned] = await Promise.all([
+      this.fetchRagContext(userMessage),
+      this.fetchLearnedContext(userMessage),
+    ]);
 
-    if (this.learning) {
-      try {
-        const learned = await this.learning.search(userMessage, 3);
-        if (learned.length) {
-          const block = learned
-            .map((e, i) => `[L${i + 1}] (${e.category}) ${e.topic}\n${e.summary}`)
-            .join('\n\n');
-          sections.push(`--- CONHECIMENTO APRENDIDO (memória persistente) ---\n${block}`);
-        }
-      } catch {
-        /* fallback */
-      }
-    }
+    if (ragContext) sections.push(ragContext);
+    if (learned) sections.push(learned);
 
     return sections.join('\n\n');
+  }
+
+  private async fetchRagContext(userMessage: string): Promise<string> {
+    if (!this.rag) return '';
+    try {
+      const ragContext = await this.rag.retrieve(userMessage, 3);
+      if (ragContext) {
+        return `--- CONTEXTO RAG (capacidades e exemplos) ---\n${ragContext}`;
+      }
+    } catch {
+      /* fallback */
+    }
+    return '';
+  }
+
+  private async fetchLearnedContext(userMessage: string): Promise<string> {
+    if (!this.learning) return '';
+    try {
+      const learned = await this.learning.search(userMessage, 2);
+      if (learned.length) {
+        const block = learned
+          .map((e, i) => `[L${i + 1}] (${e.category}) ${e.topic}\n${e.summary}`)
+          .join('\n\n');
+        return `--- CONHECIMENTO APRENDIDO (memória persistente) ---\n${block}`;
+      }
+    } catch {
+      /* fallback */
+    }
+    return '';
   }
 }

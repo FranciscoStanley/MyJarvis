@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { normalizePortugueseTranscript, type TranscriptSegment } from '@myjarvis/shared';
 import { useJarvisStore } from '@/stores/jarvis.store';
 import { api } from '@/lib/api';
 import { stripTextForSpeech } from '@/lib/client-actions';
@@ -46,11 +47,28 @@ declare global {
 
 /** Monta o transcript completo a partir de todos os segmentos reconhecidos. */
 export function buildTranscriptFromResults(event: SpeechRecognitionEvent): string {
-  let transcript = '';
+  return normalizePortugueseTranscript('', extractTranscriptSegmentsFromEvent(event));
+}
+
+/** Extrai segmentos brutos do evento (sem normalização). */
+export function extractTranscriptSegmentsFromEvent(
+  event: SpeechRecognitionEvent,
+): TranscriptSegment[] {
+  const segments: TranscriptSegment[] = [];
   for (let i = 0; i < event.results.length; i++) {
-    transcript += event.results[i][0].transcript;
+    const chunk = event.results[i][0]?.transcript?.trim();
+    if (chunk) {
+      segments.push({ text: chunk, isFinal: event.results[i].isFinal });
+    }
   }
-  return transcript.trim();
+  return segments;
+}
+
+/** Pré-visualização ao vivo — normalização leve para feedback imediato. */
+export function buildLiveTranscriptPreview(event: SpeechRecognitionEvent): string {
+  const segments = extractTranscriptSegmentsFromEvent(event);
+  const raw = segments.map((s) => s.text).join(' ').trim();
+  return raw ? normalizePortugueseTranscript(raw, segments) : '';
 }
 
 /** Fallback: voz pt-BR do sistema quando Piper está offline. */
@@ -93,6 +111,7 @@ export function useVoice() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transcriptRef = useRef('');
+  const segmentsRef = useRef<TranscriptSegment[]>([]);
   const isListeningRef = useRef(false);
   const isFinalizingRef = useRef(false);
 
@@ -165,15 +184,21 @@ export function useVoice() {
     isListeningRef.current = false;
     setListening(false);
     setLiveTranscript('');
-    transcriptRef.current = '';
 
+    const segments = [...segmentsRef.current];
     const trimmed = transcript.trim();
-    if (trimmed) {
+    const normalized = trimmed
+      ? normalizePortugueseTranscript(trimmed, segments)
+      : '';
+
+    transcriptRef.current = '';
+    segmentsRef.current = [];
+    if (normalized) {
       const { pendingClientActions } = useJarvisStore.getState();
       if (pendingClientActions.length) {
-        await confirmAction(trimmed);
+        await confirmAction(normalized);
       } else {
-        await sendMessage(trimmed);
+        await sendMessage(normalized);
       }
 
       const lastMsg = useJarvisStore.getState().messages.at(-1);
@@ -181,6 +206,8 @@ export function useVoice() {
     }
 
     isFinalizingRef.current = false;
+    transcriptRef.current = '';
+    segmentsRef.current = [];
   }, [clearSilenceTimer, confirmAction, sendMessage, setListening, speak]);
 
   const scheduleSilenceStop = useCallback(() => {
@@ -198,13 +225,16 @@ export function useVoice() {
 
     isFinalizingRef.current = false;
     transcriptRef.current = '';
+    segmentsRef.current = [];
     setLiveTranscript('');
     isListeningRef.current = true;
 
     rec.onresult = (event) => {
-      const transcript = buildTranscriptFromResults(event);
-      transcriptRef.current = transcript;
-      setLiveTranscript(transcript);
+      const segments = extractTranscriptSegmentsFromEvent(event);
+      segmentsRef.current = segments;
+      const preview = buildLiveTranscriptPreview(event);
+      transcriptRef.current = preview;
+      setLiveTranscript(preview);
       scheduleSilenceStop();
     };
 
