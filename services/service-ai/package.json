@@ -32,6 +32,7 @@
     "@myjarvis/nest-vitest": "*",
     "@nestjs/cli": "^11.0.2",
     "@nestjs/testing": "^11.0.7",
+    "@types/express": "^5.0.0",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
     "supertest": "^7.0.0",

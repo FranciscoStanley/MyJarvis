@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { clsx } from 'clsx';
 import { MessageSquarePlus, MessagesSquare, Trash2, X } from 'lucide-react';
 import { useJarvisStore } from '@/stores/jarvis.store';

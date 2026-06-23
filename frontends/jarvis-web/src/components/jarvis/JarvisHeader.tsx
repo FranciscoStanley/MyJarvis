@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { LogOut, Shield, Sparkles } from 'lucide-react';
 import { UserRole } from '@myjarvis/shared';
 import { useJarvisStore } from '@/stores/jarvis.store';
