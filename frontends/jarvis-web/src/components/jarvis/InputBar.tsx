@@ -8,7 +8,8 @@ import { useVoice } from '@/hooks/useVoice';
 export function InputBar() {
   const [text, setText] = useState('');
   const { sendMessage, isLoading } = useJarvisStore();
-  const { supported, startListening, stopListening, speak, isListening: listening } = useVoice();
+  const { supported, startListening, stopListening, speak, isListening: listening, liveTranscript } =
+    useVoice();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,8 +42,17 @@ export function InputBar() {
           <button
             type="button"
             onClick={toggleMic}
-            aria-label={listening ? 'Parar gravação' : 'Falar'}
+            aria-label={
+              listening
+                ? 'Parar gravação — envia após 3 segundos de silêncio'
+                : 'Iniciar gravação por voz'
+            }
             aria-pressed={listening}
+            title={
+              listening
+                ? 'Gravando. Pausas naturais são permitidas; pare de falar por 3s para enviar.'
+                : 'Clique para falar'
+            }
             className={`shrink-0 p-2.5 sm:p-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-jarvis-cyan/50 ${
               listening
                 ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse'
@@ -54,12 +64,24 @@ export function InputBar() {
         )}
         <input
           type="text"
-          value={text}
+          value={listening ? liveTranscript : text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Fale ou digite sua mensagem..."
-          disabled={isLoading}
-          aria-label="Mensagem para o JARVIS"
-          className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-sm focus:outline-none focus:border-jarvis-cyan/50 focus:ring-1 focus:ring-jarvis-cyan/20 placeholder:text-gray-500 disabled:opacity-50 transition-colors"
+          placeholder={
+            listening
+              ? liveTranscript
+                ? 'Continue falando ou aguarde 3s de silêncio para enviar…'
+                : 'Ouvindo… fale agora'
+              : 'Fale ou digite sua mensagem…'
+          }
+          disabled={isLoading || listening}
+          readOnly={listening}
+          aria-label={listening ? 'Transcrição em tempo real' : 'Mensagem para o JARVIS'}
+          aria-live={listening ? 'polite' : 'off'}
+          className={`flex-1 min-w-0 border rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-1 disabled:opacity-50 transition-colors ${
+            listening
+              ? 'bg-jarvis-cyan/5 border-jarvis-cyan/30 text-jarvis-cyan placeholder:text-jarvis-cyan/50 focus:border-jarvis-cyan/50 focus:ring-jarvis-cyan/20'
+              : 'bg-white/5 border-white/10 focus:border-jarvis-cyan/50 focus:ring-jarvis-cyan/20 placeholder:text-gray-500'
+          }`}
         />
         <button
           type="button"

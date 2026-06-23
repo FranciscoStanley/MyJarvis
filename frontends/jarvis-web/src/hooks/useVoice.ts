@@ -5,8 +5,25 @@ import { useJarvisStore } from '@/stores/jarvis.store';
 import { api } from '@/lib/api';
 import { stripTextForSpeech } from '@/lib/client-actions';
 
+/** Tempo de silêncio contínuo antes de encerrar a captura e enviar a mensagem. */
+export const VOICE_SILENCE_END_DELAY_MS = 3000;
+
+interface SpeechRecognitionResultItem {
+  transcript: string;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  [index: number]: SpeechRecognitionResultItem;
+}
+
 interface SpeechRecognitionEvent {
-  results: { [index: number]: { [index: number]: { transcript: string } } };
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: SpeechRecognitionResult;
+  };
 }
 
 interface SpeechRecognitionInstance extends EventTarget {
@@ -25,6 +42,15 @@ declare global {
     SpeechRecognition: new () => SpeechRecognitionInstance;
     webkitSpeechRecognition: new () => SpeechRecognitionInstance;
   }
+}
+
+/** Monta o transcript completo a partir de todos os segmentos reconhecidos. */
+export function buildTranscriptFromResults(event: SpeechRecognitionEvent): string {
+  let transcript = '';
+  for (let i = 0; i < event.results.length; i++) {
+    transcript += event.results[i][0].transcript;
+  }
+  return transcript.trim();
 }
 
 /** Fallback: voz pt-BR do sistema quando Piper está offline. */
@@ -62,8 +88,20 @@ export function useVoice() {
   const { sendMessage, confirmAction, setListening, setSpeaking, isListening } = useJarvisStore();
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const [supported, setSupported] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transcriptRef = useRef('');
+  const isListeningRef = useRef(false);
+  const isFinalizingRef = useRef(false);
+
+  const clearSilenceTimer = useCallback(() => {
+    if (silenceTimerRef.current !== null) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
@@ -71,8 +109,8 @@ export function useVoice() {
     if (SR) {
       const rec = new SR();
       rec.lang = 'pt-BR';
-      rec.continuous = false;
-      rec.interimResults = false;
+      rec.continuous = true;
+      rec.interimResults = true;
       recognitionRef.current = rec;
     }
 
@@ -84,8 +122,9 @@ export function useVoice() {
     return () => {
       window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
       audioRef.current?.pause();
+      clearSilenceTimer();
     };
-  }, []);
+  }, [clearSilenceTimer]);
 
   const speak = useCallback(async (text: string) => {
     const spoken = stripTextForSpeech(text);
@@ -118,35 +157,89 @@ export function useVoice() {
     speakWithBrowser(spoken, setSpeaking, voicesRef.current);
   }, [setSpeaking]);
 
-  const startListening = useCallback(() => {
-    const rec = recognitionRef.current;
-    if (!rec || isListening) return;
+  const finalizeListening = useCallback(async (transcript: string) => {
+    if (isFinalizingRef.current) return;
+    isFinalizingRef.current = true;
 
-    rec.onresult = async (event) => {
-      const transcript = event.results[0][0].transcript;
-      setListening(false);
+    clearSilenceTimer();
+    isListeningRef.current = false;
+    setListening(false);
+    setLiveTranscript('');
+    transcriptRef.current = '';
 
+    const trimmed = transcript.trim();
+    if (trimmed) {
       const { pendingClientActions } = useJarvisStore.getState();
       if (pendingClientActions.length) {
-        await confirmAction(transcript);
+        await confirmAction(trimmed);
       } else {
-        await sendMessage(transcript);
+        await sendMessage(trimmed);
       }
 
       const lastMsg = useJarvisStore.getState().messages.at(-1);
       if (lastMsg?.role === 'assistant') await speak(lastMsg.content);
+    }
+
+    isFinalizingRef.current = false;
+  }, [clearSilenceTimer, confirmAction, sendMessage, setListening, speak]);
+
+  const scheduleSilenceStop = useCallback(() => {
+    clearSilenceTimer();
+    silenceTimerRef.current = setTimeout(() => {
+      silenceTimerRef.current = null;
+      recognitionRef.current?.stop();
+      void finalizeListening(transcriptRef.current);
+    }, VOICE_SILENCE_END_DELAY_MS);
+  }, [clearSilenceTimer, finalizeListening]);
+
+  const startListening = useCallback(() => {
+    const rec = recognitionRef.current;
+    if (!rec || isListening) return;
+
+    isFinalizingRef.current = false;
+    transcriptRef.current = '';
+    setLiveTranscript('');
+    isListeningRef.current = true;
+
+    rec.onresult = (event) => {
+      const transcript = buildTranscriptFromResults(event);
+      transcriptRef.current = transcript;
+      setLiveTranscript(transcript);
+      scheduleSilenceStop();
     };
-    rec.onerror = () => setListening(false);
-    rec.onend = () => setListening(false);
+
+    rec.onerror = () => {
+      clearSilenceTimer();
+      isListeningRef.current = false;
+      setListening(false);
+      setLiveTranscript('');
+      transcriptRef.current = '';
+    };
+
+    rec.onend = () => {
+      if (!isListeningRef.current || isFinalizingRef.current) return;
+      try {
+        rec.start();
+      } catch {
+        isListeningRef.current = false;
+        setListening(false);
+        setLiveTranscript('');
+        transcriptRef.current = '';
+      }
+    };
 
     setListening(true);
     rec.start();
-  }, [isListening, sendMessage, confirmAction, setListening, speak]);
+  }, [clearSilenceTimer, isListening, scheduleSilenceStop, setListening]);
 
   const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
-    setListening(false);
-  }, [setListening]);
+    if (!isListeningRef.current) return;
 
-  return { supported, startListening, stopListening, speak, isListening };
+    isListeningRef.current = false;
+    clearSilenceTimer();
+    recognitionRef.current?.stop();
+    void finalizeListening(transcriptRef.current);
+  }, [clearSilenceTimer, finalizeListening]);
+
+  return { supported, startListening, stopListening, speak, isListening, liveTranscript };
 }
